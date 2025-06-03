@@ -8,13 +8,17 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
+import userRoutes from "./routes/user.route.js";
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+}));
 app.use(morgan("dev")); // HTTP request logger
 app.use(helmet()); // Security headers
 app.use(compression()); // Compress responses
@@ -23,12 +27,15 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Parse cookies
 app.use(bodyParser.json()); // Parse JSON payloads
 
+// Routes
+app.use("/api/v1/users", userRoutes);
+
 // Test route
 app.get("/api", (req, res) => {
   res.json({ message: "Welcome to Green Marketplace API" });
 });
 
-// Error handling middleware
+// Error handling middleware - should be last
 app.use(notFound);
 app.use(errorHandler);
 
@@ -39,7 +46,7 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+      console.log(`Server is running on http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
