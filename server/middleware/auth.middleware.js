@@ -13,7 +13,7 @@ export const loginLimiter = rateLimit({
 });
 
 // Authentication middleware
-export const authenticate = async (req, res, next) => {
+export const protect = async (req, res, next) => {
     try {
         let token = req.cookies.token;
 

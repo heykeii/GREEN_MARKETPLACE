@@ -1,15 +1,16 @@
 import express from "express";
-import { register, login, deactivateAccount } from "../controllers/user.controller.js";
-import { authenticate, loginLimiter } from "../middleware/auth.middleware.js";
+import { register, login, verifyEmail, resendVerification, deactivateAccount } from "../controllers/user.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // Public routes
 router.post("/register", register);
-router.post("/login", loginLimiter, login);
-
+router.post("/login", login);
+router.get("/verify-email/:token", verifyEmail);
+router.post("/resend-verification", resendVerification);
 
 // Protected routes
-router.delete("/deactivate", authenticate, deactivateAccount);
+router.post("/deactivate", protect, deactivateAccount);
 
 export default router;
