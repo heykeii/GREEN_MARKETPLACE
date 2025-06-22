@@ -8,8 +8,9 @@ const userSchema = new mongoose.Schema({
     },
     lastName: {
         type: String,
-        required: [true, "Last name is required"],
-        trim: true
+        required: false,
+        trim: true,
+        default: ""
     },
     email: {
         type: String,
@@ -19,15 +20,26 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid email"]
     },
-    phoneNumber: {
-        type: String,
-        trim: true,
-        default: null
-    },
     password: {
         type: String,
-        required: [true, "Password is required"],
+        required: function() {
+            return !this.googleId; // Password is required only if not using Google auth
+        },
         minlength: [6, "Password must be at least 6 characters long"]
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    googleEmail: {
+        type: String,
+        trim: true,
+        lowercase: true
+    },
+    avatar: {
+        type: String,
+        default: null
     },
     isActive: {
         type: Boolean,
@@ -54,14 +66,14 @@ const userSchema = new mongoose.Schema({
 
 // Virtual for user's full name
 userSchema.virtual('fullName').get(function() {
-    return `${this.firstName} ${this.lastName}`;
+    return this.lastName ? `${this.firstName} ${this.lastName}` : this.firstName;
 });
 
 // Virtual for user's full name setter
 userSchema.virtual('fullName').set(function(name) {
-    const [firstName, lastName] = name.split(' ');
-    this.firstName = firstName;
-    this.lastName = lastName;
+    const parts = name.split(' ');
+    this.firstName = parts[0];
+    this.lastName = parts.slice(1).join(' ') || "";
 });
 
 const User = mongoose.model('User', userSchema);

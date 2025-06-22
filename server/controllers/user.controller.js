@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Resend } from 'resend';
 import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 
 // Check for required environment variables
 if (!process.env.JWT_SECRET) {
@@ -15,7 +16,13 @@ if (!process.env.RESEND_API_KEY) {
     process.exit(1);
 }
 
+if (!process.env.GOOGLE_CLIENT_ID) {
+    console.error('GOOGLE_CLIENT_ID is not set in environment variables');
+    process.exit(1);
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate verification token
 const generateVerificationToken = () => {
@@ -56,6 +63,123 @@ const sendVerificationEmail = async (email, firstName, verificationToken) => {
             stack: error.stack
         });
         throw error;
+    }
+};
+
+// Verify Google token
+const verifyGoogleToken = async (token) => {
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+        return ticket.getPayload();
+    } catch (error) {
+        console.error('Google token verification error:', error);
+        throw new Error('Invalid Google token');
+    }
+};
+
+export const googleLogin = async (req, res) => {
+    try {
+        const { token } = req.body;
+        console.log("Received Google login request with token:", token);
+
+        if (!token) {
+            console.error("Google token not provided in request body.");
+            return res.status(400).json({ message: "Google token is required" });
+        }
+
+        // Verify Google token
+        console.log("Verifying Google token...");
+        const payload = await verifyGoogleToken(token);
+        console.log("Google token verified. Payload:", payload);
+        
+        const { sub: googleId, email, given_name: firstName, family_name: lastName, picture: avatar } = payload;
+
+        // Handle missing last name - use empty string as fallback
+        const userLastName = lastName || "";
+
+        // Check if user already exists
+        console.log(`Searching for user with googleId: ${googleId} or email: ${email}`);
+        let user = await User.findOne({ 
+            $or: [
+                { googleId },
+                { email }
+            ]
+        });
+
+        if (user) {
+            console.log("User found:", user._id);
+            // Update user with Google info if they don't have it
+            if (!user.googleId) {
+                console.log("User exists, updating with Google ID.");
+                user.googleId = googleId;
+                user.googleEmail = email;
+                user.avatar = avatar;
+                user.isVerified = true; // Google users are automatically verified
+                await user.save();
+                console.log("User updated successfully.");
+            }
+        } else {
+            // Create new user
+            console.log("User not found, creating a new user.");
+            user = await User.create({
+                firstName,
+                lastName: userLastName,
+                email,
+                googleId,
+                googleEmail: email,
+                avatar,
+                isVerified: true, // Google users are automatically verified
+                password: crypto.randomBytes(32).toString('hex') // Random password for Google users
+            });
+            console.log("New user created:", user._id);
+        }
+
+        // Generate JWT token
+        console.log("Generating JWT token for user:", user._id);
+        const jwtToken = jwt.sign(
+            { 
+                userId: user._id,
+                email: user.email
+            },
+            process.env.JWT_SECRET,
+            { 
+                expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+                algorithm: 'HS256'
+            }
+        );
+
+        // Set cookie
+        res.cookie("token", jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 3600000 // 1 hour
+        });
+
+        console.log("Google login process completed successfully.");
+        res.status(200).json({
+            message: "Google login successful",
+            user: {
+                id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                avatar: user.avatar
+            },
+            token: jwtToken
+        });
+
+    } catch (error) {
+        console.error("--- Google Login Error ---");
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
+        console.error("--------------------------");
+        res.status(500).json({ 
+            message: "Google login failed",
+            error: process.env.NODE_ENV === 'development' ? error.message : "An internal server error occurred."
+        });
     }
 };
 

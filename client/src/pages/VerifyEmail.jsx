@@ -81,7 +81,7 @@ const VerifyEmail = () => {
                                 <div className="text-center">
                                   
                                     <div className="mt-4">
-                                       <button>
+                                       <button onClick={() => navigate('/login')}>
                                             Go to Login Now
                                         </button>
                                     </div>

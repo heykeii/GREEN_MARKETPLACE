@@ -20,7 +20,11 @@ app.use(cors({
     credentials: true
 }));
 app.use(morgan("dev")); // HTTP request logger
-app.use(helmet()); // Security headers
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
 app.use(compression()); // Compress responses
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
