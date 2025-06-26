@@ -39,8 +39,71 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: null
+        default: null,
+        validate: {
+            validator: function(value) {
+                return !value || value.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/);
+            },
+            message: "Avatar must be a valid image URL"
+        }
     },
+    bio: {
+        type: String,
+        maxlength: [500, "Bio cannot exceed 500 characters"],
+        trim: true,
+        default: ""
+    },
+    location: {
+        address: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        city: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        province: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        zipCode: {
+            type: String,
+            trim: true,
+            default: ""
+        }
+    },
+    contactNumber: {
+        type: String,
+        trim: true,
+        match: [/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"],
+        default: ""
+    },
+    socialLinks: [{
+        platform: {
+            type: String,
+            trim: true,
+            enum: ['website', 'facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'pinterest', 'snapchat', 'discord', 'telegram', 'other']
+        },
+        url: {
+            type: String,
+            required: true,
+            trim: true,
+            validate: {
+                validator: function(value) {
+                    return value.match(/^https?:\/\/.+/);
+                },
+                message: "Social link must be a valid URL"
+            }
+        },
+        displayName: {
+            type: String,
+            trim: true,
+            default: ""
+        }
+    }],
     isActive: {
         type: Boolean,
         default: true
@@ -64,6 +127,9 @@ const userSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
+
+
+
 // Virtual for user's full name
 userSchema.virtual('fullName').get(function() {
     return this.lastName ? `${this.firstName} ${this.lastName}` : this.firstName;
@@ -74,6 +140,36 @@ userSchema.virtual('fullName').set(function(name) {
     const parts = name.split(' ');
     this.firstName = parts[0];
     this.lastName = parts.slice(1).join(' ') || "";
+});
+
+// Virtual for full address
+userSchema.virtual('fullAddress').get(function() {
+    const parts = [
+        this.location.address,
+        this.location.city,
+        this.location.state,
+        this.location.zipCode,
+        this.location.country
+    ].filter(part => part && part.trim());
+    
+    return parts.join(', ');
+});
+
+// Virtual for profile completion percentage
+userSchema.virtual('profileCompletion').get(function() {
+    const fields = [
+        this.firstName,
+        this.lastName,
+        this.email,
+        this.avatar,
+        this.bio,
+        this.location.address,
+        this.location.city,
+        this.contactNumber
+    ];
+    
+    const completedFields = fields.filter(field => field && field.toString().trim()).length;
+    return Math.round((completedFields / fields.length) * 100);
 });
 
 const User = mongoose.model('User', userSchema);
