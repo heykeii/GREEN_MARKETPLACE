@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
+import User from "../models/user.model.js";
 
 // Rate limiting middleware for login attempts
 export const loginLimiter = rateLimit({
@@ -29,7 +30,14 @@ export const protect = async (req, res, next) => {
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = { id: decoded.userId };
+            
+            // Fetch user from database to get role and other info
+            const user = await User.findById(decoded.userId).select('-password');
+            if (!user) {
+                return res.status(401).json({ message: "User not found" });
+            }
+
+            req.user = user;
             next();
         } catch (error) {
             if (error.name === "TokenExpiredError") {

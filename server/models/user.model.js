@@ -114,12 +114,27 @@ const userSchema = new mongoose.Schema({
     },
     verificationToken: {
         type: String,
-        default: null
+        default: null,
+        sparse: true
     },
     isVerified: {
         type: Boolean,
         default: false,
         required: true
+    },
+    isSeller: {
+        type: Boolean,
+        default: false
+    },
+    sellerStatus: {
+        type: String,
+        enum: ['none', 'pending', 'verified', 'rejected'],
+        default: 'none'
+    },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
     }
 }, {
     timestamps: true,

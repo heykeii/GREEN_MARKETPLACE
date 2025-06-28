@@ -9,6 +9,8 @@ import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import userRoutes from "./routes/user.route.js";
+import adminRoutes from "./routes/admin.route.js";
+import sellerRoutes from "./routes/seller.route.js";
 
 dotenv.config();
 
@@ -33,6 +35,8 @@ app.use(bodyParser.json()); // Parse JSON payloads
 
 // Routes
 app.use("/api/v1/users", userRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/seller", sellerRoutes);
 
 // Test route
 app.get("/api", (req, res) => {
