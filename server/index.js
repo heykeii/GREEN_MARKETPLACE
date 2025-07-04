@@ -35,8 +35,8 @@ app.use(bodyParser.json()); // Parse JSON payloads
 
 // Routes
 app.use("/api/v1/users", userRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/seller", sellerRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/seller", sellerRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

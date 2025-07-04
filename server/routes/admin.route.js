@@ -1,7 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
-import { getAdminStats, getSellerApplications } from '../controllers/admin.controller.js';
+import { getAdminStats, getSellerApplications, getAllUsers } from '../controllers/admin.controller.js';
 
 const router = express.Router();
 
@@ -14,5 +14,8 @@ router.get('/stats', getAdminStats);
 
 // Get all seller applications
 router.get('/seller/applications', getSellerApplications);
+
+//get all users that are active
+router.get('/get-all-users', getAllUsers);
 
 export default router; 

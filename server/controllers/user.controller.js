@@ -7,20 +7,7 @@ import { OAuth2Client } from 'google-auth-library';
 import cloudinary from '../utils/cloudinary.js';
 
 // Set default environment variables if not provided
-if (!process.env.JWT_SECRET) {
-    console.warn('JWT_SECRET is not set - using default for development');
-    process.env.JWT_SECRET = 'dev-secret-key-change-in-production';
-}
 
-if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not set - email verification will be disabled');
-    process.env.RESEND_API_KEY = 'dummy-key';
-}
-
-if (!process.env.GOOGLE_CLIENT_ID) {
-    console.warn('GOOGLE_CLIENT_ID is not set - Google login will be disabled');
-    process.env.GOOGLE_CLIENT_ID = 'dummy-client-id';
-}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -423,7 +410,7 @@ export const deactivateAccount = async (req, res) => {
 };
 
 // Get current user information
-export const getMe = async (req, res) => {
+export const getUser = async (req, res) => {
     try {
         const userId = req.user._id;
         
@@ -434,7 +421,7 @@ export const getMe = async (req, res) => {
 
         res.status(200).json({ user });
     } catch (error) {
-        console.error("Get me error:", error);
+        console.error("Get user error:", error);
         res.status(500).json({ message: "Failed to get user information" });
     }
 };
@@ -464,32 +451,30 @@ export const updateProfile = async (req, res) => {
         }
 
         // Update fields
-        user.firstName = req.body.firstName || user.firstName;
-        user.lastName = req.body.lastName || user.lastName;
-        user.bio = req.body.bio || user.bio;
-        user.contactNumber = req.body.contactNumber || user.contactNumber;
+        user.firstName = req.body.firstName ?? user.firstName;
+        user.lastName = req.body.lastName ?? user.lastName;
+        user.bio = req.body.bio ?? user.bio;
+        user.contactNumber = req.body.contactNumber ?? user.contactNumber;
         user.avatar = avatarUrl;
+        // Always set location fields, even if blank
         user.location = {
-            address: req.body['location[address]'] || user.location.address,
-            city: req.body['location[city]'] || user.location.city,
-            province: req.body['location[province]'] || user.location.province,
-            zipCode: req.body['location[zipCode]'] || user.location.zipCode
+            address: req.body['location[address]'] ?? '',
+            city: req.body['location[city]'] ?? '',
+            province: req.body['location[province]'] ?? '',
+            zipCode: req.body['location[zipCode]'] ?? ''
         };
         // Social links
         let socialLinks = [];
-        if (req.body['socialLinks[0][platform]']) {
-            // Handle multiple social links
-            let idx = 0;
-            while (req.body[`socialLinks[${idx}][platform]`]) {
-                socialLinks.push({
-                    platform: req.body[`socialLinks[${idx}][platform]`],
-                    url: req.body[`socialLinks[${idx}][url]`],
-                    displayName: req.body[`socialLinks[${idx}][displayName]`] || ''
-                });
-                idx++;
-            }
+        let idx = 0;
+        while (req.body[`socialLinks[${idx}][platform]`] !== undefined) {
+            socialLinks.push({
+                platform: req.body[`socialLinks[${idx}][platform]`] || '',
+                url: req.body[`socialLinks[${idx}][url]`] || '',
+                displayName: req.body[`socialLinks[${idx}][displayName]`] || ''
+            });
+            idx++;
         }
-        user.socialLinks = socialLinks.length > 0 ? socialLinks : user.socialLinks;
+        user.socialLinks = socialLinks;
 
         await user.save();
         res.status(200).json({ message: 'Profile updated', user });

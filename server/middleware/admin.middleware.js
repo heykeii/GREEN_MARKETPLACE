@@ -9,7 +9,7 @@ export const isAdmin = (req, res, next) => {
     
     // Check if user has admin role
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ message: 'Only admin can access this route' });
     }
     
     next();

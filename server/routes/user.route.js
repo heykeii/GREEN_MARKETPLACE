@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, getMe, updateProfile } from "../controllers/user.controller.js";
+import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser } from "../controllers/user.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import multer from 'multer';
 
@@ -15,8 +15,8 @@ router.get("/verify-email/:token", verifyEmail);
 router.post("/resend-verification", resendVerification);
 
 // Protected routes
-router.get("/me", protect, getMe);
-router.patch("/profile", protect, upload.fields([{ name: 'avatar', maxCount: 1 }]), updateProfile);
-router.post("/deactivate", protect, deactivateAccount);
+router.get("/me", protect, getUser);
+router.put("/update-profile", protect, upload.fields([{ name: 'avatar', maxCount: 1 }]), updateProfile);
+router.post("/deactivate-account", protect, deactivateAccount);
 
 export default router;
