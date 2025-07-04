@@ -41,12 +41,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null,
         validate: {
-            validator: function(value) {
-                return !value || value.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/);
-            },
-            message: "Avatar must be a valid image URL"
+          validator: function(value) {
+            return !value || /^https?:\/\/.+$/.test(value); // Only check if it's a URL
+          },
+          message: "Avatar must be a valid URL"
         }
-    },
+      }
+      ,
     bio: {
         type: String,
         maxlength: [500, "Bio cannot exceed 500 characters"],
