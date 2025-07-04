@@ -166,6 +166,8 @@ export const googleLogin = async (req, res) => {
       return res.status(403).json({
         message: "Please verify your email address. A verification link has been sent to your email.",
         isVerificationRequired: true,
+        email: user.email,
+        firstName: user.firstName,
       });
     }
 

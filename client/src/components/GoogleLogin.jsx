@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const GoogleLogin = ({ onSuccess, onError }) => {
+    const navigate = useNavigate();
     useEffect(() => {
         // Load Google Identity Services
         const script = document.createElement('script');
@@ -69,12 +71,19 @@ const GoogleLogin = ({ onSuccess, onError }) => {
             }
 
         } catch (error) {
-            console.error('Google login error:', error);
-            
+            // Check for email verification required
+            if (error.response?.data?.isVerificationRequired) {
+                navigate('/email-verification', {
+                    state: {
+                        email: error.response.data.email || '',
+                        firstName: error.response.data.firstName || '',
+                    }
+                });
+                return;
+            }
+            // Other errors
             const errorMessage = error.response?.data?.message || 'Google login failed. Please try again.';
             toast.error(errorMessage);
-
-            // Call the error callback
             if (onError) {
                 onError(error);
             }
