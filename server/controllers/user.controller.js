@@ -115,6 +115,7 @@ export const googleLogin = async (req, res) => {
       $or: [{ googleId }, { email }],
     });
 
+    let isNewUser = false;
     if (user) {
       console.log("User found:", user._id);
       // Update user with Google info if they don't have it
@@ -123,13 +124,14 @@ export const googleLogin = async (req, res) => {
         user.googleId = googleId;
         user.googleEmail = email;
         user.avatar = avatar;
-        user.isVerified = true; // Google users are automatically verified
+        // Do not auto-verify Google users
         await user.save();
         console.log("User updated successfully.");
       }
     } else {
       // Create new user
       console.log("User not found, creating a new user.");
+      const verificationToken = generateVerificationToken();
       user = await User.create({
         firstName,
         lastName: userLastName,
@@ -137,10 +139,34 @@ export const googleLogin = async (req, res) => {
         googleId,
         googleEmail: email,
         avatar,
-        isVerified: true, // Google users are automatically verified
+        isVerified: false, // Google users must verify email
+        verificationToken,
         password: crypto.randomBytes(32).toString("hex"), // Random password for Google users
       });
+      isNewUser = true;
       console.log("New user created:", user._id);
+    }
+
+    // If user is not verified, send verification email and block login
+    if (!user.isVerified) {
+      // Generate a new token if not present
+      if (!user.verificationToken) {
+        user.verificationToken = generateVerificationToken();
+        await user.save();
+      }
+      try {
+        await sendVerificationEmail(user.email, user.firstName, user.verificationToken);
+      } catch (emailError) {
+        console.error("Failed to send verification email (Google login):", emailError);
+        return res.status(500).json({
+          message: "Failed to send verification email. Please try again.",
+          error: process.env.NODE_ENV === "development" ? emailError.message : undefined,
+        });
+      }
+      return res.status(403).json({
+        message: "Please verify your email address. A verification link has been sent to your email.",
+        isVerificationRequired: true,
+      });
     }
 
     // Generate JWT token
