@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import noProfile from "@/assets/no_profile.jpg";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -36,21 +37,60 @@ const Profile = () => {
       return;
     }
     setUser(storedUser);
-    const formObj = {
-      firstName: storedUser.firstName || "",
-      lastName: storedUser.lastName || "",
-      bio: storedUser.bio || "",
-      contactNumber: storedUser.contactNumber || "",
-      location: {
-        address: storedUser.location?.address || "",
-        city: storedUser.location?.city || "",
-        province: storedUser.location?.province || "",
-        zipCode: storedUser.location?.zipCode || "",
-      },
-      socialLinks: storedUser.socialLinks || [],
+    
+    // Fetch latest user data from backend to ensure we have the most up-to-date info
+    const fetchLatestUserData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const latestUser = response.data.user;
+          localStorage.setItem("user", JSON.stringify(latestUser));
+          setUser(latestUser);
+          
+          // Update form with latest data
+          const formObj = {
+            firstName: latestUser.firstName || "",
+            lastName: latestUser.lastName || "",
+            bio: latestUser.bio || "",
+            contactNumber: latestUser.contactNumber || "",
+            location: {
+              address: latestUser.location?.address || "",
+              city: latestUser.location?.city || "",
+              province: latestUser.location?.province || "",
+              zipCode: latestUser.location?.zipCode || "",
+            },
+            socialLinks: latestUser.socialLinks || [],
+          };
+          setForm(formObj);
+          setInitialForm(formObj);
+        }
+      } catch (error) {
+        console.error("Error fetching latest user data:", error);
+        // If fetch fails, use stored user data
+        const formObj = {
+          firstName: storedUser.firstName || "",
+          lastName: storedUser.lastName || "",
+          bio: storedUser.bio || "",
+          contactNumber: storedUser.contactNumber || "",
+          location: {
+            address: storedUser.location?.address || "",
+            city: storedUser.location?.city || "",
+            province: storedUser.location?.province || "",
+            zipCode: storedUser.location?.zipCode || "",
+          },
+          socialLinks: storedUser.socialLinks || [],
+        };
+        setForm(formObj);
+        setInitialForm(formObj);
+      }
     };
-    setForm(formObj);
-    setInitialForm(formObj);
+    
+    fetchLatestUserData();
   }, []);
 
   const handleInputChange = (e) => {
@@ -279,6 +319,13 @@ const Profile = () => {
                 <div className="text-gray-700 text-sm">
                   Email: <span className="font-semibold">{user.email}</span>
                 </div>
+                
+                {/* Seller Badge */}
+                {user.sellerStatus === 'verified' && (
+                  <Badge className="bg-green-600 text-white px-3 py-1 text-sm font-semibold">
+                    ✓ Verified Seller
+                  </Badge>
+                )}
 
                 {typeof user.profileCompletion === "number" && (
                   <div className="w-full max-w-xs mt-2">

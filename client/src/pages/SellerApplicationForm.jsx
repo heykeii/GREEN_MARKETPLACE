@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'react-toastify';
+import { CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
 
 const SellerApplicationForm = () => {
   const [sellerType, setSellerType] = useState('individual');
@@ -17,6 +19,29 @@ const SellerApplicationForm = () => {
   const [businessPermit, setBusinessPermit] = useState(null);
   const [birRegistration, setBirRegistration] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [status, setStatus] = useState('loading'); // loading, verified, pending, rejected, none
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!storedUser) {
+      setStatus('none');
+      return;
+    }
+    
+    setUser(storedUser);
+    
+    // Check seller status
+    if (storedUser.sellerStatus === 'verified') {
+      setStatus('verified');
+    } else if (storedUser.sellerStatus === 'pending') {
+      setStatus('pending');
+    } else if (storedUser.sellerStatus === 'rejected') {
+      setStatus('rejected');
+    } else {
+      setStatus('none');
+    }
+  }, []);
 
   const handleFileChange = (e, setter) => {
     setter(e.target.files[0]);
@@ -44,7 +69,7 @@ const SellerApplicationForm = () => {
 
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/seller/verify`,
+        `${import.meta.env.VITE_API_URL}/api/v1/seller/verify`,
         formData,
         {
           headers: {
@@ -54,6 +79,11 @@ const SellerApplicationForm = () => {
         }
       );
       toast.success('Seller application submitted!');
+      // Update user status to pending
+      const updatedUser = { ...user, sellerStatus: 'pending' };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setStatus('pending');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         toast.error(error.response.data.message);
@@ -65,11 +95,108 @@ const SellerApplicationForm = () => {
     }
   };
 
+  // Show status messages instead of form
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (status === 'verified') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-green-800 mb-2">Already Verified!</h2>
+            <p className="text-gray-600 mb-4">
+              Congratulations! You are already a verified seller on Green Marketplace.
+            </p>
+            <Badge className="bg-green-600 text-white px-4 py-2 text-lg">
+              ✓ Verified Seller
+            </Badge>
+            <div className="mt-6">
+              <p className="text-sm text-gray-500">
+                You can now start selling your products on our platform.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (status === 'pending') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <div className="flex justify-center mb-4">
+              <Clock className="h-16 w-16 text-yellow-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-yellow-800 mb-2">Application Pending</h2>
+            <p className="text-gray-600 mb-4">
+              Your seller application is currently under review by our admin team.
+            </p>
+            <Badge className="bg-yellow-600 text-white px-4 py-2 text-lg">
+              ⏳ Application Pending
+            </Badge>
+            <div className="mt-6">
+              <p className="text-sm text-gray-500">
+                We will notify you once your application has been reviewed. This usually takes 2-3 business days.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (status === 'rejected') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <div className="flex justify-center mb-4">
+              <XCircle className="h-16 w-16 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-red-800 mb-2">Application Rejected</h2>
+            <p className="text-gray-600 mb-4">
+              Your previous seller application was not approved. You can submit a new application.
+            </p>
+            <Badge className="bg-red-600 text-white px-4 py-2 text-lg mb-4">
+              ❌ Application Rejected
+            </Badge>
+            <div className="mt-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Please review your documents and ensure all information is accurate before resubmitting.
+              </p>
+              <Button 
+                onClick={() => setStatus('none')}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Submit New Application
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show the application form for users with no seller status
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Seller Verification Application</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-6 w-6 text-green-600" />
+            Seller Verification Application
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">

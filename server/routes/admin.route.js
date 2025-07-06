@@ -1,7 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
-import { getAdminStats, getSellerApplications, getAllUsers } from '../controllers/admin.controller.js';
+import { getAdminStats, getSellerApplications, getSellerApplicationById, getAllUsers } from '../controllers/admin.controller.js';
 
 const router = express.Router();
 
@@ -14,6 +14,9 @@ router.get('/stats', getAdminStats);
 
 // Get all seller applications
 router.get('/seller/applications', getSellerApplications);
+
+// Get a specific seller application by ID
+router.get('/seller/applications/:applicationId', getSellerApplicationById);
 
 //get all users that are active
 router.get('/get-all-users', getAllUsers);

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import noProfile from "@/assets/no_profile.jpg";
+import { toast } from "react-toastify";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -120,15 +121,35 @@ const Navbar = () => {
   );
 };
 
-export const AdminNavbar = () => (
-  <nav className="w-full bg-green-800 text-white shadow-md py-4 px-8 flex items-center justify-between">
-    <div className="text-2xl font-bold tracking-wide">Green Marketplace</div>
-    <div className="flex gap-8 text-lg font-semibold">
-      <Link to="/admin/product-verification" className="hover:text-green-200 transition">Product Verification</Link>
-      <Link to="/admin/seller-verification" className="hover:text-green-200 transition">Seller Verification</Link>
-      <Link to="/admin/reports" className="hover:text-green-200 transition">Reports/Complaints</Link>
-    </div>
-  </nav>
-);
+export const AdminNavbar = () => {
+  const navigate = useNavigate();
+  
+  const handleAdminLogout = () => {
+    // Show confirmation dialog
+    if (window.confirm('Are you sure you want to logout from admin panel?')) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_user");
+      toast.success('Admin logged out successfully!');
+      navigate("/admin/login");
+    }
+  };
+
+  return (
+    <nav className="w-full bg-green-800 text-white shadow-md py-4 px-8 flex items-center justify-between">
+      <div className="text-2xl font-bold tracking-wide">Green Marketplace</div>
+      <div className="flex gap-8 text-lg font-semibold">
+        <Link to="/admin/product-verification" className="hover:text-green-200 transition">Product Verification</Link>
+        <Link to="/admin/seller-verification" className="hover:text-green-200 transition">Seller Verification</Link>
+        <Link to="/admin/reports" className="hover:text-green-200 transition">Reports/Complaints</Link>
+        <button 
+          onClick={handleAdminLogout}
+          className="hover:text-green-200 transition bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md"
+        >
+          Logout
+        </button>
+      </div>
+    </nav>
+  );
+};
 
 export default Navbar;

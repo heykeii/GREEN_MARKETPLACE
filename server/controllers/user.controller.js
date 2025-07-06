@@ -195,13 +195,7 @@ export const googleLogin = async (req, res) => {
     console.log("Google login process completed successfully.");
     res.status(200).json({
       message: "Google login successful",
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        avatar: user.avatar,
-      },
+      user: user.toObject(),
       token: jwtToken,
     });
   } catch (error) {

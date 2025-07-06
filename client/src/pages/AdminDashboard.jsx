@@ -32,9 +32,9 @@ const AdminDashboard = () => {
 
   const fetchSellerApplications = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/seller/applications`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/seller/applications`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         }
       });
       setSellerApplications(response.data.applications || []);
@@ -47,9 +47,9 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/stats`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/stats`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         }
       });
       setStats(response.data);
@@ -60,12 +60,12 @@ const AdminDashboard = () => {
 
   const handleReviewApplication = async (applicationId, action, message = '') => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/api/seller/verify/${applicationId}/review`, 
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/seller/verify/${applicationId}/review`, 
         { action, message },
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
           }
         }
       );
@@ -234,6 +234,21 @@ const AdminDashboard = () => {
                             <p className="text-sm text-gray-500">
                               Seller Type: {application.sellerType}
                             </p>
+                            {application.user?.contactNumber && (
+                              <p className="text-sm text-gray-500">
+                                Phone: {application.user.contactNumber}
+                              </p>
+                            )}
+                            {application.user?.location && (
+                              <p className="text-sm text-gray-500">
+                                Address: {[
+                                  application.user.location.address,
+                                  application.user.location.city,
+                                  application.user.location.province,
+                                  application.user.location.zipCode
+                                ].filter(Boolean).join(', ')}
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(application.status)}

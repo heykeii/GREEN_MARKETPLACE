@@ -10,8 +10,8 @@ const ProtectedAdminRoute = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const token = localStorage.getItem('admin_token');
+      const user = JSON.parse(localStorage.getItem('admin_user') || '{}');
 
       if (!token) {
         setLoading(false);
@@ -53,8 +53,8 @@ const ProtectedAdminRoute = ({ children }) => {
           toast.error('Authentication check failed.');
         }
         
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
       } finally {
         setLoading(false);
       }
