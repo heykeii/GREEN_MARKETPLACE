@@ -12,6 +12,10 @@ import AdminLogin from "./components/AdminLogin";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import SellerApplicationForm from "./pages/SellerApplicationForm";
 import Profile from "./pages/Profile";
+import SellerDashboard from './pages/SellerDashboard';
+import AdminProductVerification from './pages/AdminProductVerification';
+import PublicProfile from './pages/PublicProfile';
+import CartPage from './pages/CartPage';
 const App = () => {
   return (
     <>
@@ -24,6 +28,9 @@ const App = () => {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/seller/application" element={<SellerApplicationForm />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<PublicProfile />} />
+        <Route path="/seller/dashboard" element={<SellerDashboard />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route 
           path="/admin" 
           element={
@@ -31,6 +38,14 @@ const App = () => {
               <AdminDashboard />
             </ProtectedAdminRoute>
           } 
+        />
+        <Route 
+          path="/admin/product-verification" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminProductVerification />
+            </ProtectedAdminRoute>
+          }
         />
         <Route path="/" element={<Homepage />} />
       </Routes>

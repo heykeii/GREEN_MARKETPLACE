@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser } from "../controllers/user.controller.js";
+import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile } from "../controllers/user.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import multer from 'multer';
 
@@ -13,6 +13,9 @@ router.post("/login", login);
 router.post("/google-login", googleLogin);
 router.get("/verify-email/:token", verifyEmail);
 router.post("/resend-verification", resendVerification);
+
+// Public profile route
+router.get("/profile/:userId", getProfile);
 
 // Protected routes
 router.get("/me", protect, getUser);

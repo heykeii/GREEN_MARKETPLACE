@@ -51,3 +51,14 @@ export const protect = async (req, res, next) => {
         res.status(401).json({ message: "Authentication failed" });
     }
 }; 
+
+// Seller-only middleware
+export const sellerOnly = (req, res, next) => {
+  if (!req.user || !req.user.isSeller || req.user.sellerStatus !== 'verified') {
+    return res.status(403).json({
+      success: false,
+      message: 'Only verified sellers can perform this action.'
+    });
+  }
+  next();
+}; 

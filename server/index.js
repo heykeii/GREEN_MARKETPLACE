@@ -11,6 +11,8 @@ import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import sellerRoutes from "./routes/seller.route.js";
+import productRoutes from './routes/product.route.js'
+import cartRoutes from './routes/cart.route.js'
 
 dotenv.config();
 
@@ -37,6 +39,8 @@ app.use(bodyParser.json()); // Parse JSON payloads
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/seller", sellerRoutes);
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/cart", cartRoutes)
 
 // Test route
 app.get("/api", (req, res) => {

@@ -232,6 +232,7 @@ export const approveProduct = async (req, res) => {
       return errorResponse(res, 404, 'Product not found');
     }
     product.status = 'approved';
+    product.isAvailable = true; // Ensure product is available when approved
     await product.save();
     res.status(200).json({ 
       success: true,

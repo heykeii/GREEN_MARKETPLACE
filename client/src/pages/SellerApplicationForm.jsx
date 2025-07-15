@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'react-toastify';
 import { CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 const SellerApplicationForm = () => {
   const [sellerType, setSellerType] = useState('individual');
@@ -98,232 +99,250 @@ const SellerApplicationForm = () => {
   // Show status messages instead of form
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        </div>
+      </>
     );
   }
 
   if (status === 'verified') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6">
-            <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-green-800 mb-2">Already Verified!</h2>
-            <p className="text-gray-600 mb-4">
-              Congratulations! You are already a verified seller on Green Marketplace.
-            </p>
-            <Badge className="bg-green-600 text-white px-4 py-2 text-lg">
-              ✓ Verified Seller
-            </Badge>
-            <div className="mt-6">
-              <p className="text-sm text-gray-500">
-                You can now start selling your products on our platform.
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardContent className="pt-6">
+              <div className="flex justify-center mb-4">
+                <CheckCircle className="h-16 w-16 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-green-800 mb-2">Already Verified!</h2>
+              <p className="text-gray-600 mb-4">
+                Congratulations! You are already a verified seller on Green Marketplace.
               </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <Badge className="bg-green-600 text-white px-4 py-2 text-lg">
+                ✓ Verified Seller
+              </Badge>
+              <div className="mt-6">
+                <p className="text-sm text-gray-500">
+                  You can now start selling your products on our platform.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (status === 'pending') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6">
-            <div className="flex justify-center mb-4">
-              <Clock className="h-16 w-16 text-yellow-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-yellow-800 mb-2">Application Pending</h2>
-            <p className="text-gray-600 mb-4">
-              Your seller application is currently under review by our admin team.
-            </p>
-            <Badge className="bg-yellow-600 text-white px-4 py-2 text-lg">
-              ⏳ Application Pending
-            </Badge>
-            <div className="mt-6">
-              <p className="text-sm text-gray-500">
-                We will notify you once your application has been reviewed. This usually takes 2-3 business days.
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardContent className="pt-6">
+              <div className="flex justify-center mb-4">
+                <Clock className="h-16 w-16 text-yellow-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-yellow-800 mb-2">Application Pending</h2>
+              <p className="text-gray-600 mb-4">
+                Your seller application is under review. We will notify you once it has been processed.
               </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <Badge className="bg-yellow-500 text-white px-4 py-2 text-lg">
+                Pending Review
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (status === 'rejected') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6">
-            <div className="flex justify-center mb-4">
-              <XCircle className="h-16 w-16 text-red-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-red-800 mb-2">Application Rejected</h2>
-            <p className="text-gray-600 mb-4">
-              Your previous seller application was not approved. You can submit a new application.
-            </p>
-            <Badge className="bg-red-600 text-white px-4 py-2 text-lg mb-4">
-              ❌ Application Rejected
-            </Badge>
-            <div className="mt-6">
-              <p className="text-sm text-gray-500 mb-4">
-                Please review your documents and ensure all information is accurate before resubmitting.
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardContent className="pt-6">
+              <div className="flex justify-center mb-4">
+                <XCircle className="h-16 w-16 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-red-800 mb-2">Application Rejected</h2>
+              <p className="text-gray-600 mb-4">
+                Sorry, your seller application was rejected. Please review the requirements and try again.
               </p>
-              <Button 
-                onClick={() => setStatus('none')}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Submit New Application
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <Badge className="bg-red-600 text-white px-4 py-2 text-lg">
+                Rejected
+              </Badge>
+              <div className="mt-6">
+                <Button
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow"
+                  onClick={() => {
+                    setStatus('none');
+                    setSellerType('individual');
+                    setTin('');
+                    setGovID1(null);
+                    setGovID2(null);
+                    setProofOfAddress(null);
+                    setBankProof(null);
+                    setDtiRegistration(null);
+                    setBusinessPermit(null);
+                    setBirRegistration(null);
+                  }}
+                >
+                  Submit Another Application
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   // Show the application form for users with no seller status
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-6 w-6 text-green-600" />
-            Seller Verification Application
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Label>Seller Type</Label>
-              <div className="flex gap-4 mt-2">
-                <label>
-                  <input
-                    type="radio"
-                    name="sellerType"
-                    value="individual"
-                    checked={sellerType === 'individual'}
-                    onChange={() => setSellerType('individual')}
-                  />{' '}
-                  Individual
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="sellerType"
-                    value="business"
-                    checked={sellerType === 'business'}
-                    onChange={() => setSellerType('business')}
-                  />{' '}
-                  Business
-                </label>
+    <>
+      <Navbar />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-6 w-6 text-green-600" />
+              Seller Verification Application
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label>Seller Type</Label>
+                <div className="flex gap-4 mt-2">
+                  <label>
+                    <input
+                      type="radio"
+                      name="sellerType"
+                      value="individual"
+                      checked={sellerType === 'individual'}
+                      onChange={() => setSellerType('individual')}
+                    />{' '}
+                    Individual
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="sellerType"
+                      value="business"
+                      checked={sellerType === 'business'}
+                      onChange={() => setSellerType('business')}
+                    />{' '}
+                    Business
+                  </label>
+                </div>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="tin">TIN</Label>
-              <Input
-                id="tin"
-                name="tin"
-                value={tin}
-                onChange={e => setTin(e.target.value)}
-                required
-                placeholder="Enter your TIN"
-              />
-            </div>
-            <div>
-              <Label htmlFor="govID1">Government ID 1</Label>
-              <Input
-                id="govID1"
-                name="govID1"
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={e => handleFileChange(e, setGovID1)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="govID2">Government ID 2</Label>
-              <Input
-                id="govID2"
-                name="govID2"
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={e => handleFileChange(e, setGovID2)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="proofOfAddress">Proof of Address</Label>
-              <Input
-                id="proofOfAddress"
-                name="proofOfAddress"
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={e => handleFileChange(e, setProofOfAddress)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="bankProof">Bank Proof</Label>
-              <Input
-                id="bankProof"
-                name="bankProof"
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={e => handleFileChange(e, setBankProof)}
-                required
-              />
-            </div>
-            {sellerType === 'business' && (
-              <>
-                <div>
-                  <Label htmlFor="dtiRegistration">DTI Registration</Label>
-                  <Input
-                    id="dtiRegistration"
-                    name="dtiRegistration"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={e => handleFileChange(e, setDtiRegistration)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="businessPermit">Business Permit</Label>
-                  <Input
-                    id="businessPermit"
-                    name="businessPermit"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={e => handleFileChange(e, setBusinessPermit)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="birRegistration">BIR Registration</Label>
-                  <Input
-                    id="birRegistration"
-                    name="birRegistration"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={e => handleFileChange(e, setBirRegistration)}
-                    required
-                  />
-                </div>
-              </>
-            )}
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Application'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+              <div>
+                <Label htmlFor="tin">TIN</Label>
+                <Input
+                  id="tin"
+                  name="tin"
+                  value={tin}
+                  onChange={e => setTin(e.target.value)}
+                  required
+                  placeholder="Enter your TIN"
+                />
+              </div>
+              <div>
+                <Label htmlFor="govID1">Government ID 1</Label>
+                <Input
+                  id="govID1"
+                  name="govID1"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={e => handleFileChange(e, setGovID1)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="govID2">Government ID 2</Label>
+                <Input
+                  id="govID2"
+                  name="govID2"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={e => handleFileChange(e, setGovID2)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="proofOfAddress">Proof of Address</Label>
+                <Input
+                  id="proofOfAddress"
+                  name="proofOfAddress"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={e => handleFileChange(e, setProofOfAddress)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="bankProof">Bank Proof</Label>
+                <Input
+                  id="bankProof"
+                  name="bankProof"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={e => handleFileChange(e, setBankProof)}
+                  required
+                />
+              </div>
+              {sellerType === 'business' && (
+                <>
+                  <div>
+                    <Label htmlFor="dtiRegistration">DTI Registration</Label>
+                    <Input
+                      id="dtiRegistration"
+                      name="dtiRegistration"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={e => handleFileChange(e, setDtiRegistration)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="businessPermit">Business Permit</Label>
+                    <Input
+                      id="businessPermit"
+                      name="businessPermit"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={e => handleFileChange(e, setBusinessPermit)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="birRegistration">BIR Registration</Label>
+                    <Input
+                      id="birRegistration"
+                      name="birRegistration"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={e => handleFileChange(e, setBirRegistration)}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={loading}>
+                {loading ? 'Submitting...' : 'Submit Application'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };
 

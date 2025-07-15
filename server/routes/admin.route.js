@@ -1,7 +1,8 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
-import { getAdminStats, getSellerApplications, getSellerApplicationById, getAllUsers } from '../controllers/admin.controller.js';
+import { getAdminStats, getSellerApplications, getSellerApplicationById, getAllUsers, getPendingProducts, approveProduct, rejectProduct } from '../controllers/admin.controller.js';
+import { getProfile } from '../controllers/user.controller.js';
 
 const router = express.Router();
 
@@ -20,5 +21,13 @@ router.get('/seller/applications/:applicationId', getSellerApplicationById);
 
 //get all users that are active
 router.get('/get-all-users', getAllUsers);
+
+// Product verification routes
+router.get('/products/pending', getPendingProducts);
+router.patch('/products/approve/:productId', approveProduct);
+router.patch('/products/reject/:productId', rejectProduct);
+
+// Add after other admin routes
+router.get('/user/profile/:userId', getProfile);
 
 export default router; 

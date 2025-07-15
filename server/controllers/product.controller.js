@@ -104,6 +104,42 @@ export const updateProduct = async (req, res) => {
     if (!product) {
       return errorResponse(res, 404, 'Product not found or not authorized.');
     }
+
+    // Handle images: existingImages (URLs to keep) + new uploads
+    let existingImages = req.body.existingImages || [];
+    if (typeof existingImages === 'string') existingImages = [existingImages]; // handle single string
+    let newImageUrls = [];
+    if (req.files && req.files.length > 0) {
+      try {
+        const uploadPromises = req.files.map(file => {
+          return new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+              {
+                folder: 'products',
+                resource_type: 'auto',
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+              }
+            ).end(file.buffer);
+          });
+        });
+        newImageUrls = await Promise.all(uploadPromises);
+      } catch (uploadError) {
+        return errorResponse(res, 500, 'Image upload failed.', uploadError.message);
+      }
+    }
+    const allImages = [...existingImages, ...newImageUrls];
+    if (allImages.length < 3) {
+      return errorResponse(res, 400, 'You must have at least 3 images.');
+    }
+    if (allImages.length > 10) {
+      return errorResponse(res, 400, 'You can have a maximum of 10 images.');
+    }
+    product.images = allImages;
+
+    // Update other fields
     const updatableFields = [
       'name', 'description', 'price', 'quantity', 'category',
       'origin', 'productionMethod', 'materialsUsed', 'tags'

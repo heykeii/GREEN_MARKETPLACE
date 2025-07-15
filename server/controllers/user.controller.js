@@ -465,6 +465,24 @@ export const getUser = async (req, res) => {
   }
 };
 
+// Get public profile of a user (for admin/user to view seller profile)
+export const getProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    // Only select public fields (do not select virtuals like fullName)
+    const user = await User.findById(userId).select(
+      'firstName lastName email avatar bio location contactNumber socialLinks isSeller sellerStatus role createdAt updatedAt'
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ profile: user });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: 'Failed to get user profile' });
+  }
+};
+
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;

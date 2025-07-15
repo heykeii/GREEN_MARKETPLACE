@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import Navbar, { AdminNavbar } from '@/components/Navbar';
+import { useNavigate } from 'react-router-dom';
+import noProfile from '@/assets/no_profile.jpg';
 
 const AdminDashboard = () => {
   const [sellerApplications, setSellerApplications] = useState([]);
@@ -24,6 +26,8 @@ const AdminDashboard = () => {
     pendingApplications: 0,
     verifiedSellers: 0
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchSellerApplications();
@@ -226,29 +230,40 @@ const AdminDashboard = () => {
                     {sellerApplications.map((application) => (
                       <div key={application._id} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="font-semibold text-lg">
-                              {application.user?.firstName} {application.user?.lastName}
-                            </h3>
-                            <p className="text-gray-600">{application.user?.email}</p>
-                            <p className="text-sm text-gray-500">
-                              Seller Type: {application.sellerType}
-                            </p>
-                            {application.user?.contactNumber && (
+                          <div className="flex items-center gap-4">
+                            {/* Seller Avatar */}
+                            <img
+                              src={application.user?.avatar || noProfile}
+                              alt="avatar"
+                              className="w-14 h-14 rounded-full object-cover border cursor-pointer hover:shadow-lg transition"
+                              onClick={() => navigate(`/profile/${application.user?._id}`)}
+                              onError={e => { e.target.onerror = null; e.target.src = noProfile; }}
+                              title="View Profile"
+                            />
+                            <div>
+                              <h3 className="font-semibold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/profile/${application.user?._id}`)}>
+                                {application.user?.firstName} {application.user?.lastName}
+                              </h3>
+                              <p className="text-gray-600">{application.user?.email}</p>
                               <p className="text-sm text-gray-500">
-                                Phone: {application.user.contactNumber}
+                                Seller Type: {application.sellerType}
                               </p>
-                            )}
-                            {application.user?.location && (
-                              <p className="text-sm text-gray-500">
-                                Address: {[
-                                  application.user.location.address,
-                                  application.user.location.city,
-                                  application.user.location.province,
-                                  application.user.location.zipCode
-                                ].filter(Boolean).join(', ')}
-                              </p>
-                            )}
+                              {application.user?.contactNumber && (
+                                <p className="text-sm text-gray-500">
+                                  Phone: {application.user.contactNumber}
+                                </p>
+                              )}
+                              {application.user?.location && (
+                                <p className="text-sm text-gray-500">
+                                  Address: {[
+                                    application.user.location.address,
+                                    application.user.location.city,
+                                    application.user.location.province,
+                                    application.user.location.zipCode
+                                  ].filter(Boolean).join(', ')}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(application.status)}
