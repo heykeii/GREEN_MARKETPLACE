@@ -1,5 +1,16 @@
 import User from '../models/user.model.js';
 import SellerApplication from '../models/seller.model.js';
+import Product from '../models/products.model.js';
+
+// Helper for error responses
+const errorResponse = (res, status, message, error = null, details = null) => {
+  return res.status(status).json({
+    success: false,
+    message,
+    error: process.env.NODE_ENV === 'development' ? error : undefined,
+    details
+  });
+};
 
 // Get admin dashboard statistics
 export const getAdminStats = async (req, res) => {
@@ -21,6 +32,7 @@ export const getAdminStats = async (req, res) => {
     });
 
     res.status(200).json({
+      success: true,
       totalUsers,
       totalSellers,
       pendingApplications,
@@ -28,10 +40,7 @@ export const getAdminStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch admin statistics',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    errorResponse(res, 500, 'Failed to fetch admin statistics', error);
   }
 };
 
@@ -81,6 +90,7 @@ export const getSellerApplications = async (req, res) => {
     console.log(`Found ${applications.length} applications out of ${total} total`);
 
     res.status(200).json({ 
+      success: true,
       applications,
       pagination: {
         currentPage: parseInt(page),
@@ -91,10 +101,7 @@ export const getSellerApplications = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching seller applications:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch seller applications',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    errorResponse(res, 500, 'Failed to fetch seller applications', error);
   }
 };
 
@@ -110,18 +117,18 @@ export const getSellerApplicationById = async (req, res) => {
       .populate('reviewedBy', 'firstName lastName');
 
     if (!application) {
-      return res.status(404).json({ message: 'Seller application not found' });
+      return errorResponse(res, 404, 'Seller application not found');
     }
 
     console.log('Application found:', application._id);
 
-    res.status(200).json({ application });
+    res.status(200).json({ 
+      success: true,
+      application
+    });
   } catch (error) {
     console.error('Error fetching seller application:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch seller application',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    errorResponse(res, 500, 'Failed to fetch seller application', error);
   }
 };
 
@@ -167,6 +174,7 @@ export const getAllUsers = async (req, res) => {
     console.log(`Found ${users.length} users out of ${total} total`);
 
     res.status(200).json({ 
+      success: true,
       users,
       pagination: {
         currentPage: parseInt(page),
@@ -177,9 +185,84 @@ export const getAllUsers = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching all users:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch all users',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    errorResponse(res, 500, 'Failed to fetch all users', error);
+  }
+};
+
+// Get all products pending verification
+export const getPendingProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const filter = { status: 'pending' };
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate('seller', 'firstName lastName email')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Product.countDocuments(filter)
+    ]);
+    const totalPages = Math.ceil(total / parseInt(limit));
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
     });
+  } catch (error) {
+    console.error('Error fetching pending products:', error);
+    errorResponse(res, 500, 'Failed to fetch pending products', error);
+  }
+};
+
+// Approve a product
+export const approveProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found');
+    }
+    product.status = 'approved';
+    await product.save();
+    res.status(200).json({ 
+      success: true,
+      message: 'Product approved',
+      product
+    });
+  } catch (error) {
+    console.error('Error approving product:', error);
+    errorResponse(res, 500, 'Failed to approve product', error);
+  }
+};
+
+// Reject a product
+export const rejectProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { message } = req.body;
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found');
+    }
+    product.status = 'rejected';
+    if (message) product.rejectionMessage = message;
+    await product.save();
+    res.status(200).json({ 
+      success: true,
+      message: 'Product rejected',
+      product
+    });
+  } catch (error) {
+    console.error('Error rejecting product:', error);
+    errorResponse(res, 500, 'Failed to reject product', error);
   }
 };

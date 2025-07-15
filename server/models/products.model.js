@@ -1,68 +1,79 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
 
   description: {
     type: String,
-    required: true
+    required: true,
   },
 
   images: {
     type: [String], // Array of image URLs or file paths
-    default: []
+    default: [],
   },
 
   price: {
     type: Number,
-    required: true
+    required: true,
   },
 
   quantity: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
   },
 
   category: {
     type: String,
-    required: true // e.g., Clothing, Decor, Accessories
+    required: true, // e.g., Clothing, Decor, Accessories
   },
 
-  tags: {
-    type: [String], // e.g., ["handmade", "zero waste"]
-    default: []
+  origin: {
+    type: String, // e.g., Batangas, PH
+    default: "",
+  },
+
+  productionMethod: {
+    type: String, // e.g., "handcrafted", "machine-assisted"
+    default: "",
   },
 
   materialsUsed: {
     type: [String],
-    required: true // e.g., ["recycled wood", "organic cotton"]
+    required: true, // e.g., ["recycled wood", "organic cotton"]
   },
 
   sustainabilityScore: {
     type: Number,
-    default: 0 // to be calculated based on materialsUsed
+    default: 0, // to be calculated based on materialsUsed
   },
 
   seller: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
 
   isAvailable: {
     type: Boolean,
-    default: true
+    default: true,
+  },
+
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
   },
 
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
-module.exports = mongoose.model('Product', productSchema);
+export default mongoose.model("Product", productSchema);

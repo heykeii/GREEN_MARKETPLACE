@@ -36,7 +36,7 @@ const Navbar = () => {
               className="text-2xl font-extrabold text-white tracking-tight cursor-pointer drop-shadow-md"
               onClick={() => navigate("/")}
             >
-              GreenMarket
+              Green Marketplace
             </span>
           </div>
           {/* Center: Nav Links */}

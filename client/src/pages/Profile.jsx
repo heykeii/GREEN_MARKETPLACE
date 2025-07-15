@@ -8,6 +8,7 @@ import noProfile from "@/assets/no_profile.jpg";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Navbar from "@/components/Navbar";
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -279,17 +280,48 @@ const Profile = () => {
     }));
   };
 
+  // Helper function to get social platform icon (react-icons)
+  const getSocialIcon = (platform) => {
+    const iconMap = {
+      website: <FaGlobe className="text-xl text-green-700" />,
+      facebook: <FaFacebook className="text-xl text-blue-600" />,
+      instagram: <FaInstagram className="text-xl text-pink-500" />,
+      twitter: <FaTwitter className="text-xl text-sky-500" />,
+      linkedin: <FaLinkedin className="text-xl text-blue-700" />,
+      youtube: <FaYoutube className="text-xl text-red-600" />,
+      tiktok: <FaTiktok className="text-xl text-black" />,
+      pinterest: <FaPinterest className="text-xl text-red-500" />,
+      snapchat: <FaSnapchatGhost className="text-xl text-yellow-400" />,
+      discord: <FaDiscord className="text-xl text-indigo-500" />,
+      telegram: <FaTelegramPlane className="text-xl text-blue-400" />,
+      other: <FaLink className="text-xl text-green-700" />,
+    };
+    return iconMap[platform] || <FaLink className="text-xl text-green-700" />;
+  };
+
   if (user === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        You must be signed in to view your profile.
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50">
+        <Card className="p-8 shadow-xl border-green-200">
+          <CardContent className="text-center">
+            <div className="text-green-700 text-lg font-semibold">
+              You must be signed in to view your profile.
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50">
+        <Card className="p-8 shadow-xl border-green-200">
+          <CardContent className="text-center">
+            <div className="text-green-700 text-lg font-semibold animate-pulse">
+              Loading...
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -297,84 +329,161 @@ const Profile = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-white bg-gradient-to-br from-green-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-3xl flex flex-col gap-8">
-          {/* Profile Summary Section */}
-          <Card className="shadow-xl border-green-200 bg-white/90">
-            <CardContent className="flex flex-col md:flex-row items-center gap-8 py-10">
-              <div className="flex flex-col items-center gap-4 md:w-1/3">
-                <img
-                  src={user.avatar || noProfile}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = noProfile;
-                  }}
-                  alt="avatar"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-green-300 shadow-lg"
-                />
-
-                <div className="text-2xl font-bold text-green-800">
-                  {user.firstName} {user.lastName}
-                </div>
-                <div className="text-gray-700 text-sm">
-                  Email: <span className="font-semibold">{user.email}</span>
-                </div>
-                
-                {/* Seller Badge */}
-                {user.sellerStatus === 'verified' && (
-                  <Badge className="bg-green-600 text-white px-3 py-1 text-sm font-semibold">
-                    ✓ Verified Seller
-                  </Badge>
-                )}
-
-                {typeof user.profileCompletion === "number" && (
-                  <div className="w-full max-w-xs mt-2">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>Profile Completion</span>
-                      <span>{user.profileCompletion}%</span>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Profile Summary Card - Left Side */}
+            <div className="lg:col-span-1">
+              <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm sticky top-8">
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center space-y-6">
+                    
+                    {/* Avatar Section */}
+                    <div className="relative group">
+                      <div className="w-40 h-40 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 p-1 shadow-xl">
+                        <img
+                          src={user.avatar || noProfile}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = noProfile;
+                          }}
+                          alt="avatar"
+                          className="w-full h-full rounded-full object-cover bg-white"
+                        />
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                        <div className="w-3 h-3 bg-white rounded-full"></div>
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${user.profileCompletion}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 w-full">
-                <Card className="bg-white/80 border-green-100 shadow-none">
-                  <CardHeader>
-                    <CardTitle className="text-green-700 text-xl font-semibold">
-                      Edit Profile
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col items-center gap-4 mb-6">
-                      {editMode && (
-                        <div className="w-full flex flex-col items-center gap-2">
-                          <Label htmlFor="avatar">Change Avatar</Label>
-                          <Input
-                            id="avatar"
-                            name="avatar"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarChange}
-                            className="w-full"
-                          />
-                        </div>
+
+                    {/* User Info */}
+                    <div className="text-center space-y-3">
+                      <h1 className="text-2xl font-bold text-green-800">
+                        {user.firstName} {user.lastName}
+                      </h1>
+                      <div className="px-4 py-2 bg-green-50 rounded-full">
+                        <span className="text-green-700 text-sm font-medium">{user.email}</span>
+                      </div>
+                      
+                      {/* Seller Badge */}
+                      {user.sellerStatus === 'verified' && (
+                        <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-md">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Verified Seller
+                        </Badge>
                       )}
                     </div>
-                    <form
-                      className="space-y-4"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSave();
-                      }}
-                    >
-                      <div className="flex gap-4">
-                        <div className="flex-1">
-                          <Label htmlFor="firstName">First Name</Label>
+
+                    {/* Bio */}
+                    {user.bio && (
+                      <div className="text-center">
+                        <p className="text-green-700 text-sm italic px-4">{user.bio}</p>
+                      </div>
+                    )}
+
+                    {/* Social Links */}
+                    {user.socialLinks && user.socialLinks.length > 0 && (
+                      <div className="w-full space-y-3">
+                        <h4 className="text-green-800 font-semibold text-sm text-center">Social Links</h4>
+                        <div className="space-y-2">
+                          {user.socialLinks.map((link, index) => (
+                            <a
+                              key={index}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center w-full px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
+                            >
+                              <span className="text-lg mr-2">{getSocialIcon(link.platform)}</span>
+                              <span className="text-green-700 text-sm font-medium group-hover:text-green-800 truncate">
+                                {link.displayName || link.platform}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Profile Completion */}
+                    {typeof user.profileCompletion === "number" && (
+                      <div className="w-full space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-green-700 font-medium">Profile Completion</span>
+                          <span className="text-green-600 font-bold">{user.profileCompletion}%</span>
+                        </div>
+                        <div className="w-full bg-green-100 rounded-full h-3 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-green-500 to-emerald-500 h-full rounded-full transition-all duration-500 ease-out shadow-inner"
+                            style={{ width: `${user.profileCompletion}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location (if available) */}
+                    {(user.location?.city || user.location?.province) && (
+                      <div className="text-center">
+                        <p className="text-green-600 text-sm font-medium">
+                          {[user.location.city, user.location.province].filter(Boolean).join(", ")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Profile Form - Right Side */}
+            <div className="lg:col-span-2">
+              <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm">
+                <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+                  <CardTitle className="text-2xl font-bold flex items-center">
+                    <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Profile Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8 bg-white/95 rounded-b-xl">
+                  
+                  {/* Avatar Upload Section */}
+                  {editMode && (
+                    <div className="mb-8 p-6 bg-green-50 rounded-xl border-2 border-dashed border-green-200">
+                      <div className="text-center">
+                        <svg className="mx-auto h-12 w-12 text-green-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <Label htmlFor="avatar" className="text-green-700 font-semibold text-lg cursor-pointer hover:text-green-800 transition-colors">
+                          Change Profile Picture
+                        </Label>
+                        <Input
+                          id="avatar"
+                          name="avatar"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarChange}
+                          className="mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <form
+                    className="space-y-8"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSave();
+                    }}
+                  >
+                    {/* Basic Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-emerald-800 mb-2">Basic Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName" className="text-emerald-600 font-semibold">First Name</Label>
                           <Input
                             id="firstName"
                             name="firstName"
@@ -382,35 +491,36 @@ const Profile = () => {
                             onChange={handleInputChange}
                             disabled={!editMode}
                             required
-                            className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                            className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                           />
                         </div>
-                        <div className="flex-1">
-                          <Label htmlFor="lastName">Last Name</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName" className="text-emerald-600 font-semibold">Last Name</Label>
                           <Input
                             id="lastName"
                             name="lastName"
                             value={form.lastName}
                             onChange={handleInputChange}
                             disabled={!editMode}
-                            className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                            className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                           />
                         </div>
                       </div>
-                      <div>
-                        <Label htmlFor="bio">Bio</Label>
-                        <Input
+                      <div className="space-y-2">
+                        <Label htmlFor="bio" className="text-emerald-600 font-semibold">Bio</Label>
+                        <textarea
                           id="bio"
                           name="bio"
+                          rows="3"
                           value={form.bio}
                           onChange={handleInputChange}
                           disabled={!editMode}
-                          placeholder="Tell us about yourself"
-                          className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                          placeholder="Tell us about yourself..."
+                          className="w-full px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-md focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200 resize-none"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="contactNumber">Contact Number</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="contactNumber" className="text-emerald-600 font-semibold">Contact Number</Label>
                         <Input
                           id="contactNumber"
                           name="contactNumber"
@@ -418,162 +528,130 @@ const Profile = () => {
                           onChange={handleInputChange}
                           disabled={!editMode}
                           placeholder="e.g. +639123456789"
-                          className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                          className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="address">Address</Label>
+                    </div>
+
+                    {/* Location Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-emerald-800 mb-2">Location</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="address" className="text-emerald-600 font-semibold">Address</Label>
                           <Input
                             id="address"
                             name="location.address"
                             value={form.location.address}
                             onChange={handleInputChange}
                             disabled={!editMode}
-                            className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                            className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="city">City</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="city" className="text-emerald-600 font-semibold">City</Label>
                           <Input
                             id="city"
                             name="location.city"
                             value={form.location.city}
                             onChange={handleInputChange}
                             disabled={!editMode}
-                            className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                            className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="province">Province</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="province" className="text-emerald-600 font-semibold">Province</Label>
                           <Input
                             id="province"
                             name="location.province"
                             value={form.location.province}
                             onChange={handleInputChange}
                             disabled={!editMode}
-                            className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                            className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="zipCode">Zip Code</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="zipCode" className="text-emerald-600 font-semibold">Zip Code</Label>
                           <Input
                             id="zipCode"
                             name="location.zipCode"
                             value={form.location.zipCode}
                             onChange={handleInputChange}
                             disabled={!editMode}
-                            className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
+                            className="bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-900 font-medium transition-all duration-200"
                           />
                         </div>
                       </div>
-                      <div>
-                        <Label>Social Links</Label>
+                    </div>
+
+                    {/* Social Links */}
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-emerald-800 mb-2">Social Links</h3>
+                      <div className="space-y-2">
                         {form.socialLinks.map((link, idx) => (
-                          <div key={idx} className="flex gap-2 mb-2 items-center">
-                            <select
-                              value={link.platform}
-                              onChange={(e) =>
-                                handleSocialLinkChange(
-                                  idx,
-                                  "platform",
-                                  e.target.value
-                                )
-                              }
-                              disabled={!editMode}
-                              className="border rounded px-2 py-1 bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600 text-green-700 font-bold"
-                            >
-                              <option value="website">Website</option>
-                              <option value="facebook">Facebook</option>
-                              <option value="instagram">Instagram</option>
-                              <option value="twitter">Twitter</option>
-                              <option value="linkedin">LinkedIn</option>
-                              <option value="youtube">YouTube</option>
-                              <option value="tiktok">TikTok</option>
-                              <option value="pinterest">Pinterest</option>
-                              <option value="snapchat">Snapchat</option>
-                              <option value="discord">Discord</option>
-                              <option value="telegram">Telegram</option>
-                              <option value="other">Other</option>
-                            </select>
-                            <Input
-                              value={link.url}
-                              onChange={(e) =>
-                                handleSocialLinkChange(idx, "url", e.target.value)
-                              }
-                              disabled={!editMode}
-                              placeholder="URL"
-                              className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600"
-                            />
-                            <Input
-                              value={link.displayName}
-                              onChange={(e) =>
-                                handleSocialLinkChange(
-                                  idx,
-                                  "displayName",
-                                  e.target.value
-                                )
-                              }
-                              disabled={!editMode}
-                              placeholder="Display Name"
-                              className="bg-green-50 border-green-200 focus:ring-green-600 focus:border-green-600"
-                            />
-                            {editMode && (
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                onClick={() => removeSocialLink(idx)}
-                              >
-                                -
-                              </Button>
-                            )}
+                          <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-4">
+                            <div className="flex-shrink-0">{getSocialIcon(link.platform)}</div>
+                            <div className="flex-1">
+                              <div className="text-emerald-900 font-semibold text-sm">{link.displayName || link.platform}</div>
+                              <div className="text-emerald-900 text-xs truncate">{link.url}</div>
+                            </div>
                           </div>
                         ))}
-                        {editMode && (
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 pt-6 border-t border-green-200">
+                      {!editMode ? (
+                        <Button
+                          type="button"
+                          onClick={handleEdit}
+                          className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit Profile
+                        </Button>
+                      ) : (
+                        <>
                           <Button
                             type="button"
-                            onClick={addSocialLink}
-                            className="mt-2 bg-green-100 text-green-700 hover:bg-green-200"
+                            onClick={handleCancel}
+                            className="flex-1 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
                           >
-                            Add Social Link
+                            Cancel
                           </Button>
-                        )}
-                      </div>
-                      <div className="flex gap-4 mt-8 justify-end">
-                        {editMode ? (
-                          <>
-                            <Button
-                              type="submit"
-                              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold shadow-md"
-                              disabled={loading || !isFormChanged()}
-                            >
-                              {loading ? "Saving..." : "Save"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={handleCancel}
-                              disabled={loading}
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
                           <Button
-                            type="button"
-                            onClick={handleEdit}
-                            className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold shadow-md"
+                            type="submit"
+                            disabled={loading || !isFormChanged()}
+                            className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                           >
-                            Edit Profile
+                            {loading ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Save Changes
+                              </>
+                            )}
                           </Button>
-                        )}
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
+                        </>
+                      )}
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </>
