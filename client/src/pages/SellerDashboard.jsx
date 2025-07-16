@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'react-toastify';
 import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaEye, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const SellerDashboard = () => {
   const [user, setUser] = useState(null);
@@ -558,7 +559,7 @@ const SellerDashboard = () => {
             </button>
           </div>
           {/* Modal Content */}
-          <div className="flex flex-col md:flex-row gap-0 md:gap-8 p-8 bg-gradient-to-br from-gray-50 to-emerald-50">
+          <div className="flex flex-col md:flex-row gap-0 md:gap-8 p-8 bg-gradient-to-br from-gray-50 to-emerald-50 max-h-[80vh] overflow-y-auto">
             {children}
           </div>
         </div>
@@ -787,6 +788,18 @@ const SellerDashboard = () => {
                 />
               </div>
               <div>
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border rounded p-2"
+                  rows={3}
+                />
+              </div>
+              <div>
                 <Label htmlFor="price" className="text-sm font-medium text-gray-700">Price</Label>
                 <Input
                   id="price"
@@ -913,6 +926,18 @@ const SellerDashboard = () => {
                 />
               </div>
               <div>
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border rounded p-2"
+                  rows={3}
+                />
+              </div>
+              <div>
                 <Label htmlFor="price" className="text-sm font-medium text-gray-700">Price</Label>
                 <Input
                   id="price"
@@ -1002,6 +1027,7 @@ const SellerDashboard = () => {
           </form>
         </div>
       </MemoModal>
+      <Footer />
     </>
   );
 };

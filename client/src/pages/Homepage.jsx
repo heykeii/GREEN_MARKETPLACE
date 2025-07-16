@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import ProductPage from './ProductPage';
 import { FaLeaf, FaRecycle, FaUsers, FaHandsHelping } from 'react-icons/fa';
+import Footer from '@/components/Footer';
 
 const categories = [
   { icon: <FaLeaf className="text-emerald-600 text-3xl" />, label: 'Eco-Friendly' },
@@ -16,14 +17,19 @@ const Homepage = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const productsRef = useRef(null);
+  const footerRef = useRef(null);
 
   const handleScrollToProducts = () => {
     productsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleAboutClick = () => {
+    footerRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div>
-      <Navbar onProductsClick={handleScrollToProducts} />
+      <Navbar onProductsClick={handleScrollToProducts} onAboutClick={handleAboutClick} />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-emerald-100 to-teal-100 py-24 px-4 flex flex-col items-center text-center overflow-hidden">
         {/* Decorative SVG/Illustration */}
@@ -97,6 +103,7 @@ const Homepage = () => {
           <ProductPage />
         </div>
       </section>
+      <Footer ref={footerRef} />
     </div>
   );
 };

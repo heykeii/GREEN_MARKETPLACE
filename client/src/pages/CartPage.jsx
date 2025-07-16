@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import { FaTrash, FaShoppingCart } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import Footer from '@/components/Footer';
 
 const CartPage = () => {
   const [cart, setCart] = useState([]);
@@ -153,6 +154,7 @@ const CartPage = () => {
           )}
         </div>
       </div>
+      <Footer />
     </>
   );
 };

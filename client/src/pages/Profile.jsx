@@ -9,6 +9,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Navbar from "@/components/Navbar";
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
+import Footer from '@/components/Footer';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -654,6 +655,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 };

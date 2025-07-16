@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Package, Loader2, ChevronLeft, ChevronRight, Leaf, ShoppingCart, Zap, Heart, Star } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import Footer from '@/components/Footer';
 
 const ProductPage = () => {
   const [products, setProducts] = useState([]);
@@ -66,16 +67,7 @@ const ProductPage = () => {
         toast.error('Failed to add to cart');
       }
     } else {
-      // Guest: use localStorage
-      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      if (cart.some(item => item._id === product._id)) {
-        toast.info('Product already in cart');
-        return;
-      }
-      cart.push({ ...product, quantity: 1 });
-      localStorage.setItem('cart', JSON.stringify(cart));
-      window.dispatchEvent(new Event('cartUpdated'));
-      toast.success('Added to cart!');
+      toast.error('You must be logged in to add items to your cart.');
     }
   };
 
@@ -274,6 +266,7 @@ const ProductPage = () => {
           </div>
         )}
       </div>
+    
     </div>
   );
 };

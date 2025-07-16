@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart } from 'react-icons/fa';
 
-const Navbar = ({ onProductsClick }) => {
+const Navbar = ({ onProductsClick, onAboutClick }) => {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,7 +61,7 @@ const Navbar = ({ onProductsClick }) => {
     { label: "Home", path: "/" },
     { label: "Products", path: "/products", onClick: onProductsClick },
     { label: "Campaign", path: "/campaign" },
-    { label: "About Us", path: "/about" },
+    { label: "About Us", path: "/about", onClick: onAboutClick },
   ];
 
   return (
