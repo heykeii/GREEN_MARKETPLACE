@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import GoogleLogin from '../components/GoogleLogin';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import Footer from '@/components/Footer';
+
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -73,7 +73,7 @@ const Register = () => {
 
     const handleGoogleSuccess = (data) => {
         // Redirect to dashboard after successful Google registration
-        navigate('/dashboard');
+        navigate('/');
     };
 
     const handleGoogleError = (error) => {
@@ -215,7 +215,7 @@ const Register = () => {
                     </div>
                 </div>
             </div>
-            <Footer />
+            
         </div>
     );
 };

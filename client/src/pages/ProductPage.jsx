@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Package, Loader2, ChevronLeft, ChevronRight, Leaf, ShoppingCart, Zap, Heart, Star } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import Footer from '@/components/Footer';
+
 
 const ProductPage = () => {
   const [products, setProducts] = useState([]);
