@@ -589,15 +589,75 @@ const Profile = () => {
                     <div className="space-y-4">
                       <h3 className="text-xl font-bold text-emerald-800 mb-2">Social Links</h3>
                       <div className="space-y-2">
-                        {form.socialLinks.map((link, idx) => (
-                          <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-4">
-                            <div className="flex-shrink-0">{getSocialIcon(link.platform)}</div>
-                            <div className="flex-1">
-                              <div className="text-emerald-900 font-semibold text-sm">{link.displayName || link.platform}</div>
-                              <div className="text-emerald-900 text-xs truncate">{link.url}</div>
-                            </div>
-                          </div>
-                        ))}
+                        {editMode ? (
+                          <>
+                            {form.socialLinks.map((link, idx) => (
+                              <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex flex-col md:flex-row items-center gap-4">
+                                <div className="flex-shrink-0 w-full md:w-auto flex items-center gap-2">
+                                  <select
+                                    value={link.platform}
+                                    onChange={e => handleSocialLinkChange(idx, 'platform', e.target.value)}
+                                    className="border border-emerald-200 rounded-md px-2 py-1 text-emerald-900 bg-white"
+                                  >
+                                    <option value="website">Website</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="twitter">Twitter</option>
+                                    <option value="linkedin">LinkedIn</option>
+                                    <option value="youtube">YouTube</option>
+                                    <option value="tiktok">TikTok</option>
+                                    <option value="pinterest">Pinterest</option>
+                                    <option value="snapchat">Snapchat</option>
+                                    <option value="discord">Discord</option>
+                                    <option value="telegram">Telegram</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={link.displayName}
+                                  onChange={e => handleSocialLinkChange(idx, 'displayName', e.target.value)}
+                                  placeholder="Display Name"
+                                  className="flex-1 border border-emerald-200 rounded-md px-2 py-1 text-emerald-900 bg-white"
+                                />
+                                <input
+                                  type="url"
+                                  value={link.url}
+                                  onChange={e => handleSocialLinkChange(idx, 'url', e.target.value)}
+                                  placeholder="https://..."
+                                  className="flex-1 border border-emerald-200 rounded-md px-2 py-1 text-emerald-900 bg-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeSocialLink(idx)}
+                                  className="text-red-600 hover:text-red-800 font-bold px-2 py-1 rounded"
+                                  title="Remove"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={addSocialLink}
+                              className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold"
+                            >
+                              + Add Social Link
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {form.socialLinks.map((link, idx) => (
+                              <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-4">
+                                <div className="flex-shrink-0">{getSocialIcon(link.platform)}</div>
+                                <div className="flex-1">
+                                  <div className="text-emerald-900 font-semibold text-sm">{link.displayName || link.platform}</div>
+                                  <div className="text-emerald-900 text-xs truncate">{link.url}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
                     </div>
 
