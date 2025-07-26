@@ -19,6 +19,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const [cartCount, setCartCount] = useState(0);
 
@@ -50,10 +51,17 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Dispatch a custom event with the search term
-      window.dispatchEvent(new CustomEvent('productSearch', { detail: searchQuery.trim() }));
-      if (onProductsClick) onProductsClick();
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+    }
+  };
+
+  const handleMobileSearch = (e) => {
+    e.preventDefault();
+    if (mobileSearchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
+      setMobileSearchQuery('');
+      setIsMobileMenuOpen(false);
     }
   };
 
@@ -226,14 +234,16 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
           <div className="md:hidden absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
             <div className="px-4 py-4 space-y-3">
               {/* Mobile Search */}
-              <div className="relative">
+              <form onSubmit={handleMobileSearch} className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-                <Input
+                <input
                   type="text"
                   placeholder="Search products..."
+                  value={mobileSearchQuery}
+                  onChange={(e) => setMobileSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-2 w-full bg-gray-50 border-gray-200 rounded-full"
                 />
-              </div>
+              </form>
               
               {/* Mobile Navigation */}
               {navItems.map((item) => (

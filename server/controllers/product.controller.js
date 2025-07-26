@@ -89,9 +89,12 @@ export const createProduct = async (req, res) => {
 // Get all products by the logged-in seller
 export const getProductsBySeller = async (req, res) => {
   try {
+    console.log('Fetching products for seller:', req.user._id);
     const products = await Product.find({ seller: req.user._id });
+    console.log('Found products:', products.length);
     res.status(200).json({ success: true, products });
   } catch (error) {
+    console.error('Error fetching products:', error);
     return errorResponse(res, 500, 'Failed to fetch products.', error.message);
   }
 };

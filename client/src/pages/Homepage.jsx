@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
-import ProductPage from './ProductPage';
+import ProductsListing from '@/components/ProductsListing';
 import { FaLeaf, FaRecycle, FaUsers, FaHandsHelping, FaStar, FaShieldAlt, FaHeart, FaTruck } from 'react-icons/fa';
 import Footer from '@/components/Footer';
 
@@ -265,7 +265,7 @@ const Homepage = () => {
           </div>
           
           <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 md:p-12">
-            <ProductPage />
+            <ProductsListing />
           </div>
         </div>
       </section>

@@ -30,7 +30,20 @@ const productSchema = new mongoose.Schema({
 
   category: {
     type: String,
-    required: true, // e.g., Clothing, Decor, Accessories
+    required: true,
+    // Temporarily comment out enum to handle existing data
+    // enum: [
+    //   "Eco Home & Living",
+    //   "Sustainable Fashion & Accessories", 
+    //   "Natural Beauty & Personal Care",
+    //   "Zero-Waste Essentials",
+    //   "Gifts & Eco Kits",
+    //   "Upcycled Art & Crafts",
+    //   "Eco Baby & Kids",
+    //   "Garden & Outdoors",
+    //   "Education & Advocacy"
+    // ],
+    default: "Eco Home & Living"
   },
 
   origin: {

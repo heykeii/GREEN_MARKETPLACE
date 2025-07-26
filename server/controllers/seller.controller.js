@@ -3,6 +3,8 @@ import User from '../models/user.model.js';
 import cloudinary from '../utils/cloudinary.js';
 import multer from 'multer';
 import path from 'path';
+import Product from '../models/products.model.js';
+import Order from '../models/orders.model.js';
 
 // Multer setup (memory storage for direct upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -192,5 +194,204 @@ export const reviewSellerApplication = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to review seller application.', error: error.message });
+  }
+};
+
+export const getSellerAnalytics = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const { timeframe = '30d' } = req.query;
+
+    console.log('Fetching analytics for seller:', sellerId);
+
+    // Calculate date range based on timeframe
+    const now = new Date();
+    let startDate;
+    switch (timeframe) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case '1y':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get seller's products
+    const products = await Product.find({ seller: sellerId });
+    console.log('Found products:', products.length);
+    
+    const productIds = products.map(p => p._id);
+
+    // Get orders for seller's products (if any exist)
+    let orders = [];
+    if (productIds.length > 0) {
+      try {
+        orders = await Order.find({
+          'items.product': { $in: productIds },
+          createdAt: { $gte: startDate }
+        }).populate('items.product customer');
+        console.log('Found orders:', orders.length);
+      } catch (orderError) {
+        console.error('Error fetching orders:', orderError);
+        // Continue with empty orders array
+      }
+    }
+
+    // Calculate analytics
+    const analytics = {
+      overview: {
+        totalRevenue: 0,
+        totalOrders: orders.length,
+        totalProducts: products.length,
+        averageRating: 4.2, // Mock rating
+        monthlyGrowth: 12.5, // Mock growth
+        conversionRate: 3.2 // Mock conversion rate
+      },
+      salesData: {
+        daily: [],
+        weekly: [],
+        monthly: []
+      },
+      topProducts: [],
+      categoryPerformance: [],
+      customerInsights: {
+        totalCustomers: 0,
+        repeatCustomers: 0,
+        averageOrderValue: 0,
+        customerSatisfaction: 4.2 // Mock satisfaction
+      },
+      inventoryMetrics: {
+        lowStockItems: 0,
+        outOfStockItems: 0,
+        totalInventoryValue: 0,
+        inventoryTurnover: 2.1 // Mock turnover
+      }
+    };
+
+    // Calculate revenue and other metrics
+    let totalRevenue = 0;
+    const customerSet = new Set();
+    const repeatCustomers = new Set();
+    const customerOrderCounts = {};
+
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        if (productIds.includes(item.product._id.toString())) {
+          totalRevenue += item.price * item.quantity;
+          customerSet.add(order.customer._id.toString());
+          
+          if (customerOrderCounts[order.customer._id.toString()]) {
+            customerOrderCounts[order.customer._id.toString()]++;
+            repeatCustomers.add(order.customer._id.toString());
+          } else {
+            customerOrderCounts[order.customer._id.toString()] = 1;
+          }
+        }
+      });
+    });
+
+    analytics.overview.totalRevenue = totalRevenue;
+    analytics.overview.averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+    analytics.customerInsights.totalCustomers = customerSet.size;
+    analytics.customerInsights.repeatCustomers = repeatCustomers.size;
+    analytics.customerInsights.averageOrderValue = analytics.overview.averageOrderValue;
+
+    // Calculate inventory metrics
+    analytics.inventoryMetrics.lowStockItems = products.filter(p => p.quantity < 10 && p.quantity > 0).length;
+    analytics.inventoryMetrics.outOfStockItems = products.filter(p => p.quantity === 0).length;
+    analytics.inventoryMetrics.totalInventoryValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+
+    // Generate top products
+    const productRevenue = {};
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const productId = item.product._id.toString();
+        if (productIds.includes(productId)) {
+          if (!productRevenue[productId]) {
+            productRevenue[productId] = {
+              revenue: 0,
+              orders: 0,
+              product: item.product
+            };
+          }
+          productRevenue[productId].revenue += item.price * item.quantity;
+          productRevenue[productId].orders += item.quantity;
+        }
+      });
+    });
+
+    analytics.topProducts = Object.values(productRevenue)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5)
+      .map(item => ({
+        id: item.product._id,
+        name: item.product.name,
+        revenue: item.revenue,
+        orders: item.orders,
+        rating: 4.2 // Mock rating for now
+      }));
+
+    // Generate category performance
+    const categoryRevenue = {};
+    products.forEach(product => {
+      if (!categoryRevenue[product.category]) {
+        categoryRevenue[product.category] = {
+          revenue: 0,
+          products: 0
+        };
+      }
+      categoryRevenue[product.category].products++;
+    });
+
+    // Add revenue from orders to categories
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const product = products.find(p => p._id.toString() === item.product._id.toString());
+        if (product) {
+          categoryRevenue[product.category].revenue += item.price * item.quantity;
+        }
+      });
+    });
+
+    analytics.categoryPerformance = Object.entries(categoryRevenue).map(([category, data]) => ({
+      category,
+      revenue: data.revenue,
+      products: data.products,
+      growth: (Math.random() * 20 - 5).toFixed(1) // Mock growth for now
+    }));
+
+    // Generate sales data (mock for now)
+    const generateSalesData = (type) => {
+      const data = [];
+      const days = type === 'daily' ? 30 : type === 'weekly' ? 12 : 6;
+      for (let i = 0; i < days; i++) {
+        data.push({
+          date: new Date(now.getTime() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          revenue: Math.floor(Math.random() * 500) + 100,
+          orders: Math.floor(Math.random() * 10) + 1
+        });
+      }
+      return data;
+    };
+
+    analytics.salesData = {
+      daily: generateSalesData('daily'),
+      weekly: generateSalesData('weekly'),
+      monthly: generateSalesData('monthly')
+    };
+
+    console.log('Analytics calculated successfully');
+    res.json(analytics);
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ message: 'Failed to fetch analytics', error: error.message });
   }
 };

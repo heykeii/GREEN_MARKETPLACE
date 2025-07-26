@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { FaSpinner, FaPlus, FaImage, FaTimes, FaArrowLeft } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { CATEGORY_OPTIONS } from '@/constants/categories';
 
 const CreateProduct = () => {
   const [form, setForm] = useState({
@@ -279,16 +280,21 @@ const CreateProduct = () => {
                     </div>
                     <div>
                       <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category *</Label>
-                      <Input
+                      <select
                         id="category"
                         name="category"
-                        type="text"
                         value={form.category}
                         onChange={handleInputChange}
                         required
-                        className="w-full"
-                        placeholder="e.g., Clothing, Decor, Accessories"
-                      />
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      >
+                        <option value="">Select a category</option>
+                        {CATEGORY_OPTIONS.map((option, index) => (
+                          <option key={index} value={option.name}>
+                            {option.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="origin" className="text-sm font-medium text-gray-700">Origin</Label>

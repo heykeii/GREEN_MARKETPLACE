@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'react-toastify';
-import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaEye, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie } from 'react-icons/fa';
+import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { CATEGORY_OPTIONS } from '@/constants/categories';
 
 const SellerDashboard = () => {
   const [user, setUser] = useState(null);
@@ -22,6 +23,40 @@ const SellerDashboard = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState({
+    overview: {
+      totalRevenue: 0,
+      totalOrders: 0,
+      totalProducts: 0,
+      averageRating: 0,
+      monthlyGrowth: 0,
+      conversionRate: 0
+    },
+    salesData: {
+      daily: [],
+      weekly: [],
+      monthly: []
+    },
+    topProducts: [],
+    categoryPerformance: [],
+    customerInsights: {
+      totalCustomers: 0,
+      repeatCustomers: 0,
+      averageOrderValue: 0,
+      customerSatisfaction: 0
+    },
+    inventoryMetrics: {
+      lowStockItems: 0,
+      outOfStockItems: 0,
+      totalInventoryValue: 0,
+      inventoryTurnover: 0
+    }
+  });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsTimeframe, setAnalyticsTimeframe] = useState('30d');
+  
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -48,24 +83,141 @@ const SellerDashboard = () => {
     }
     setUser(storedUser);
     fetchProducts();
+    fetchAnalytics();
   }, []);
+
+  // Update analytics data when products are fetched
+  useEffect(() => {
+    // Always update analytics data, even if no products
+    setAnalyticsData(prev => ({
+      ...prev,
+      overview: {
+        ...prev.overview,
+        totalProducts: approvedProducts.length + pendingProducts.length
+      },
+      topProducts: generateMockTopProducts(),
+      categoryPerformance: generateMockCategoryPerformance()
+    }));
+  }, [approvedProducts, pendingProducts]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      console.log('Fetching products with token:', token ? 'present' : 'missing');
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/my-products`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log('Products response:', response.data);
       const all = response.data.products || [];
       setPendingProducts(all.filter(p => p.status === 'pending'));
       setApprovedProducts(all.filter(p => p.status === 'approved'));
     } catch (error) {
+      console.error('Error fetching products:', error.response?.data || error.message);
       toast.error('Failed to fetch your products.');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const fetchAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Fetching analytics with token:', token ? 'present' : 'missing');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/analytics?timeframe=${analyticsTimeframe}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      console.log('Analytics response:', response.data);
+      setAnalyticsData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error.response?.data || error.message);
+      // For now, use mock data until backend is implemented
+      setAnalyticsData({
+        overview: {
+          totalRevenue: 0, // No revenue since no orders
+          totalOrders: 0, // No orders since this is mock data
+          totalProducts: 0, // Will be updated after products are fetched
+          averageRating: 4.2,
+          monthlyGrowth: 0, // No growth since no orders
+          conversionRate: 0 // No conversion since no orders
+        },
+        salesData: {
+          daily: generateMockSalesData('daily'),
+          weekly: generateMockSalesData('weekly'),
+          monthly: generateMockSalesData('monthly')
+        },
+        topProducts: [],
+        categoryPerformance: [],
+        customerInsights: {
+          totalCustomers: 0, // No customers since no orders
+          repeatCustomers: 0, // No repeat customers since no orders
+          averageOrderValue: 0, // No average since no orders
+          customerSatisfaction: 4.2
+        },
+        inventoryMetrics: {
+          lowStockItems: 3,
+          outOfStockItems: 1,
+          totalInventoryValue: 8500,
+          inventoryTurnover: 0 // No turnover since no orders
+        }
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [analyticsTimeframe]);
+
+  // Mock data generators for development
+  const generateMockSalesData = (type) => {
+    const data = [];
+    const days = type === 'daily' ? 30 : type === 'weekly' ? 12 : 6;
+    for (let i = 0; i < days; i++) {
+      data.push({
+        date: new Date(Date.now() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        revenue: 0, // No revenue since no orders
+        orders: 0 // No orders since no actual sales
+      });
+    }
+    return data;
+  };
+
+  const generateMockTopProducts = () => {
+    if (!approvedProducts || approvedProducts.length === 0) {
+      return [];
+    }
+    return approvedProducts.slice(0, 5).map((product, index) => ({
+      id: product._id,
+      name: product.name,
+      revenue: 0, // No revenue since no orders
+      orders: 0, // No orders since this is mock data
+      rating: (Math.random() * 2 + 3).toFixed(1) // Random rating between 3.0-5.0
+    }));
+  };
+
+  const generateMockCategoryPerformance = () => {
+    if (!approvedProducts || approvedProducts.length === 0) {
+      return [];
+    }
+    // Use actual category options instead of dynamic categories from products
+    return CATEGORY_OPTIONS.map(category => {
+      // Find products in this category
+      const categoryProducts = approvedProducts.filter(p => p.category === category.name);
+      const productCount = categoryProducts.length;
+      
+      // Since there are no actual orders, show 0 revenue
+      const mockRevenue = 0; // No revenue since no orders
+      
+      // Show neutral growth since no actual data
+      const mockGrowth = "0.0"; // No growth since no orders
+      
+      return {
+        category: category.name,
+        revenue: mockRevenue,
+        products: productCount,
+        growth: mockGrowth
+      };
+    }).filter(category => category.products > 0); // Only show categories with products
+  };
 
   const handleInputChange = useCallback((e) => {
     const { name, value, files } = e.target;
@@ -522,6 +674,235 @@ const SellerDashboard = () => {
 
   const MemoImageUploadSection = React.memo(ImageUploadSection);
 
+  // Analytics Components
+  const AnalyticsOverview = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-3xl font-bold text-emerald-600">₱{analyticsData.overview.totalRevenue.toLocaleString()}</p>
+              <div className="flex items-center mt-2">
+                <FaArrowUp className="text-green-500 mr-1" />
+                <span className="text-sm text-green-600">+{analyticsData.overview.monthlyGrowth}%</span>
+              </div>
+            </div>
+            <div className="bg-emerald-100 p-3 rounded-full">
+              <FaDollarSign className="text-emerald-600 text-2xl" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Orders</p>
+              <p className="text-3xl font-bold text-blue-600">{analyticsData.overview.totalOrders}</p>
+              <div className="flex items-center mt-2">
+                <FaArrowUp className="text-green-500 mr-1" />
+                <span className="text-sm text-green-600">+8.2%</span>
+              </div>
+            </div>
+            <div className="bg-blue-100 p-3 rounded-full">
+              <FaShoppingBag className="text-blue-600 text-2xl" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Average Rating</p>
+              <p className="text-3xl font-bold text-amber-600">{analyticsData.overview.averageRating}</p>
+              <div className="flex items-center mt-2">
+                <FaStar className="text-amber-500 mr-1" />
+                <span className="text-sm text-amber-600">Excellent</span>
+              </div>
+            </div>
+            <div className="bg-amber-100 p-3 rounded-full">
+              <FaStar className="text-amber-600 text-2xl" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const TopProductsSection = () => (
+    <Card className="glass-card border-0 shadow-xl mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FaChartBar className="text-emerald-600" />
+          Top Performing Products
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {analyticsData.topProducts.map((product, index) => (
+            <div key={product.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold">
+                  {index + 1}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800">{product.name}</h4>
+                  <p className="text-sm text-gray-500">{product.orders} orders</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-emerald-600">₱{product.revenue.toLocaleString()}</p>
+                <div className="flex items-center gap-1">
+                  <FaStar className="text-amber-500 text-sm" />
+                  <span className="text-sm text-gray-600">{product.rating}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const CategoryPerformanceSection = () => (
+    <Card className="glass-card border-0 shadow-xl mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FaTag className="text-emerald-600" />
+          Category Performance
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {analyticsData.categoryPerformance.map((category, index) => (
+            <div key={category.category} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+                  {index + 1}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800">{category.category}</h4>
+                  <p className="text-sm text-gray-500">{category.products} products</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-emerald-600">₱{category.revenue.toLocaleString()}</p>
+                <div className="flex items-center gap-1">
+                  {parseFloat(category.growth) > 0 ? (
+                    <FaArrowUp className="text-green-500 text-sm" />
+                  ) : (
+                    <FaArrowDown className="text-red-500 text-sm" />
+                  )}
+                  <span className={`text-sm ${parseFloat(category.growth) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {category.growth}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const CustomerInsightsSection = () => (
+    <Card className="glass-card border-0 shadow-xl mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FaUsers className="text-emerald-600" />
+          Customer Insights
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Customers</p>
+                <p className="text-2xl font-bold text-blue-600">{analyticsData.customerInsights.totalCustomers}</p>
+              </div>
+              <FaUsers className="text-blue-500 text-2xl" />
+            </div>
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Repeat Customers</p>
+                <p className="text-2xl font-bold text-green-600">{analyticsData.customerInsights.repeatCustomers}</p>
+              </div>
+              <FaHeart className="text-green-500 text-2xl" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Avg Order Value</p>
+                <p className="text-2xl font-bold text-amber-600">₱{analyticsData.customerInsights.averageOrderValue}</p>
+              </div>
+              <FaShoppingCart className="text-amber-500 text-2xl" />
+            </div>
+            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Satisfaction</p>
+                <p className="text-2xl font-bold text-purple-600">{analyticsData.customerInsights.customerSatisfaction}/5</p>
+              </div>
+              <FaStar className="text-purple-500 text-2xl" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const InventoryMetricsSection = () => (
+    <Card className="glass-card border-0 shadow-xl mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FaBoxOpen className="text-emerald-600" />
+          Inventory Metrics
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
+                <p className="text-2xl font-bold text-red-600">{analyticsData.inventoryMetrics.lowStockItems}</p>
+              </div>
+              <FaClock className="text-red-500 text-2xl" />
+            </div>
+            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Out of Stock</p>
+                <p className="text-2xl font-bold text-orange-600">{analyticsData.inventoryMetrics.outOfStockItems}</p>
+              </div>
+              <FaTimes className="text-orange-500 text-2xl" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Inventory Value</p>
+                <p className="text-2xl font-bold text-emerald-600">₱{analyticsData.inventoryMetrics.totalInventoryValue.toLocaleString()}</p>
+              </div>
+              <FaDollarSign className="text-emerald-500 text-2xl" />
+            </div>
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Turnover Rate</p>
+                <p className="text-2xl font-bold text-blue-600">{analyticsData.inventoryMetrics.inventoryTurnover}x</p>
+              </div>
+              <FaChartLine className="text-blue-500 text-2xl" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <>
       <Navbar />
@@ -597,25 +978,39 @@ const SellerDashboard = () => {
             </Card>
           </div>
 
-          {/* Section Header */}
+          {/* Quick Navigation */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-emerald-800">Your Products</h2>
-            <div className="flex items-center gap-2">
-              <FaFilter className="text-emerald-400" />
-              <span className="text-sm text-emerald-500">Filter, sort, and manage your listings</span>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => setActiveTab('analytics')}
+                variant="outline"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 transition-all duration-200"
+              >
+                <FaChartBar className="mr-2 h-4 w-4" />
+                View Analytics
+              </Button>
+              <div className="flex items-center gap-2">
+                <FaFilter className="text-emerald-400" />
+                <span className="text-sm text-emerald-500">Filter, sort, and manage your listings</span>
+              </div>
             </div>
           </div>
 
           {/* Products Section, Tabs, Product List, etc. */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="grid w-full grid-cols-2 bg-emerald-100 rounded-xl mb-4">
+            <TabsList className="grid w-full grid-cols-3 bg-emerald-100 rounded-xl mb-4">
               <TabsTrigger value="approved" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white rounded-xl text-lg font-semibold">
                 Approved
               </TabsTrigger>
               <TabsTrigger value="pending" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white rounded-xl text-lg font-semibold">
                 Pending
               </TabsTrigger>
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl text-lg font-semibold">
+                Analytics
+              </TabsTrigger>
             </TabsList>
+            
             <TabsContent value="approved">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex-1">
@@ -658,6 +1053,7 @@ const SellerDashboard = () => {
                 ))}
               </div>
             </TabsContent>
+            
             <TabsContent value="pending">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex-1">
@@ -699,6 +1095,58 @@ const SellerDashboard = () => {
                   <ProductCard key={product._id} product={product} status={product.status} />
                 ))}
               </div>
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              {analyticsLoading ? (
+                <div className="flex justify-center items-center py-24">
+                  <div className="text-center">
+                    <FaSpinner className="animate-spin h-12 w-12 text-emerald-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Loading analytics...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Timeframe Selector */}
+                  <div className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">Business Analytics</h3>
+                      <p className="text-sm text-gray-600">Track your performance and growth metrics</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="timeframe" className="text-sm font-medium text-gray-700">
+                        Timeframe:
+                      </Label>
+                      <select
+                        id="timeframe"
+                        value={analyticsTimeframe}
+                        onChange={(e) => setAnalyticsTimeframe(e.target.value)}
+                        className="p-2 border border-gray-300 rounded-lg text-sm"
+                      >
+                        <option value="7d">Last 7 days</option>
+                        <option value="30d">Last 30 days</option>
+                        <option value="90d">Last 90 days</option>
+                        <option value="1y">Last year</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Analytics Overview */}
+                  <AnalyticsOverview />
+
+                  {/* Top Products */}
+                  <TopProductsSection />
+
+                  {/* Category Performance */}
+                  <CategoryPerformanceSection />
+
+                  {/* Customer Insights */}
+                  <CustomerInsightsSection />
+
+                  {/* Inventory Metrics */}
+                  <InventoryMetricsSection />
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -777,15 +1225,21 @@ const SellerDashboard = () => {
               </div>
               <div>
                 <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category</Label>
-                <Input
+                <select
                   id="category"
                   name="category"
-                  type="text"
                   value={form.category}
                   onChange={handleInputChange}
                   required
-                  className="w-full"
-                />
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">Select a category</option>
+                  {CATEGORY_OPTIONS.map((option, index) => (
+                    <option key={index} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label htmlFor="origin" className="text-sm font-medium text-gray-700">Origin</Label>

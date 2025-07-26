@@ -17,6 +17,9 @@ import CreateProduct from './pages/CreateProduct';
 import AdminProductVerification from './pages/AdminProductVerification';
 import PublicProfile from './pages/PublicProfile';
 import CartPage from './pages/CartPage';
+import ProductPage from './pages/ProductPage';
+import SearchResults from './pages/SearchResults';
+
 const App = () => {
   return (
     <>
@@ -33,6 +36,8 @@ const App = () => {
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/seller/create-product" element={<CreateProduct />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/product/:productId" element={<ProductPage />} />
+        <Route path="/search" element={<SearchResults />} />
         <Route 
           path="/admin" 
           element={

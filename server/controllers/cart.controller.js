@@ -4,11 +4,21 @@ import Product from '../models/products.model.js';
 export const getCart = async (req, res) => {
   const userId = req.user._id;
   const cart = await Cart.findOne({ user: userId }).populate('items.product');
-  res.json({ cart: cart ? cart.items.map(item => ({
-    ...item.toObject(),
-    ...item.product.toObject(),
-    quantity: item.quantity
-  })) : [] });
+  
+  if (!cart) {
+    return res.json({ cart: [] });
+  }
+
+  // Filter out items with null products and map the valid ones
+  const validItems = cart.items
+    .filter(item => item.product !== null) // Filter out null products
+    .map(item => ({
+      ...item.toObject(),
+      ...item.product.toObject(),
+      quantity: item.quantity
+    }));
+
+  res.json({ cart: validItems });
 };
 
 export const addToCart = async (req, res) => {
