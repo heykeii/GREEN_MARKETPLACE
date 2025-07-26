@@ -290,6 +290,7 @@ export const AdminNavbar = () => {
   const adminNavItems = [
     { label: "Product Verification", path: "/admin/product-verification" },
     { label: "Seller Verification", path: "/admin/seller-verification" },
+    { label: "User Management", path: "/admin/user-management" },
     { label: "Reports & Complaints", path: "/admin/reports" },
   ];
 

@@ -9,26 +9,28 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Eye, Package, User, Calendar, MapPin, Palette, Tag, DollarSign, Hash, Wrench, Filter, Clock, Star, ArrowLeft, ArrowRight, MoreHorizontal } from 'lucide-react';
 import noProfile from '@/assets/no_profile.jpg';
+import { AdminNavbar } from '@/components/Navbar';
 
 const AdminProductVerification = () => {
-  const [pendingProducts, setPendingProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rejectionModal, setRejectionModal] = useState({ open: false, productId: null });
   const [rejectionMessage, setRejectionMessage] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sellerAvatars, setSellerAvatars] = useState({});
+  const [statusFilter, setStatusFilter] = useState('pending');
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPendingProducts(page);
+    fetchProducts(page, statusFilter);
     // eslint-disable-next-line
-  }, [page]);
+  }, [page, statusFilter]);
 
   // Fetch seller avatars if missing
   useEffect(() => {
     const fetchAvatars = async () => {
-      const missing = pendingProducts.filter(p => p.seller && !p.seller.avatar && !sellerAvatars[p.seller._id]);
+      const missing = products.filter(p => p.seller && !p.seller.avatar && !sellerAvatars[p.seller._id]);
       for (const product of missing) {
         try {
           const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/profile/${product.seller._id}`);
@@ -38,21 +40,24 @@ const AdminProductVerification = () => {
         }
       }
     };
-    if (pendingProducts.length > 0) fetchAvatars();
+    if (products.length > 0) fetchAvatars();
     // eslint-disable-next-line
-  }, [pendingProducts]);
+  }, [products]);
 
-  const fetchPendingProducts = async (pageNum = 1) => {
+  const fetchProducts = async (pageNum = 1, status = 'pending') => {
     setLoading(true);
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/products/pending?page=${pageNum}&limit=10`, {
+      let endpoint = '/api/v1/admin/products/pending';
+      if (status === 'approved') endpoint = '/api/v1/admin/products/approved';
+      if (status === 'rejected') endpoint = '/api/v1/admin/products/rejected';
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}?page=${pageNum}&limit=10`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      setPendingProducts(response.data.products || []);
+      setProducts(response.data.products || []);
       setTotalPages(response.data.pagination?.totalPages || 1);
     } catch (error) {
-      toast.error('Failed to fetch pending products.');
+      toast.error('Failed to fetch products.');
     } finally {
       setLoading(false);
     }
@@ -65,7 +70,7 @@ const AdminProductVerification = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       toast.success('Product approved!');
-      fetchPendingProducts(page);
+      fetchProducts(page, statusFilter);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to approve product.');
     }
@@ -80,7 +85,7 @@ const AdminProductVerification = () => {
       toast.success('Product rejected!');
       setRejectionModal({ open: false, productId: null });
       setRejectionMessage('');
-      fetchPendingProducts(page);
+      fetchProducts(page, statusFilter);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to reject product.');
     }
@@ -88,6 +93,7 @@ const AdminProductVerification = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    
       {/* Floating Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -113,7 +119,7 @@ const AdminProductVerification = () => {
                   variant="secondary" 
                   className="px-4 py-2 text-sm font-semibold bg-amber-50 text-amber-700 border-amber-200 rounded-full"
                 >
-                  {pendingProducts.length} Pending Review
+                  {products.length} Pending Review
                 </Badge>
               </div>
               <Button 
@@ -132,6 +138,13 @@ const AdminProductVerification = () => {
       {/* Main Content */}
       <div className="pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100 w-fit">
+              {[{key:'pending',label:'Pending'},{key:'approved',label:'Approved'},{key:'rejected',label:'Rejected'}].map(tab => (
+                <button key={tab.key} onClick={()=>{setStatusFilter(tab.key);setPage(1);}} className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${statusFilter===tab.key?'bg-blue-600 text-white shadow-md':'text-gray-600 hover:bg-gray-50'}`}>{tab.label}</button>
+              ))}
+            </div>
+          </div>
           {loading ? (
             <div className="flex items-center justify-center h-96">
               <div className="text-center">
@@ -143,7 +156,7 @@ const AdminProductVerification = () => {
                 <p className="text-gray-500">Fetching pending submissions for review...</p>
               </div>
             </div>
-          ) : pendingProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="text-center py-20">
               <div className="relative mb-6">
                 <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
@@ -160,7 +173,7 @@ const AdminProductVerification = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              {pendingProducts.map((product, index) => (
+              {products.map((product, index) => (
                 <div 
                   key={product._id} 
                   className="group relative"
@@ -366,22 +379,34 @@ const AdminProductVerification = () => {
 
                           {/* Enhanced Action Buttons */}
                           <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
-                            <Button 
-                              onClick={() => handleApprove(product._id)}
-                              className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 gap-3 py-3 rounded-2xl font-semibold transition-all duration-300 hover:scale-105"
-                            >
-                              <CheckCircle className="w-5 h-5" />
-                              Approve Product
-                            </Button>
-                            
-                            <Button 
-                              onClick={() => setRejectionModal({ open: true, productId: product._id })}
-                              variant="outline"
-                              className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 gap-3 py-3 rounded-2xl font-semibold transition-all duration-300 hover:scale-105"
-                            >
-                              <XCircle className="w-5 h-5" />
-                              Reject
-                            </Button>
+                            {product.status === 'pending' && (
+                              <>
+                                <Button 
+                                  onClick={() => handleApprove(product._id)}
+                                  className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 gap-3 py-3 rounded-2xl font-semibold transition-all duration-300 hover:scale-105"
+                                >
+                                  <CheckCircle className="w-5 h-5" />
+                                  Approve Product
+                                </Button>
+                                
+                                <Button 
+                                  onClick={() => setRejectionModal({ open: true, productId: product._id })}
+                                  variant="outline"
+                                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 gap-3 py-3 rounded-2xl font-semibold transition-all duration-300 hover:scale-105"
+                                >
+                                  <XCircle className="w-5 h-5" />
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            {product.status !== 'pending' && (
+                              <Badge 
+                                variant={product.status === 'approved' ? 'success' : 'destructive'} 
+                                className="px-4 py-2 rounded-full text-sm font-semibold"
+                              >
+                                {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                              </Badge>
+                            )}
                             
                             <Button 
                               variant="outline"

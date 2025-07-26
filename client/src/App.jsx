@@ -19,6 +19,8 @@ import PublicProfile from './pages/PublicProfile';
 import CartPage from './pages/CartPage';
 import ProductPage from './pages/ProductPage';
 import SearchResults from './pages/SearchResults';
+import AdminSellerVerification from './pages/AdminSellerVerification';
+import AdminUserManagement from './pages/AdminUserManagement';
 
 const App = () => {
   return (
@@ -51,6 +53,22 @@ const App = () => {
           element={
             <ProtectedAdminRoute>
               <AdminProductVerification />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/seller-verification" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminSellerVerification />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/user-management" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminUserManagement />
             </ProtectedAdminRoute>
           }
         />

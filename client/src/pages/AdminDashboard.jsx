@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   ShoppingBag, 
-  FileText, 
   CheckCircle, 
-  XCircle, 
-  Clock,
-  AlertCircle
+  Clock
 } from 'lucide-react';
 import axios from 'axios';
-import Navbar, { AdminNavbar } from '@/components/Navbar';
-import { useNavigate } from 'react-router-dom';
-import noProfile from '@/assets/no_profile.jpg';
+import { AdminNavbar } from '@/components/Navbar';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
-  const [sellerApplications, setSellerApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalSellers: 0,
@@ -27,27 +18,9 @@ const AdminDashboard = () => {
     verifiedSellers: 0
   });
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    fetchSellerApplications();
     fetchStats();
   }, []);
-
-  const fetchSellerApplications = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/seller/applications`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
-      });
-      setSellerApplications(response.data.applications || []);
-    } catch (error) {
-      console.error('Error fetching seller applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchStats = async () => {
     try {
@@ -62,51 +35,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleReviewApplication = async (applicationId, action, message = '') => {
-    try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/seller/verify/${applicationId}/review`, 
-        { action, message },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-          }
-        }
-      );
-
-      fetchSellerApplications();
-      fetchStats();
-    } catch (error) {
-      console.error('Error reviewing application:', error);
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'approved':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
-      case 'approved':
-        return <Badge variant="default" className="bg-green-500">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNavbar/>
@@ -118,7 +46,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -166,231 +94,52 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Main Content */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="seller-verification">Seller Verification</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome to Green Marketplace Admin</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Manage your marketplace operations, review seller applications, and monitor platform activity.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-semibold text-blue-900 mb-2">Quick Actions</h3>
-                    <ul className="text-sm text-blue-700 space-y-1">
-                      <li>• Review pending seller applications</li>
-                      <li>• Monitor platform statistics</li>
-                      <li>• Manage user accounts</li>
-                    </ul>
-                  </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <h3 className="font-semibold text-green-900 mb-2">Recent Activity</h3>
-                    <ul className="text-sm text-green-700 space-y-1">
-                      <li>• {stats.pendingApplications} applications pending review</li>
-                      <li>• {stats.verifiedSellers} verified sellers active</li>
-                      <li>• {stats.totalUsers} total registered users</li>
-                    </ul>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <Link to="/admin/user-management">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Users className="h-8 w-8 text-purple-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">User Management</p>
+                    <p className="text-sm font-medium text-purple-600">View All Users</p>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </TabsContent>
+            </Link>
+          </Card>
+        </div>
 
-          <TabsContent value="seller-verification" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Seller Verification Applications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-2 text-gray-600">Loading applications...</p>
-                  </div>
-                ) : sellerApplications.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">No seller applications found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {sellerApplications.map((application) => (
-                      <div key={application._id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-4">
-                            {/* Seller Avatar */}
-                            <img
-                              src={application.user?.avatar || noProfile}
-                              alt="avatar"
-                              className="w-14 h-14 rounded-full object-cover border cursor-pointer hover:shadow-lg transition"
-                              onClick={() => navigate(`/profile/${application.user?._id}`)}
-                              onError={e => { e.target.onerror = null; e.target.src = noProfile; }}
-                              title="View Profile"
-                            />
-                            <div>
-                              <h3 className="font-semibold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/profile/${application.user?._id}`)}>
-                                {application.user?.firstName} {application.user?.lastName}
-                              </h3>
-                              <p className="text-gray-600">{application.user?.email}</p>
-                              <p className="text-sm text-gray-500">
-                                Seller Type: {application.sellerType}
-                              </p>
-                              {application.user?.contactNumber && (
-                                <p className="text-sm text-gray-500">
-                                  Phone: {application.user.contactNumber}
-                                </p>
-                              )}
-                              {application.user?.location && (
-                                <p className="text-sm text-gray-500">
-                                  Address: {[
-                                    application.user.location.address,
-                                    application.user.location.city,
-                                    application.user.location.province,
-                                    application.user.location.zipCode
-                                  ].filter(Boolean).join(', ')}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(application.status)}
-                            {getStatusBadge(application.status)}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <h4 className="font-medium text-sm text-gray-700 mb-2">Documents Submitted:</h4>
-                            <ul className="text-sm text-gray-600 space-y-1">
-                              <li>• Government IDs: {application.documents?.govIDs?.length || 0} files</li>
-                              {application.documents?.govIDs?.map((url, index) => (
-                                <li key={index} className="ml-4">
-                                  <a 
-                                    href={url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 underline"
-                                  >
-                                    Government ID {index + 1}
-                                  </a>
-                                </li>
-                              ))}
-                              <li>• Proof of Address: {application.documents?.proofOfAddress ? (
-                                <a 
-                                  href={application.documents.proofOfAddress} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline"
-                                >
-                                  View Document
-                                </a>
-                              ) : '✗'}</li>
-                              <li>• Bank Proof: {application.documents?.bankProof ? (
-                                <a 
-                                  href={application.documents.bankProof} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline"
-                                >
-                                  View Document
-                                </a>
-                              ) : '✗'}</li>
-                              {application.sellerType === 'business' && (
-                                <>
-                                  <li>• DTI Registration: {application.documents?.dtiRegistration ? (
-                                    <a 
-                                      href={application.documents.dtiRegistration} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      View Document
-                                    </a>
-                                  ) : '✗'}</li>
-                                  <li>• Business Permit: {application.documents?.businessPermit ? (
-                                    <a 
-                                      href={application.documents.businessPermit} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      View Document
-                                    </a>
-                                  ) : '✗'}</li>
-                                  <li>• BIR Registration: {application.documents?.birRegistration ? (
-                                    <a 
-                                      href={application.documents.birRegistration} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      View Document
-                                    </a>
-                                  ) : '✗'}</li>
-                                </>
-                              )}
-                            </ul>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-sm text-gray-700 mb-2">Application Details:</h4>
-                            <p className="text-sm text-gray-600">
-                              <strong>Submitted:</strong> {new Date(application.createdAt).toLocaleDateString()}
-                            </p>
-                            {application.reviewedAt && (
-                              <p className="text-sm text-gray-600">
-                                <strong>Reviewed:</strong> {new Date(application.reviewedAt).toLocaleDateString()}
-                              </p>
-                            )}
-                            {application.message && (
-                              <p className="text-sm text-gray-600 mt-2">
-                                <strong>Message:</strong> {application.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {application.status === 'pending' && (
-                          <div className="flex space-x-2">
-                            <Button
-                              onClick={() => handleReviewApplication(application._id, 'approved')}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                const message = prompt('Enter rejection reason (optional):');
-                                handleReviewApplication(application._id, 'rejected', message);
-                              }}
-                              variant="destructive"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Main Content */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome to Green Marketplace Admin</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Manage your marketplace operations, review seller applications, and monitor platform activity.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Quick Actions</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Review pending seller applications</li>
+                  <li>• Monitor platform statistics</li>
+                  <li>• Manage user accounts</li>
+                  <li>• <Link to="/admin/user-management" className="underline">Manage Users</Link></li>
+                </ul>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h3 className="font-semibold text-green-900 mb-2">Recent Activity</h3>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• {stats.pendingApplications} applications pending review</li>
+                  <li>• {stats.verifiedSellers} verified sellers active</li>
+                  <li>• {stats.totalUsers} total registered users</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -142,6 +142,7 @@ export const getAllUsers = async (req, res) => {
       role,
       sellerStatus,
       isVerified,
+      search,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
@@ -151,6 +152,15 @@ export const getAllUsers = async (req, res) => {
     if (role) filter.role = role;
     if (sellerStatus) filter.sellerStatus = sellerStatus;
     if (isVerified !== undefined) filter.isVerified = isVerified === 'true';
+    
+    // Add search functionality
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
 
     // Build sort object
     const sort = {};
@@ -223,6 +233,74 @@ export const getPendingProducts = async (req, res) => {
   }
 };
 
+// Get all products approved
+export const getApprovedProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const filter = { status: 'approved' };
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate('seller', 'firstName lastName email')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Product.countDocuments(filter)
+    ]);
+    const totalPages = Math.ceil(total / parseInt(limit));
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching approved products:', error);
+    errorResponse(res, 500, 'Failed to fetch approved products', error);
+  }
+};
+
+// Get all products rejected
+export const getRejectedProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const filter = { status: 'rejected' };
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate('seller', 'firstName lastName email')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Product.countDocuments(filter)
+    ]);
+    const totalPages = Math.ceil(total / parseInt(limit));
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching rejected products:', error);
+    errorResponse(res, 500, 'Failed to fetch rejected products', error);
+  }
+};
+
 // Approve a product
 export const approveProduct = async (req, res) => {
   try {
@@ -265,5 +343,21 @@ export const rejectProduct = async (req, res) => {
   } catch (error) {
     console.error('Error rejecting product:', error);
     errorResponse(res, 500, 'Failed to reject product', error);
+  }
+};
+
+// Permanently delete a user by admin
+export const deleteUserByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+      return errorResponse(res, 404, 'User not found');
+    }
+    await user.deleteOne();
+    res.status(200).json({ success: true, message: 'User deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    errorResponse(res, 500, 'Failed to delete user', error);
   }
 };

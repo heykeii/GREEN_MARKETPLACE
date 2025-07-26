@@ -171,6 +171,10 @@ export const googleLogin = async (req, res) => {
       });
     }
 
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
+
     // Generate JWT token
     console.log("Generating JWT token for user:", user._id);
     const jwtToken = jwt.sign(
@@ -350,6 +354,10 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
 
     // Generate JWT token
     const token = jwt.sign(
