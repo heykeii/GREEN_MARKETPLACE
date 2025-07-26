@@ -13,6 +13,7 @@ import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import SellerApplicationForm from "./pages/SellerApplicationForm";
 import Profile from "./pages/Profile";
 import SellerDashboard from './pages/SellerDashboard';
+import CreateProduct from './pages/CreateProduct';
 import AdminProductVerification from './pages/AdminProductVerification';
 import PublicProfile from './pages/PublicProfile';
 import CartPage from './pages/CartPage';
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<PublicProfile />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
+        <Route path="/seller/create-product" element={<CreateProduct />} />
         <Route path="/cart" element={<CartPage />} />
         <Route 
           path="/admin" 

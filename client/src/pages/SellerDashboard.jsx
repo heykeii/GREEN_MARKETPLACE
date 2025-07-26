@@ -17,7 +17,6 @@ const SellerDashboard = () => {
   const [approvedProducts, setApprovedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('approved');
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
@@ -51,7 +50,7 @@ const SellerDashboard = () => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -66,9 +65,9 @@ const SellerDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value, files } = e.target;
     if (name === 'images') {
       const fileList = Array.from(files);
@@ -77,53 +76,7 @@ const SellerDashboard = () => {
     } else {
       setForm(f => ({ ...f, [name]: value }));
     }
-  };
-
-  const handleCreateProduct = async (e) => {
-    e.preventDefault();
-    if (!form.name || !form.description || !form.price || !form.quantity || !form.category || !form.materialsUsed) {
-      toast.error('Please fill in all required fields.');
-      return;
-    }
-    if (!form.images || form.images.length < 3) {
-      toast.error('Please upload at least 3 product images.');
-      return;
-    }
-    if (form.images.length > 10) {
-      toast.error('You can upload a maximum of 10 images.');
-      return;
-    }
-    setProcessing(true);
-    try {
-      const token = localStorage.getItem('token');
-      const formData = new FormData();
-      formData.append('name', form.name);
-      formData.append('description', form.description);
-      formData.append('price', form.price);
-      formData.append('quantity', form.quantity);
-      formData.append('category', form.category);
-      formData.append('origin', form.origin);
-      formData.append('productionMethod', form.productionMethod);
-      form.materialsUsed.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('materialsUsed', val));
-      form.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('tags', val));
-      form.images.forEach(img => formData.append('images', img));
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/products/create/product`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      toast.success('Product submitted for review!');
-      setShowCreateForm(false);
-      setForm({ name: '', description: '', price: '', quantity: '', category: '', origin: '', productionMethod: '', materialsUsed: '', tags: '', images: [] });
-      setImagePreviews([]);
-      fetchProducts();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create product.');
-    } finally {
-      setProcessing(false);
-    }
-  };
+  }, []);
 
   const handleEditClick = (product) => {
     setEditProduct(product);
@@ -567,7 +520,6 @@ const SellerDashboard = () => {
     );
   };
 
-  const MemoModal = React.memo(Modal);
   const MemoImageUploadSection = React.memo(ImageUploadSection);
 
   return (
@@ -599,7 +551,7 @@ const SellerDashboard = () => {
                   <div className="text-3xl font-bold">{approvedProducts.length + pendingProducts.length}</div>
                 </div>
                 <Button
-                  onClick={() => setShowCreateForm(true)}
+                  onClick={() => navigate('/seller/create-product')}
                   className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 rounded-xl font-semibold text-lg"
                   size="lg"
                 >
@@ -752,145 +704,7 @@ const SellerDashboard = () => {
         </div>
       </div>
       {/* Modals and overlays here */}
-      <MemoModal
-        isOpen={showCreateForm}
-        onClose={() => setShowCreateForm(false)}
-        title="Create New Product"
-        size="default"
-      >
-        <div className="flex flex-col md:flex-row gap-8 w-full">
-          {/* Left: Image Upload */}
-          <div className="md:w-1/2 w-full">
-            <MemoImageUploadSection
-              images={form.images}
-              previews={imagePreviews}
-              onImageChange={handleInputChange}
-              onRemove={removeImage}
-              onClearAll={() => clearAllImages()}
-              isEdit={false}
-              maxImages={10}
-            />
-          </div>
-          {/* Right: Product Details */}
-          <form onSubmit={handleCreateProduct} className="md:w-1/2 w-full space-y-6">
-            <h3 className="text-lg font-semibold text-emerald-700 mb-2">Product Details</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="name" className="text-sm font-medium text-gray-700">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full border rounded p-2"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="price" className="text-sm font-medium text-gray-700">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={form.price}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="quantity" className="text-sm font-medium text-gray-700">Quantity</Label>
-                <Input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  value={form.quantity}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category</Label>
-                <Input
-                  id="category"
-                  name="category"
-                  type="text"
-                  value={form.category}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="origin" className="text-sm font-medium text-gray-700">Origin</Label>
-                <Input
-                  id="origin"
-                  name="origin"
-                  type="text"
-                  value={form.origin}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="productionMethod" className="text-sm font-medium text-gray-700">Production Method</Label>
-                <Input
-                  id="productionMethod"
-                  name="productionMethod"
-                  type="text"
-                  value={form.productionMethod}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="materialsUsed" className="text-sm font-medium text-gray-700">Materials Used</Label>
-                <Input
-                  id="materialsUsed"
-                  name="materialsUsed"
-                  type="text"
-                  value={form.materialsUsed}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Wood, Metal, Clay"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="tags" className="text-sm font-medium text-gray-700">Tags</Label>
-                <Input
-                  id="tags"
-                  name="tags"
-                  type="text"
-                  value={form.tags}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Handmade, Unique, Eco-Friendly"
-                  className="w-full"
-                />
-              </div>
-            </div>
-            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 hover:shadow-lg" disabled={processing}>
-              {processing ? <FaSpinner className="mr-2 h-4 w-4 animate-spin" /> : <FaPlus className="mr-2 h-4 w-4" />}
-              Submit Product for Review
-            </Button>
-          </form>
-        </div>
-      </MemoModal>
-
-      <MemoModal
+      <Modal
         isOpen={showEditForm}
         onClose={() => setShowEditForm(false)}
         title="Edit Product"
@@ -1026,7 +840,7 @@ const SellerDashboard = () => {
             </Button>
           </form>
         </div>
-      </MemoModal>
+      </Modal>
       <Footer />
     </>
   );

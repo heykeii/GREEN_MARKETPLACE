@@ -19,6 +19,11 @@ const ProductPage = () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const token = localStorage.getItem('token');
 
+  // Helper function to check if current user is the seller of a product
+  const isOwnProduct = (product) => {
+    return user && product.seller && user._id === product.seller;
+  };
+
   useEffect(() => {
     fetchProducts(page);
     // eslint-disable-next-line
@@ -168,7 +173,7 @@ const ProductPage = () => {
                       <h2 className="font-bold text-lg text-emerald-800 mb-2 line-clamp-2 leading-tight">
                         {product.name}
                       </h2>
-                      <p className="text-gray-600 text-sm line-clamp-3 mb-3">
+                      <p className="text-gray-700 text-sm line-clamp-3 mb-3">
                         {product.description}
                       </p>
                       
@@ -179,7 +184,7 @@ const ProductPage = () => {
                         <span className="text-green-700 font-bold text-xl">
                           {formatPrice(product.price)}
                         </span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs text-emerald-600 font-semibold bg-gray-100 px-2 py-1 rounded">
                           In Stock
                         </span>
                       </div>
@@ -187,32 +192,42 @@ const ProductPage = () => {
 
                     {/* Action Buttons */}
                     <div className="space-y-2">
-                      <Button
-                        onClick={() => handleBuyNow(product._id)}
-                        disabled={cartLoading[product._id]}
-                        className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-                      >
-                        {cartLoading[product._id] === 'buy' ? (
-                          <Loader2 className="animate-spin mr-2" />
-                        ) : (
-                          <Zap className="mr-2" />
-                        )}
-                        Buy Now
-                      </Button>
-                      
-                      <Button
-                        onClick={() => handleAddToCart(product)}
-                        disabled={cartLoading[product._id]}
-                        variant="outline"
-                        className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 font-medium py-2.5 rounded-lg transition-all duration-200"
-                      >
-                        {cartLoading[product._id] === 'cart' ? (
-                          <Loader2 className="animate-spin mr-2" />
-                        ) : (
-                          <ShoppingCart className="mr-2" />
-                        )}
-                        Add to Cart
-                      </Button>
+                      {!isOwnProduct(product) ? (
+                        <>
+                          <Button
+                            onClick={() => handleBuyNow(product._id)}
+                            disabled={cartLoading[product._id]}
+                            className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                          >
+                            {cartLoading[product._id] === 'buy' ? (
+                              <Loader2 className="animate-spin mr-2" />
+                            ) : (
+                              <Zap className="mr-2" />
+                            )}
+                            Buy Now
+                          </Button>
+                          
+                          <Button
+                            onClick={() => handleAddToCart(product)}
+                            disabled={cartLoading[product._id]}
+                            variant="outline"
+                            className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 font-medium py-2.5 rounded-lg transition-all duration-200"
+                          >
+                            {cartLoading[product._id] === 'cart' ? (
+                              <Loader2 className="animate-spin mr-2" />
+                            ) : (
+                              <ShoppingCart className="mr-2" />
+                            )}
+                            Add to Cart
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="text-center py-2">
+                          <span className="text-sm text-emerald-500 font-semibold bg-gray-100 px-3 py-1 rounded-full">
+                            Your Product
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
