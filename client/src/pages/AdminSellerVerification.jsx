@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, FileText, Clock, Users, Mail, User, Star, Filter, Search } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Clock, Users, Mail, User, Star, Filter, Search, ExternalLink, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import noProfile from '@/assets/no_profile.jpg';
 import { AdminNavbar } from '@/components/Navbar';
 
@@ -13,6 +13,7 @@ const AdminSellerVerification = () => {
   const [sellerApplications, setSellerApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [expandedApplications, setExpandedApplications] = useState(new Set());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +52,16 @@ const AdminSellerVerification = () => {
     } catch (error) {
       toast.error('Error reviewing application.');
     }
+  };
+
+  const toggleApplicationExpand = (applicationId) => {
+    const newExpanded = new Set(expandedApplications);
+    if (newExpanded.has(applicationId)) {
+      newExpanded.delete(applicationId);
+    } else {
+      newExpanded.add(applicationId);
+    }
+    setExpandedApplications(newExpanded);
   };
 
   const getStatusBadge = (status) => {
@@ -98,6 +109,230 @@ const AdminSellerVerification = () => {
   });
 
   const stats = getApplicationStats();
+
+  const DocumentSection = ({ application }) => {
+    const isExpanded = expandedApplications.has(application._id);
+
+    return (
+      <div className="mt-6 border-t border-gray-100 pt-6">
+        <button
+          onClick={() => toggleApplicationExpand(application._id)}
+          className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 mb-4"
+        >
+          <FileText className="h-5 w-5" />
+          Documents & Details
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+
+        {isExpanded && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Documents Section */}
+            <div className="bg-gray-50 rounded-xl p-6">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                Submitted Documents
+              </h4>
+              <div className="space-y-4">
+                {/* Government IDs */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Government IDs:</p>
+                  {application.documents?.govIDs?.length > 0 ? (
+                    <div className="space-y-2">
+                      {application.documents.govIDs.map((url, index) => (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Government ID {index + 1}
+                          <ExternalLink className="h-3 w-3 ml-auto" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                  )}
+                </div>
+
+                {/* Proof of Address */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Proof of Address:</p>
+                  {application.documents?.proofOfAddress ? (
+                    <a
+                      href={application.documents.proofOfAddress}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Document
+                      <ExternalLink className="h-3 w-3 ml-auto" />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                  )}
+                </div>
+
+                {/* Bank Proof */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Bank Proof:</p>
+                  {application.documents?.bankProof ? (
+                    <a
+                      href={application.documents.bankProof}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Document
+                      <ExternalLink className="h-3 w-3 ml-auto" />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                  )}
+                </div>
+
+                {/* Business Documents (only for business type) */}
+                {application.sellerType === 'business' && (
+                  <>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">DTI Registration:</p>
+                      {application.documents?.dtiRegistration ? (
+                        <a
+                          href={application.documents.dtiRegistration}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Document
+                          <ExternalLink className="h-3 w-3 ml-auto" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Business Permit:</p>
+                      {application.documents?.businessPermit ? (
+                        <a
+                          href={application.documents.businessPermit}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Document
+                          <ExternalLink className="h-3 w-3 ml-auto" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">BIR Registration:</p>
+                      {application.documents?.birRegistration ? (
+                        <a
+                          href={application.documents.birRegistration}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Document
+                          <ExternalLink className="h-3 w-3 ml-auto" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Application Details Section */}
+            <div className="bg-blue-50 rounded-xl p-6">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-600" />
+                Application Details
+              </h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Submitted Date:</p>
+                  <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                    {new Date(application.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+
+                {application.reviewedAt && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Reviewed Date:</p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {new Date(application.reviewedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {application.user?.contactNumber && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Contact Number:</p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {application.user.contactNumber}
+                    </p>
+                  </div>
+                )}
+
+                {application.user?.location && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Address:</p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {[
+                        application.user.location.address,
+                        application.user.location.city,
+                        application.user.location.province,
+                        application.user.location.zipCode
+                      ].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                )}
+
+                {application.message && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Review Message:</p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {application.message}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -303,7 +538,10 @@ const AdminSellerVerification = () => {
                               Approve
                             </Button>
                             <Button
-                              onClick={() => handleReviewApplication(application._id, 'rejected')}
+                              onClick={() => {
+                                const message = prompt('Enter rejection reason (optional):');
+                                handleReviewApplication(application._id, 'rejected', message || '');
+                              }}
                               disabled={application.status === 'rejected'}
                               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -314,6 +552,9 @@ const AdminSellerVerification = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Documents Section */}
+                    <DocumentSection application={application} />
                   </div>
                 ))}
               </div>
