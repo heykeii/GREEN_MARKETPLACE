@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
 import { 
   FaSpinner, 
@@ -27,10 +29,13 @@ import {
   FaChartBar,
   FaBoxes,
   FaToggleOn,
-  FaToggleOff
+  FaToggleOff,
+  FaTimes,
+  FaImage
 } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { CATEGORY_OPTIONS } from '@/constants/categories';
 
 const ProductPage = () => {
   const { productId } = useParams();
@@ -44,6 +49,22 @@ const ProductPage = () => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    quantity: '',
+    category: '',
+    origin: '',
+    productionMethod: '',
+    materialsUsed: '',
+    tags: ''
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editImages, setEditImages] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -112,7 +133,130 @@ const ProductPage = () => {
   };
 
   const handleEditProduct = () => {
-    navigate(`/seller/edit-product/${productId}`);
+    // Populate the edit form with current product data
+    setEditForm({
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price || '',
+      quantity: product.quantity || '',
+      category: product.category || '',
+      origin: product.origin || '',
+      productionMethod: product.productionMethod || '',
+      materialsUsed: Array.isArray(product.materialsUsed) ? product.materialsUsed.join(', ') : '',
+      tags: Array.isArray(product.tags) ? product.tags.join(', ') : ''
+    });
+    
+    // Set existing images
+    setEditImages(product.images || []);
+    setNewImages([]);
+    setImagePreviews([]);
+    setShowEditModal(true);
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const totalImages = editImages.length + newImages.length + files.length;
+    
+    if (totalImages > 10) {
+      toast.error('You can have a maximum of 10 images.');
+      return;
+    }
+    
+    if (totalImages < 3) {
+      toast.error('You must have at least 3 images.');
+      return;
+    }
+    
+    setNewImages(prev => [...prev, ...files]);
+    
+    // Create previews for new images
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => [...prev, e.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index, isNew = false) => {
+    if (isNew) {
+      setNewImages(prev => prev.filter((_, i) => i !== index));
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setEditImages(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const clearAllImages = () => {
+    setEditImages([]);
+    setNewImages([]);
+    setImagePreviews([]);
+  };
+
+  const handleSubmitEdit = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    
+    try {
+      const totalImages = editImages.length + newImages.length;
+      if (totalImages < 3) {
+        toast.error('You must have at least 3 images.');
+        setEditLoading(false);
+        return;
+      }
+      
+      if (totalImages > 10) {
+        toast.error('You can have a maximum of 10 images.');
+        setEditLoading(false);
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('name', editForm.name);
+      formData.append('description', editForm.description);
+      formData.append('price', editForm.price);
+      formData.append('quantity', editForm.quantity);
+      formData.append('category', editForm.category);
+      formData.append('origin', editForm.origin);
+      formData.append('productionMethod', editForm.productionMethod);
+      
+      // Handle materialsUsed as array
+      editForm.materialsUsed.split(',').map(s => s.trim()).filter(Boolean).forEach(val => {
+        formData.append('materialsUsed', val);
+      });
+      
+      // Handle tags as array
+      editForm.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => {
+        formData.append('tags', val);
+      });
+
+      // Add existing images
+      editImages.forEach(url => {
+        formData.append('existingImages', url);
+      });
+
+      // Add new images
+      newImages.forEach(img => {
+        formData.append('images', img);
+      });
+
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/products/update/${productId}`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      toast.success('Product updated successfully!');
+      setShowEditModal(false);
+      fetchProduct(); // Refresh product data
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast.error(error.response?.data?.message || 'Failed to update product');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const handleViewAnalytics = () => {
@@ -312,7 +456,6 @@ const ProductPage = () => {
                   <span className="text-sm text-gray-600">
                     {product.quantity > 10 ? 'In Stock' : 
                      product.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
-                    {product.quantity > 0 && ` (${product.quantity} available)`}
                   </span>
                 </div>
               </div>
@@ -438,9 +581,6 @@ const ProductPage = () => {
                         +
                       </Button>
                     </div>
-                    <span className="text-sm text-gray-600">
-                      {product.quantity} available
-                    </span>
                   </div>
 
                   <div className="flex gap-4">
@@ -504,6 +644,265 @@ const ProductPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Product Modal */}
+      {showEditModal && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-emerald-50/80 via-emerald-100/80 to-teal-50/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div 
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Product</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="h-5 w-5" />
+                </Button>
+              </div>
+
+              <form onSubmit={handleSubmitEdit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Product Name</Label>
+                    <Input
+                      id="name"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="price">Price (₱)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={editForm.price}
+                      onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      value={editForm.quantity}
+                      onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <select
+                      id="category"
+                      value={editForm.category}
+                      onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {CATEGORY_OPTIONS.map((category, index) => (
+                        <option key={index} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="origin">Origin</Label>
+                    <Input
+                      id="origin"
+                      value={editForm.origin}
+                      onChange={(e) => setEditForm({ ...editForm, origin: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="productionMethod">Production Method</Label>
+                    <Input
+                      id="productionMethod"
+                      value={editForm.productionMethod}
+                      onChange={(e) => setEditForm({ ...editForm, productionMethod: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <textarea
+                    id="description"
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={4}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  />
+                </div>
+
+                 <div>
+                   <Label htmlFor="materialsUsed">Materials Used (comma-separated)</Label>
+                   <Input
+                     id="materialsUsed"
+                     value={editForm.materialsUsed}
+                     onChange={(e) => setEditForm({ ...editForm, materialsUsed: e.target.value })}
+                     placeholder="e.g., Organic cotton, Recycled plastic, Bamboo"
+                   />
+                 </div>
+
+                 <div>
+                   <Label htmlFor="tags">Tags (comma-separated)</Label>
+                   <Input
+                     id="tags"
+                     value={editForm.tags}
+                     onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                     placeholder="e.g., Eco-friendly, Sustainable, Organic"
+                   />
+                 </div>
+
+                 {/* Image Upload Section */}
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between">
+                     <Label>Product Images</Label>
+                     <div className="flex gap-2">
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="sm"
+                         onClick={() => document.getElementById('image-upload').click()}
+                         className="text-sm"
+                       >
+                         <FaImage className="mr-2 h-4 w-4" />
+                         Add Images
+                       </Button>
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="sm"
+                         onClick={clearAllImages}
+                         className="text-sm text-red-600 hover:text-red-700"
+                       >
+                         Clear All
+                       </Button>
+                     </div>
+                   </div>
+                   
+                   <input
+                     id="image-upload"
+                     type="file"
+                     multiple
+                     accept="image/*"
+                     onChange={handleImageChange}
+                     className="hidden"
+                   />
+                   
+                   <div className="text-sm text-gray-600">
+                     {editImages.length + newImages.length} of 10 images • Minimum 3 required
+                   </div>
+
+                   {/* Existing Images */}
+                   {editImages.length > 0 && (
+                     <div className="space-y-2">
+                       <Label className="text-sm font-medium text-gray-700">Existing Images</Label>
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                         {editImages.map((image, index) => (
+                           <div key={`existing-${index}`} className="relative group">
+                             <img
+                               src={image}
+                               alt={`Product ${index + 1}`}
+                               className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                             />
+                             <button
+                               type="button"
+                               onClick={() => removeImage(index, false)}
+                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                             >
+                               <FaTimes className="h-3 w-3" />
+                             </button>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+
+                   {/* New Images */}
+                   {newImages.length > 0 && (
+                     <div className="space-y-2">
+                       <Label className="text-sm font-medium text-gray-700">New Images</Label>
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                         {newImages.map((file, index) => (
+                           <div key={`new-${index}`} className="relative group">
+                             <img
+                               src={imagePreviews[index]}
+                               alt={`New ${index + 1}`}
+                               className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                             />
+                             <button
+                               type="button"
+                               onClick={() => removeImage(index, true)}
+                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                             >
+                               <FaTimes className="h-3 w-3" />
+                             </button>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+
+                   {/* Empty State */}
+                   {editImages.length === 0 && newImages.length === 0 && (
+                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                       <FaImage className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                       <p className="text-gray-600 mb-2">No images uploaded</p>
+                       <p className="text-sm text-gray-500">Upload at least 3 images to continue</p>
+                     </div>
+                   )}
+                 </div>
+
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1"
+                    disabled={editLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    disabled={editLoading}
+                  >
+                    {editLoading ? (
+                      <>
+                        <FaSpinner className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Product'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );

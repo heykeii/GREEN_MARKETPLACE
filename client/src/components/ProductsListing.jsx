@@ -13,7 +13,7 @@ import {
   FaEye
 } from 'react-icons/fa';
 
-const ProductsListing = () => {
+const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'grid' }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState({});
@@ -84,6 +84,29 @@ const ProductsListing = () => {
     navigate(`/product/${productId}`);
   };
 
+  // Compute filtered and sorted products
+  const normalizedFilter = (categoryFilter || '').toLowerCase();
+  let visibleProducts = products.filter((p) => {
+    if (!normalizedFilter) return true;
+    // Compare case-insensitively against category name
+    return (p.category || '').toLowerCase() === normalizedFilter;
+  });
+
+  // Sorting
+  if (sortBy === 'price-low') {
+    visibleProducts = [...visibleProducts].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+  } else if (sortBy === 'price-high') {
+    visibleProducts = [...visibleProducts].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  } else if (sortBy === 'oldest') {
+    visibleProducts = [...visibleProducts].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+  } else if (sortBy === 'rating') {
+    // If rating not available, leave as-is; placeholder sorts by quantity as proxy
+    visibleProducts = [...visibleProducts].sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0));
+  } else {
+    // newest
+    visibleProducts = [...visibleProducts].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-24">
@@ -95,7 +118,7 @@ const ProductsListing = () => {
     );
   }
 
-  if (products.length === 0) {
+  if (visibleProducts.length === 0) {
     return (
       <div className="text-center py-24">
         <FaEye className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -106,11 +129,11 @@ const ProductsListing = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-      {products.map((product) => (
+    <div className={`${viewMode === 'list' ? 'grid grid-cols-1 gap-6' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'}`}>
+      {visibleProducts.map((product) => (
         <Card 
           key={product._id} 
-          className="group relative overflow-hidden shadow-lg border-emerald-100 bg-white/95 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 backdrop-blur-sm cursor-pointer"
+          className={`group relative overflow-hidden shadow-lg border-emerald-100 bg-white/95 hover:shadow-2xl transition-all duration-300 backdrop-blur-sm cursor-pointer ${viewMode === 'list' ? 'flex' : ''}`}
           onClick={() => handleProductClick(product._id)}
         >
           {/* Wishlist Button */}
@@ -124,13 +147,13 @@ const ProductsListing = () => {
             <FaHeart className={`w-4 h-4 ${wishlist.has(product._id) ? 'text-red-500' : 'text-gray-400'}`} />
           </button>
 
-          <CardContent className="p-0 flex flex-col h-full">
+          <CardContent className={`p-0 ${viewMode === 'list' ? 'flex w-full' : 'flex flex-col'} h-full`}>
             {/* Product Image */}
-            <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
+            <div className={`${viewMode === 'list' ? 'w-56 h-40' : 'aspect-video'} bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative`}>
               <img
                 src={product.images?.[0] || ''}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                className={`w-full h-full object-cover ${viewMode === 'list' ? '' : 'group-hover:scale-110'} transition-transform duration-500`}
               />
               {/* Category Badge */}
               <div className="absolute top-3 left-3 bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -139,7 +162,7 @@ const ProductsListing = () => {
             </div>
 
             {/* Product Info */}
-            <div className="p-6 flex-1 flex flex-col">
+            <div className={`p-6 flex-1 flex flex-col ${viewMode === 'list' ? '' : ''}`}>
               <div className="flex-1 mb-4">
                 <h2 className="font-bold text-lg text-emerald-800 mb-2 line-clamp-2 leading-tight">
                   {product.name}

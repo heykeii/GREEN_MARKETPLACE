@@ -114,17 +114,37 @@ const SellerDashboard = () => {
       setApprovedProducts(all.filter(p => p.status === 'approved'));
     } catch (error) {
       console.error('Error fetching products:', error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        toast.error('Authentication failed. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+        return;
+      }
+      
       toast.error('Failed to fetch your products.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const fetchAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
     try {
       const token = localStorage.getItem('token');
       console.log('Fetching analytics with token:', token ? 'present' : 'missing');
+      
+      // First check seller status for debugging
+      try {
+        const statusResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/debug-status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('Seller debug status:', statusResponse.data);
+      } catch (statusError) {
+        console.error('Failed to check seller status:', statusError.response?.data || statusError.message);
+      }
+      
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/analytics?timeframe=${analyticsTimeframe}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -132,6 +152,20 @@ const SellerDashboard = () => {
       setAnalyticsData(response.data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        toast.error('Authentication failed. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+        return;
+      }
+      
+      if (error.response?.status === 403) {
+        toast.error('You must be a verified seller to access analytics.');
+        return;
+      }
+      
       // For now, use mock data until backend is implemented
       setAnalyticsData({
         overview: {
@@ -165,7 +199,7 @@ const SellerDashboard = () => {
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [analyticsTimeframe]);
+  }, [analyticsTimeframe, navigate]);
 
   // Mock data generators for development
   const generateMockSalesData = (type) => {
@@ -1151,150 +1185,247 @@ const SellerDashboard = () => {
           </Tabs>
         </div>
       </div>
-      {/* Modals and overlays here */}
-      <Modal
-        isOpen={showEditForm}
-        onClose={() => setShowEditForm(false)}
-        title="Edit Product"
-        size="default"
-      >
-        <div className="flex flex-col md:flex-row gap-8 w-full">
-          {/* Left: Image Upload */}
-          <div className="md:w-1/2 w-full">
-            <MemoImageUploadSection
-              images={form.images}
-              previews={imagePreviews}
-              onImageChange={handleInputChange}
-              onRemove={removeImage}
-              onClearAll={() => clearAllImages()}
-              isEdit={true}
-              maxImages={10}
-            />
-          </div>
-          {/* Right: Product Details */}
-          <form onSubmit={handleUpdateProduct} className="md:w-1/2 w-full space-y-6">
-            <h3 className="text-lg font-semibold text-emerald-700 mb-2">Product Details</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="name" className="text-sm font-medium text-gray-700">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full border rounded p-2"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="price" className="text-sm font-medium text-gray-700">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={form.price}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="quantity" className="text-sm font-medium text-gray-700">Quantity</Label>
-                <Input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  value={form.quantity}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category</Label>
-                <select
-                  id="category"
-                  name="category"
-                  value={form.category}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+      {/* Edit Product Modal */}
+      {showEditForm && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-emerald-50/80 via-emerald-100/80 to-teal-50/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowEditForm(false)}
+        >
+          <div 
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Product</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEditForm(false)}
+                  className="text-gray-500 hover:text-gray-700"
                 >
-                  <option value="">Select a category</option>
-                  {CATEGORY_OPTIONS.map((option, index) => (
-                    <option key={index} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
+                  <FaTimes className="h-5 w-5" />
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="origin" className="text-sm font-medium text-gray-700">Origin</Label>
-                <Input
-                  id="origin"
-                  name="origin"
-                  type="text"
-                  value={form.origin}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="productionMethod" className="text-sm font-medium text-gray-700">Production Method</Label>
-                <Input
-                  id="productionMethod"
-                  name="productionMethod"
-                  type="text"
-                  value={form.productionMethod}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="materialsUsed" className="text-sm font-medium text-gray-700">Materials Used</Label>
-                <Input
-                  id="materialsUsed"
-                  name="materialsUsed"
-                  type="text"
-                  value={form.materialsUsed}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Wood, Metal, Clay"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="tags" className="text-sm font-medium text-gray-700">Tags</Label>
-                <Input
-                  id="tags"
-                  name="tags"
-                  type="text"
-                  value={form.tags}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Handmade, Unique, Eco-Friendly"
-                  className="w-full"
-                />
-              </div>
+
+              <form onSubmit={handleUpdateProduct} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Product Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={form.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="price">Price (₱)</Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      value={form.price}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      name="quantity"
+                      type="number"
+                      value={form.quantity}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <select
+                      id="category"
+                      name="category"
+                      value={form.category}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {CATEGORY_OPTIONS.map((category, index) => (
+                        <option key={index} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="origin">Origin</Label>
+                    <Input
+                      id="origin"
+                      name="origin"
+                      value={form.origin}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="productionMethod">Production Method</Label>
+                    <Input
+                      id="productionMethod"
+                      name="productionMethod"
+                      value={form.productionMethod}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={form.description}
+                    onChange={handleInputChange}
+                    rows={4}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="materialsUsed">Materials Used (comma-separated)</Label>
+                  <Input
+                    id="materialsUsed"
+                    name="materialsUsed"
+                    value={form.materialsUsed}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Organic cotton, Recycled plastic, Bamboo"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="tags">Tags (comma-separated)</Label>
+                  <Input
+                    id="tags"
+                    name="tags"
+                    value={form.tags}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Eco-friendly, Sustainable, Organic"
+                  />
+                </div>
+
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Product Images</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('image-upload').click()}
+                        className="text-sm"
+                      >
+                        <FaImage className="mr-2 h-4 w-4" />
+                        Add Images
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => clearAllImages()}
+                        className="text-sm text-red-600 hover:text-red-700"
+                      >
+                        Clear All
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <input
+                    id="image-upload"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleInputChange}
+                    className="hidden"
+                  />
+                  
+                  <div className="text-sm text-gray-600">
+                    {form.images.length} of 10 images • Minimum 3 required
+                  </div>
+
+                  {/* Existing Images */}
+                  {form.images.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700">Product Images</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {form.images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={image}
+                              alt={`Product ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <FaTimes className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {form.images.length === 0 && (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                      <FaImage className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <p className="text-gray-600 mb-2">No images uploaded</p>
+                      <p className="text-sm text-gray-500">Upload at least 3 images to continue</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowEditForm(false)}
+                    className="flex-1"
+                    disabled={processing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    disabled={processing}
+                  >
+                    {processing ? (
+                      <>
+                        <FaSpinner className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Product'
+                    )}
+                  </Button>
+                </div>
+              </form>
             </div>
-            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 hover:shadow-lg" disabled={processing}>
-              {processing ? <FaSpinner className="mr-2 h-4 w-4 animate-spin" /> : <FaEdit className="mr-2 h-4 w-4" />}
-              Update Product
-            </Button>
-          </form>
+          </div>
         </div>
-      </Modal>
+      )}
       <Footer />
     </>
   );

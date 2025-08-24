@@ -12,6 +12,17 @@ const router = express.Router();
 // Analytics endpoint
 router.get('/analytics', protect, sellerOnly, getSellerAnalytics);
 
+// Debug endpoint to check seller status
+router.get('/debug-status', protect, (req, res) => {
+  res.json({
+    userId: req.user._id,
+    email: req.user.email,
+    isSeller: req.user.isSeller,
+    sellerStatus: req.user.sellerStatus,
+    role: req.user.role
+  });
+});
+
 // Seller verification routes
 router.post('/verify', protect, upload.fields([
   { name: 'govIDs', maxCount: 2 },

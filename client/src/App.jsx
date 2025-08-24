@@ -21,6 +21,7 @@ import ProductPage from './pages/ProductPage';
 import SearchResults from './pages/SearchResults';
 import AdminSellerVerification from './pages/AdminSellerVerification';
 import AdminUserManagement from './pages/AdminUserManagement';
+import Products from './pages/Products';
 
 const App = () => {
   return (
@@ -38,6 +39,7 @@ const App = () => {
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/seller/create-product" element={<CreateProduct />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/products" element={<Products />} />
         <Route path="/product/:productId" element={<ProductPage />} />
         <Route path="/search" element={<SearchResults />} />
         <Route 

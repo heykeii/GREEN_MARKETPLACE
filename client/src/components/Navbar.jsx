@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import noProfile from "@/assets/no_profile.jpg";
@@ -33,18 +34,41 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
 
   useEffect(() => {
     // Cart count logic
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      setCartCount(cart.length);
+    const updateCartCount = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        let cart = [];
+        if (currentUser && token) {
+          // Fetch latest cart from API to avoid stale localStorage values
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          cart = res.data.cart || [];
+          localStorage.setItem('cart', JSON.stringify(cart));
+        } else {
+          cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        }
+        setCartCount(Array.isArray(cart) ? cart.length : 0);
+      } catch (err) {
+        setCartCount(0);
+      }
     };
     updateCartCount();
-    window.addEventListener('cartUpdated', updateCartCount);
-    return () => window.removeEventListener('cartUpdated', updateCartCount);
+    const onCartUpdated = () => updateCartCount();
+    window.addEventListener('cartUpdated', onCartUpdated);
+    window.addEventListener('storage', onCartUpdated);
+    return () => {
+      window.removeEventListener('cartUpdated', onCartUpdated);
+      window.removeEventListener('storage', onCartUpdated);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
     navigate("/");
   };
 
@@ -96,7 +120,13 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
             {navItems.map((item) => (
               <button
                 key={item.label}
-                onClick={() => item.onClick ? item.onClick() : navigate(item.path)}
+                onClick={() => {
+                  if (item.onClick) {
+                    item.onClick();
+                  } else {
+                    navigate(item.path);
+                  }
+                }}
                 className="relative px-3 py-2 text-gray-700 font-medium transition-all duration-200 hover:text-emerald-600 group"
               >
                 {item.label}
@@ -250,7 +280,11 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 <button
                   key={item.label}
                   onClick={() => {
-                    navigate(item.path);
+                    if (item.onClick) {
+                      item.onClick();
+                    } else {
+                      navigate(item.path);
+                    }
                     setIsMobileMenuOpen(false);
                   }}
                   className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
@@ -303,7 +337,7 @@ export const AdminNavbar = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Admin Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/admin')} title="Go to Admin Dashboard">
             <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
               <FaLeaf className="text-white text-sm" />
             </div>
