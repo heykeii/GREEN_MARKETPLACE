@@ -167,12 +167,13 @@ const SellerDashboard = () => {
       }
       
       // For now, use mock data until backend is implemented
+      const mockTopProducts = await generateMockTopProducts();
       setAnalyticsData({
         overview: {
           totalRevenue: 0, // No revenue since no orders
           totalOrders: 0, // No orders since this is mock data
           totalProducts: 0, // Will be updated after products are fetched
-          averageRating: 4.2,
+          averageRating: 0, // Will be calculated from real reviews
           monthlyGrowth: 0, // No growth since no orders
           conversionRate: 0 // No conversion since no orders
         },
@@ -181,13 +182,13 @@ const SellerDashboard = () => {
           weekly: generateMockSalesData('weekly'),
           monthly: generateMockSalesData('monthly')
         },
-        topProducts: [],
+        topProducts: mockTopProducts,
         categoryPerformance: [],
         customerInsights: {
           totalCustomers: 0, // No customers since no orders
           repeatCustomers: 0, // No repeat customers since no orders
           averageOrderValue: 0, // No average since no orders
-          customerSatisfaction: 4.2
+          customerSatisfaction: 0 // Will be calculated from real reviews
         },
         inventoryMetrics: {
           lowStockItems: 3,
@@ -215,17 +216,39 @@ const SellerDashboard = () => {
     return data;
   };
 
-  const generateMockTopProducts = () => {
+  const generateMockTopProducts = async () => {
     if (!approvedProducts || approvedProducts.length === 0) {
       return [];
     }
-    return approvedProducts.slice(0, 5).map((product, index) => ({
-      id: product._id,
-      name: product.name,
-      revenue: 0, // No revenue since no orders
-      orders: 0, // No orders since this is mock data
-      rating: (Math.random() * 2 + 3).toFixed(1) // Random rating between 3.0-5.0
-    }));
+    
+    const productsWithRatings = await Promise.all(
+      approvedProducts.slice(0, 5).map(async (product) => {
+        try {
+          // Fetch real review stats for each product
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/reviews/product/${product._id}?page=1&limit=1`);
+          const rating = response.data.success ? response.data.stats.averageRating : 0;
+          
+          return {
+            id: product._id,
+            name: product.name,
+            revenue: 0, // No revenue since no orders
+            orders: 0, // No orders since this is mock data
+            rating: rating > 0 ? rating.toFixed(1) : '0.0'
+          };
+        } catch (error) {
+          console.error(`Error fetching rating for product ${product._id}:`, error);
+          return {
+            id: product._id,
+            name: product.name,
+            revenue: 0,
+            orders: 0,
+            rating: '0.0'
+          };
+        }
+      })
+    );
+    
+    return productsWithRatings;
   };
 
   const generateMockCategoryPerformance = () => {
@@ -752,10 +775,21 @@ const SellerDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Average Rating</p>
-              <p className="text-3xl font-bold text-amber-600">{analyticsData.overview.averageRating}</p>
+              <p className="text-3xl font-bold text-amber-600">
+                {analyticsData.overview.averageRating > 0 
+                  ? analyticsData.overview.averageRating.toFixed(1)
+                  : '0.0'
+                }
+              </p>
               <div className="flex items-center mt-2">
                 <FaStar className="text-amber-500 mr-1" />
-                <span className="text-sm text-amber-600">Excellent</span>
+                <span className="text-sm text-amber-600">
+                  {analyticsData.overview.averageRating >= 4.5 ? 'Excellent' :
+                   analyticsData.overview.averageRating >= 4.0 ? 'Very Good' :
+                   analyticsData.overview.averageRating >= 3.5 ? 'Good' :
+                   analyticsData.overview.averageRating >= 3.0 ? 'Fair' :
+                   analyticsData.overview.averageRating > 0 ? 'Poor' : 'No Reviews'}
+                </span>
               </div>
             </div>
             <div className="bg-amber-100 p-3 rounded-full">

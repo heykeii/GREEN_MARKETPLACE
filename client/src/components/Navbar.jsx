@@ -121,6 +121,10 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
               <button
                 key={item.label}
                 onClick={() => {
+                  if (item.label === 'Products') {
+                    navigate('/products');
+                    return;
+                  }
                   if (item.onClick) {
                     item.onClick();
                   } else {
@@ -280,7 +284,9 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 <button
                   key={item.label}
                   onClick={() => {
-                    if (item.onClick) {
+                    if (item.label === 'Products') {
+                      navigate('/products');
+                    } else if (item.onClick) {
                       item.onClick();
                     } else {
                       navigate(item.path);

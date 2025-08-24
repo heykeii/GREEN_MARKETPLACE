@@ -29,6 +29,7 @@ const SearchResults = () => {
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [reviewStats, setReviewStats] = useState({});
 
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const token = localStorage.getItem('token');
@@ -60,16 +61,43 @@ const SearchResults = () => {
         }
       });
       
-      setProducts(response.data.products || []);
+      const productsData = response.data.products || [];
+      setProducts(productsData);
       setTotalResults(response.data.pagination?.totalItems || 0);
       setCurrentPage(response.data.pagination?.currentPage || 1);
       setTotalPages(response.data.pagination?.totalPages || 1);
+      
+      // Fetch review stats for search results
+      await fetchReviewStats(productsData);
     } catch (error) {
       console.error('Error fetching search results:', error);
       toast.error('Failed to load search results');
       setProducts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviewStats = async (productsData) => {
+    try {
+      const statsPromises = productsData.map(async (product) => {
+        try {
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/reviews/product/${product._id}?page=1&limit=1`);
+          return { productId: product._id, stats: response.data.stats };
+        } catch (error) {
+          console.error(`Error fetching review stats for product ${product._id}:`, error);
+          return { productId: product._id, stats: { averageRating: 0, totalReviews: 0 } };
+        }
+      });
+      
+      const statsResults = await Promise.all(statsPromises);
+      const statsMap = {};
+      statsResults.forEach(({ productId, stats }) => {
+        statsMap[productId] = stats;
+      });
+      setReviewStats(statsMap);
+    } catch (error) {
+      console.error('Error fetching review stats:', error);
     }
   };
 
@@ -267,7 +295,12 @@ const SearchResults = () => {
                           {/* Rating */}
                           <div className="flex items-center gap-1 mb-3">
                             <FaStar className="text-amber-500 text-sm" />
-                            <span className="text-sm text-gray-600">4.5 (24 reviews)</span>
+                            <span className="text-sm text-gray-600">
+                              {reviewStats[product._id]?.averageRating > 0 
+                                ? `${reviewStats[product._id].averageRating.toFixed(1)} (${reviewStats[product._id].totalReviews} ${reviewStats[product._id].totalReviews === 1 ? 'review' : 'reviews'})`
+                                : 'No reviews yet'
+                              }
+                            </span>
                           </div>
                         </div>
 

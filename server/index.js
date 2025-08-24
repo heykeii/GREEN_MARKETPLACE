@@ -13,6 +13,7 @@ import adminRoutes from "./routes/admin.route.js";
 import sellerRoutes from "./routes/seller.route.js";
 import productRoutes from './routes/product.route.js'
 import cartRoutes from './routes/cart.route.js'
+import reviewRoutes from './routes/review.route.js'
 
 dotenv.config();
 
@@ -40,7 +41,8 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/seller", sellerRoutes);
 app.use("/api/v1/products", productRoutes);
-app.use("/api/v1/cart", cartRoutes)
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

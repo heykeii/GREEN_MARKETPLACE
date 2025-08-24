@@ -35,6 +35,7 @@ import {
 } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ReviewsSection from '@/components/ReviewsSection';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
 
 const ProductPage = () => {
@@ -48,6 +49,7 @@ const ProductPage = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
   const [isOwner, setIsOwner] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -72,6 +74,7 @@ const ProductPage = () => {
     setUser(storedUser);
     setToken(storedToken);
     fetchProduct();
+    fetchReviewStats();
   }, [productId]);
 
   const fetchProduct = async () => {
@@ -89,6 +92,18 @@ const ProductPage = () => {
       toast.error('Failed to load product details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviewStats = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/reviews/product/${productId}?page=1&limit=1`);
+      if (response.data.success) {
+        setReviewStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching review stats:', error);
+      // Don't show error toast for review stats, just use defaults
     }
   };
 
@@ -412,7 +427,12 @@ const ProductPage = () => {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex items-center gap-1">
                         <FaStar className="text-amber-500" />
-                        <span className="text-gray-600">4.5 (24 reviews)</span>
+                        <span className="text-gray-600">
+                          {reviewStats.averageRating > 0 
+                            ? `${reviewStats.averageRating.toFixed(1)} (${reviewStats.totalReviews} ${reviewStats.totalReviews === 1 ? 'review' : 'reviews'})`
+                            : 'No reviews yet'
+                          }
+                        </span>
                       </div>
                       <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
                         {product.category}
@@ -642,6 +662,14 @@ const ProductPage = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-12">
+          <ReviewsSection 
+            productId={productId} 
+            currentUser={user}
+          />
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import Product from '../models/products.model.js';
 import Order from '../models/orders.model.js';
+import Review from '../models/reviews.model.js';
 
 // Multer setup (memory storage for direct upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -245,13 +246,39 @@ export const getSellerAnalytics = async (req, res) => {
       }
     }
 
+    // Get review statistics for seller's products
+    let reviewStats = { averageRating: 0, totalReviews: 0 };
+    if (productIds.length > 0) {
+      try {
+        const reviewAggregation = await Review.aggregate([
+          { $match: { product: { $in: productIds }, isVisible: true } },
+          {
+            $group: {
+              _id: null,
+              averageRating: { $avg: '$rating' },
+              totalReviews: { $sum: 1 }
+            }
+          }
+        ]);
+        
+        if (reviewAggregation.length > 0) {
+          reviewStats = {
+            averageRating: Math.round(reviewAggregation[0].averageRating * 10) / 10,
+            totalReviews: reviewAggregation[0].totalReviews
+          };
+        }
+      } catch (reviewError) {
+        console.error('Error fetching review stats:', reviewError);
+      }
+    }
+
     // Calculate analytics
     const analytics = {
       overview: {
         totalRevenue: 0,
         totalOrders: orders.length,
         totalProducts: products.length,
-        averageRating: 4.2, // Mock rating
+        averageRating: reviewStats.averageRating,
         monthlyGrowth: 12.5, // Mock growth
         conversionRate: 3.2 // Mock conversion rate
       },

@@ -59,7 +59,19 @@ const orderSchema = new mongoose.Schema({
     notes: {
         type: String,
         maxlength: 500
-    }
+    },
+
+    // Review tracking - which items have been reviewed
+    reviewedItems: [{
+        product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product'
+        },
+        reviewedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, {
     timestamps: true
 });
