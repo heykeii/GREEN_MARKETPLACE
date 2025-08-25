@@ -121,6 +121,11 @@ const ProductPage = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      // Update localStorage timestamp to prevent unnecessary API calls
+      localStorage.setItem('lastCartUpdate', Date.now().toString());
+      window.dispatchEvent(new Event('cartUpdated'));
+      
       toast.success('Added to cart successfully!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add to cart');

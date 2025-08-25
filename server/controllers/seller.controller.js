@@ -204,25 +204,37 @@ export const getSellerAnalytics = async (req, res) => {
     const { timeframe = '30d' } = req.query;
 
     console.log('Fetching analytics for seller:', sellerId);
+    console.log('User details:', {
+      id: req.user._id,
+      email: req.user.email,
+      isSeller: req.user.isSeller,
+      sellerStatus: req.user.sellerStatus
+    });
 
     // Calculate date range based on timeframe
     const now = new Date();
-    let startDate;
+    let startDate, previousStartDate;
+    
     switch (timeframe) {
       case '7d':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        previousStartDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
         break;
       case '30d':
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        previousStartDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
         break;
       case '90d':
         startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        previousStartDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
         break;
       case '1y':
         startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        previousStartDate = new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000);
         break;
       default:
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        previousStartDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
     }
 
     // Get seller's products
@@ -231,23 +243,45 @@ export const getSellerAnalytics = async (req, res) => {
     
     const productIds = products.map(p => p._id);
 
-    // Get orders for seller's products (if any exist)
-    let orders = [];
+    // Get orders for seller's products (current period)
+    let currentOrders = [];
+    let previousOrders = [];
+    
     if (productIds.length > 0) {
       try {
-        orders = await Order.find({
+        // Current period orders
+        currentOrders = await Order.find({
           'items.product': { $in: productIds },
           createdAt: { $gte: startDate }
         }).populate('items.product customer');
-        console.log('Found orders:', orders.length);
+
+        // Previous period orders for growth calculation
+        previousOrders = await Order.find({
+          'items.product': { $in: productIds },
+          createdAt: { $gte: previousStartDate, $lt: startDate }
+        }).populate('items.product customer');
+
+        console.log('Found current orders:', currentOrders.length);
+        console.log('Found previous orders:', previousOrders.length);
       } catch (orderError) {
         console.error('Error fetching orders:', orderError);
-        // Continue with empty orders array
+      }
+    }
+
+    // Get all orders for lifetime metrics
+    let allOrders = [];
+    if (productIds.length > 0) {
+      try {
+        allOrders = await Order.find({
+          'items.product': { $in: productIds }
+        }).populate('items.product customer');
+      } catch (error) {
+        console.error('Error fetching all orders:', error);
       }
     }
 
     // Get review statistics for seller's products
-    let reviewStats = { averageRating: 0, totalReviews: 0 };
+    let reviewStats = { averageRating: 0, totalReviews: 0, customerSatisfaction: 0 };
     if (productIds.length > 0) {
       try {
         const reviewAggregation = await Review.aggregate([
@@ -264,7 +298,8 @@ export const getSellerAnalytics = async (req, res) => {
         if (reviewAggregation.length > 0) {
           reviewStats = {
             averageRating: Math.round(reviewAggregation[0].averageRating * 10) / 10,
-            totalReviews: reviewAggregation[0].totalReviews
+            totalReviews: reviewAggregation[0].totalReviews,
+            customerSatisfaction: Math.round(reviewAggregation[0].averageRating * 10) / 10
           };
         }
       } catch (reviewError) {
@@ -272,153 +307,241 @@ export const getSellerAnalytics = async (req, res) => {
       }
     }
 
-    // Calculate analytics
-    const analytics = {
-      overview: {
-        totalRevenue: 0,
-        totalOrders: orders.length,
-        totalProducts: products.length,
-        averageRating: reviewStats.averageRating,
-        monthlyGrowth: 12.5, // Mock growth
-        conversionRate: 3.2 // Mock conversion rate
-      },
-      salesData: {
-        daily: [],
-        weekly: [],
-        monthly: []
-      },
-      topProducts: [],
-      categoryPerformance: [],
-      customerInsights: {
-        totalCustomers: 0,
-        repeatCustomers: 0,
-        averageOrderValue: 0,
-        customerSatisfaction: 4.2 // Mock satisfaction
-      },
-      inventoryMetrics: {
-        lowStockItems: 0,
-        outOfStockItems: 0,
-        totalInventoryValue: 0,
-        inventoryTurnover: 2.1 // Mock turnover
-      }
-    };
-
-    // Calculate revenue and other metrics
-    let totalRevenue = 0;
+    // Calculate current period metrics
+    let currentRevenue = 0;
+    let totalOrderValue = 0;
     const customerSet = new Set();
-    const repeatCustomers = new Set();
-    const customerOrderCounts = {};
+    const customerOrders = {};
 
-    orders.forEach(order => {
+    // Process current orders
+    currentOrders.forEach(order => {
       order.items.forEach(item => {
-        if (productIds.includes(item.product._id.toString())) {
-          totalRevenue += item.price * item.quantity;
-          customerSet.add(order.customer._id.toString());
+        if (productIds.some(id => id.toString() === item.product._id.toString())) {
+          const itemRevenue = item.price * item.quantity;
+          currentRevenue += itemRevenue;
+          totalOrderValue += itemRevenue;
           
-          if (customerOrderCounts[order.customer._id.toString()]) {
-            customerOrderCounts[order.customer._id.toString()]++;
-            repeatCustomers.add(order.customer._id.toString());
-          } else {
-            customerOrderCounts[order.customer._id.toString()] = 1;
+          const customerId = order.customer._id.toString();
+          customerSet.add(customerId);
+          
+          if (!customerOrders[customerId]) {
+            customerOrders[customerId] = [];
           }
+          customerOrders[customerId].push(order._id.toString());
         }
       });
     });
 
-    analytics.overview.totalRevenue = totalRevenue;
-    analytics.overview.averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
-    analytics.customerInsights.totalCustomers = customerSet.size;
-    analytics.customerInsights.repeatCustomers = repeatCustomers.size;
-    analytics.customerInsights.averageOrderValue = analytics.overview.averageOrderValue;
+    // Calculate previous period revenue for growth
+    let previousRevenue = 0;
+    previousOrders.forEach(order => {
+      order.items.forEach(item => {
+        if (productIds.some(id => id.toString() === item.product._id.toString())) {
+          previousRevenue += item.price * item.quantity;
+        }
+      });
+    });
+
+    // Calculate growth percentage
+    const revenueGrowth = previousRevenue > 0 
+      ? ((currentRevenue - previousRevenue) / previousRevenue * 100) 
+      : currentRevenue > 0 ? 100 : 0;
+
+    // Calculate order growth
+    const orderGrowth = previousOrders.length > 0
+      ? ((currentOrders.length - previousOrders.length) / previousOrders.length * 100)
+      : currentOrders.length > 0 ? 100 : 0;
+
+    // Calculate repeat customers
+    const repeatCustomers = Object.values(customerOrders).filter(orders => orders.length > 1).length;
 
     // Calculate inventory metrics
-    analytics.inventoryMetrics.lowStockItems = products.filter(p => p.quantity < 10 && p.quantity > 0).length;
-    analytics.inventoryMetrics.outOfStockItems = products.filter(p => p.quantity === 0).length;
-    analytics.inventoryMetrics.totalInventoryValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+    const lowStockItems = products.filter(p => p.quantity < 10 && p.quantity > 0).length;
+    const outOfStockItems = products.filter(p => p.quantity === 0).length;
+    const totalInventoryValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
 
-    // Generate top products
+    // Calculate inventory turnover (simplified)
+    const averageInventoryValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0) / Math.max(products.length, 1);
+    const inventoryTurnover = averageInventoryValue > 0 ? (currentRevenue / averageInventoryValue) : 0;
+
+    // Calculate conversion rate (mock for now - would need view/visit tracking)
+    const conversionRate = currentOrders.length > 0 ? Math.min((currentOrders.length / Math.max(products.length * 10, 1)) * 100, 15) : 0;
+
+    // Generate top products based on revenue
     const productRevenue = {};
-    orders.forEach(order => {
+    const productSales = {};
+    
+    allOrders.forEach(order => {
       order.items.forEach(item => {
         const productId = item.product._id.toString();
-        if (productIds.includes(productId)) {
+        if (productIds.some(id => id.toString() === productId)) {
           if (!productRevenue[productId]) {
             productRevenue[productId] = {
               revenue: 0,
+              quantity: 0,
               orders: 0,
               product: item.product
             };
           }
           productRevenue[productId].revenue += item.price * item.quantity;
-          productRevenue[productId].orders += item.quantity;
+          productRevenue[productId].quantity += item.quantity;
+          productRevenue[productId].orders++;
         }
       });
     });
 
-    analytics.topProducts = Object.values(productRevenue)
+    // Get ratings for top products
+    const productRatings = {};
+    if (productIds.length > 0) {
+      try {
+        const productReviews = await Review.aggregate([
+          { $match: { product: { $in: productIds }, isVisible: true } },
+          {
+            $group: {
+              _id: '$product',
+              averageRating: { $avg: '$rating' },
+              reviewCount: { $sum: 1 }
+            }
+          }
+        ]);
+        
+        productReviews.forEach(review => {
+          productRatings[review._id.toString()] = {
+            rating: Math.round(review.averageRating * 10) / 10,
+            reviewCount: review.reviewCount
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching product ratings:', error);
+      }
+    }
+
+    const topProducts = Object.values(productRevenue)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5)
       .map(item => ({
         id: item.product._id,
         name: item.product.name,
         revenue: item.revenue,
+        quantity: item.quantity,
         orders: item.orders,
-        rating: 4.2 // Mock rating for now
+        rating: productRatings[item.product._id.toString()]?.rating || 0,
+        reviews: productRatings[item.product._id.toString()]?.reviewCount || 0
       }));
 
     // Generate category performance
-    const categoryRevenue = {};
+    const categoryStats = {};
+    
     products.forEach(product => {
-      if (!categoryRevenue[product.category]) {
-        categoryRevenue[product.category] = {
+      if (!categoryStats[product.category]) {
+        categoryStats[product.category] = {
           revenue: 0,
-          products: 0
+          products: 1,
+          orders: 0,
+          quantity: 0
         };
+      } else {
+        categoryStats[product.category].products++;
       }
-      categoryRevenue[product.category].products++;
     });
 
-    // Add revenue from orders to categories
-    orders.forEach(order => {
+    // Add sales data to categories
+    allOrders.forEach(order => {
       order.items.forEach(item => {
         const product = products.find(p => p._id.toString() === item.product._id.toString());
         if (product) {
-          categoryRevenue[product.category].revenue += item.price * item.quantity;
+          categoryStats[product.category].revenue += item.price * item.quantity;
+          categoryStats[product.category].orders++;
+          categoryStats[product.category].quantity += item.quantity;
         }
       });
     });
 
-    analytics.categoryPerformance = Object.entries(categoryRevenue).map(([category, data]) => ({
+    const categoryPerformance = Object.entries(categoryStats).map(([category, data]) => ({
       category,
       revenue: data.revenue,
       products: data.products,
-      growth: (Math.random() * 20 - 5).toFixed(1) // Mock growth for now
-    }));
+      orders: data.orders,
+      averagePrice: data.revenue / Math.max(data.quantity, 1),
+      growth: Math.round((Math.random() * 20 - 5) * 10) / 10 // Mock growth - would need historical data
+    })).sort((a, b) => b.revenue - a.revenue);
 
-    // Generate sales data (mock for now)
+    // Generate realistic sales data based on actual orders
     const generateSalesData = (type) => {
       const data = [];
-      const days = type === 'daily' ? 30 : type === 'weekly' ? 12 : 6;
-      for (let i = 0; i < days; i++) {
+      const periods = type === 'daily' ? 30 : type === 'weekly' ? 12 : 6;
+      const periodMs = type === 'daily' ? 24 * 60 * 60 * 1000 : type === 'weekly' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+      
+      for (let i = 0; i < periods; i++) {
+        const periodStart = new Date(now.getTime() - (periods - i) * periodMs);
+        const periodEnd = new Date(now.getTime() - (periods - i - 1) * periodMs);
+        
+        let periodRevenue = 0;
+        let periodOrders = 0;
+        
+        currentOrders.forEach(order => {
+          const orderDate = new Date(order.createdAt);
+          if (orderDate >= periodStart && orderDate < periodEnd) {
+            order.items.forEach(item => {
+              if (productIds.some(id => id.toString() === item.product._id.toString())) {
+                periodRevenue += item.price * item.quantity;
+                periodOrders++;
+              }
+            });
+          }
+        });
+        
         data.push({
-          date: new Date(now.getTime() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          revenue: Math.floor(Math.random() * 500) + 100,
-          orders: Math.floor(Math.random() * 10) + 1
+          date: periodStart.toISOString().split('T')[0],
+          revenue: periodRevenue,
+          orders: periodOrders
         });
       }
+      
       return data;
     };
 
-    analytics.salesData = {
-      daily: generateSalesData('daily'),
-      weekly: generateSalesData('weekly'),
-      monthly: generateSalesData('monthly')
+    // Compile final analytics
+    const analytics = {
+      overview: {
+        totalRevenue: Math.round(currentRevenue * 100) / 100,
+        totalOrders: currentOrders.length,
+        totalProducts: products.length,
+        averageRating: reviewStats.averageRating,
+        monthlyGrowth: Math.round(revenueGrowth * 10) / 10,
+        conversionRate: Math.round(conversionRate * 10) / 10
+      },
+      salesData: {
+        daily: generateSalesData('daily'),
+        weekly: generateSalesData('weekly'),
+        monthly: generateSalesData('monthly')
+      },
+      topProducts,
+      categoryPerformance,
+      customerInsights: {
+        totalCustomers: customerSet.size,
+        repeatCustomers: repeatCustomers,
+        averageOrderValue: Math.round((currentOrders.length > 0 ? totalOrderValue / currentOrders.length : 0) * 100) / 100,
+        customerSatisfaction: reviewStats.customerSatisfaction
+      },
+      inventoryMetrics: {
+        lowStockItems,
+        outOfStockItems,
+        totalInventoryValue: Math.round(totalInventoryValue * 100) / 100,
+        inventoryTurnover: Math.round(inventoryTurnover * 100) / 100
+      }
     };
 
     console.log('Analytics calculated successfully');
     res.json(analytics);
   } catch (error) {
     console.error('Analytics error:', error);
-    res.status(500).json({ message: 'Failed to fetch analytics', error: error.message });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch analytics', 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };

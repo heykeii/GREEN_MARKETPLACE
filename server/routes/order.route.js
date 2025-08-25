@@ -1,0 +1,30 @@
+import express from 'express';
+import {
+    createOrder,
+    getUserOrders,
+    getOrderById,
+    updateOrderStatus,
+    getAllOrders,
+    getSellerOrders,
+    cancelOrder
+} from '../controllers/order.controller.js';
+import { protect } from '../middleware/auth.middleware.js';
+import { isAdmin } from '../middleware/admin.middleware.js';
+
+const router = express.Router();
+
+// Customer routes
+router.post('/create', protect, createOrder);
+router.get('/my-orders', protect, getUserOrders);
+router.get('/:orderId', protect, getOrderById);
+router.put('/:orderId/cancel', protect, cancelOrder);
+
+// Seller routes
+router.get('/seller/orders', protect, getSellerOrders);
+router.put('/seller/:orderId/status', protect, updateOrderStatus);
+
+// Admin routes
+router.get('/admin/all', protect, isAdmin, getAllOrders);
+router.put('/admin/:orderId/status', protect, isAdmin, updateOrderStatus);
+
+export default router;

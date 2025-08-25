@@ -25,7 +25,10 @@ export const protect = async (req, res, next) => {
         }
 
         if (!token) {
-            return res.status(401).json({ message: "Authentication required" });
+            return res.status(401).json({ 
+                success: false,
+                message: "Authentication required" 
+            });
         }
 
         try {
@@ -34,7 +37,10 @@ export const protect = async (req, res, next) => {
             // Fetch user from database to get role and other info
             const user = await User.findById(decoded.userId).select('-password');
             if (!user) {
-                return res.status(401).json({ message: "User not found" });
+                return res.status(401).json({ 
+                    success: false,
+                    message: "User not found" 
+                });
             }
 
             req.user = user;
@@ -42,13 +48,20 @@ export const protect = async (req, res, next) => {
         } catch (error) {
             if (error.name === "TokenExpiredError") {
                 res.clearCookie("token");
-                return res.status(401).json({ message: "Token expired. Please login again." });
+                return res.status(401).json({ 
+                    success: false,
+                    message: "Token expired. Please login again." 
+                });
             }
             throw error;
         }
     } catch (error) {
         console.error("Authentication error:", error);
-        res.status(401).json({ message: "Authentication failed" });
+        res.status(401).json({ 
+            success: false,
+            message: "Authentication failed",
+            error: error.message
+        });
     }
 }; 
 

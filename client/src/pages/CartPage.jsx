@@ -6,25 +6,33 @@ import Navbar from '@/components/Navbar';
 import { FaTrash, FaShoppingCart } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import Footer from '@/components/Footer';
 
 const CartPage = () => {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
 
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const token = localStorage.getItem('token');
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const token = localStorage.getItem('token');
+    
+    const controller = new AbortController();
+    
     const fetchCart = async () => {
       if (user && token) {
         try {
           const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal
           });
           setCart(res.data.cart || []);
           localStorage.setItem('cart', JSON.stringify(res.data.cart || []));
         } catch (err) {
+          if (err.name === 'CanceledError') return;
+          console.error('Fetch cart error:', err);
           setCart([]);
         }
       } else {
@@ -32,7 +40,10 @@ const CartPage = () => {
         setCart(stored);
       }
     };
+    
     fetchCart();
+    
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -42,7 +53,12 @@ const CartPage = () => {
   const updateCart = async (newCart, action, productId) => {
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
+    localStorage.setItem('lastCartUpdate', Date.now().toString());
     window.dispatchEvent(new Event('cartUpdated'));
+    
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const token = localStorage.getItem('token');
+    
     if (user && token) {
       try {
         if (action === 'update') {
@@ -58,7 +74,10 @@ const CartPage = () => {
           });
         }
       } catch (err) {
-        // Optionally show error
+        console.error('Update cart error:', err);
+        if (err.response?.status === 401) {
+          navigate('/login');
+        }
       }
     }
   };
@@ -77,7 +96,21 @@ const CartPage = () => {
   };
 
   const handleCheckout = () => {
-    toast.success('Checkout not implemented');
+    if (cart.length === 0) {
+      toast.error('Your cart is empty');
+      return;
+    }
+    
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const token = localStorage.getItem('token');
+    
+    if (!user || !token) {
+      toast.error('Please login to checkout');
+      navigate('/login');
+      return;
+    }
+    
+    navigate('/checkout');
   };
 
   return (

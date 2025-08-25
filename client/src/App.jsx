@@ -22,6 +22,11 @@ import SearchResults from './pages/SearchResults';
 import AdminSellerVerification from './pages/AdminSellerVerification';
 import AdminUserManagement from './pages/AdminUserManagement';
 import Products from './pages/Products';
+import CheckoutPage from './pages/CheckoutPage';
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailsPage from './pages/OrderDetailsPage';
+import AdminOrderManagement from './pages/AdminOrderManagement';
+import SellerOrderManagement from './pages/SellerOrderManagement';
 
 const App = () => {
   return (
@@ -38,7 +43,11 @@ const App = () => {
         <Route path="/profile/:userId" element={<PublicProfile />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/seller/create-product" element={<CreateProduct />} />
+        <Route path="/seller/orders" element={<SellerOrderManagement />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:productId" element={<ProductPage />} />
         <Route path="/search" element={<SearchResults />} />
@@ -71,6 +80,14 @@ const App = () => {
           element={
             <ProtectedAdminRoute>
               <AdminUserManagement />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/order-management" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminOrderManagement />
             </ProtectedAdminRoute>
           }
         />

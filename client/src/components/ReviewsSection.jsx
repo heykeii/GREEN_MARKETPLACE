@@ -40,7 +40,7 @@ const ReviewsSection = ({ productId, currentUser = null }) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `/api/v1/reviews/product/${productId}?page=${page}&limit=10&sortBy=${sort}`
+        `${import.meta.env.VITE_API_URL}/api/v1/reviews/product/${productId}?page=${page}&limit=10&sortBy=${sort}`
       );
       
       if (response.data.success) {
@@ -70,8 +70,8 @@ const ReviewsSection = ({ productId, currentUser = null }) => {
     if (!currentUser) return;
     
     try {
-      const token = localStorage.getItem('userToken');
-      const response = await axios.get('/api/v1/reviews/reviewable', {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/reviews/reviewable`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -90,7 +90,34 @@ const ReviewsSection = ({ productId, currentUser = null }) => {
 
   useEffect(() => {
     fetchReviews(currentPage, sortBy);
-  }, [currentPage, sortBy]);
+  }, [currentPage, sortBy, productId]);
+
+  // Listen for new reviews submitted from other pages
+  useEffect(() => {
+    const checkForNewReviews = () => {
+      const newReviewFlag = localStorage.getItem('newReviewSubmitted');
+      if (newReviewFlag) {
+        // Remove the flag and refresh reviews
+        localStorage.removeItem('newReviewSubmitted');
+        fetchReviews(1, sortBy);
+        fetchReviewableProducts();
+        setCurrentPage(1);
+      }
+    };
+
+    // Check immediately and set up interval to check periodically
+    checkForNewReviews();
+    const interval = setInterval(checkForNewReviews, 2000); // Check every 2 seconds
+
+    // Listen for focus events to check when user returns to tab
+    const handleFocus = () => checkForNewReviews();
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [sortBy]);
 
   const handleSortChange = (newSort) => {
     setSortBy(newSort);

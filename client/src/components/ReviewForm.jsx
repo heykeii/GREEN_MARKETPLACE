@@ -144,7 +144,7 @@ const ReviewForm = ({
         submitData.append('images', image);
       });
 
-      const token = localStorage.getItem('userToken');
+      const token = localStorage.getItem('token');
       if (!token) {
         toast.error('Please login to submit a review');
         return;
@@ -161,14 +161,14 @@ const ReviewForm = ({
       if (existingReview) {
         // Update existing review
         response = await axios.put(
-          `/api/v1/reviews/${existingReview._id}`,
+          `${import.meta.env.VITE_API_URL}/api/v1/reviews/${existingReview._id}`,
           submitData,
           config
         );
       } else {
         // Create new review
         response = await axios.post(
-          '/api/v1/reviews',
+          `${import.meta.env.VITE_API_URL}/api/v1/reviews`,
           submitData,
           config
         );

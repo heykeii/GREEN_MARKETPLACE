@@ -46,7 +46,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -108,6 +108,20 @@ const AdminDashboard = () => {
               </CardContent>
             </Link>
           </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <Link to="/admin/order-management">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <ShoppingBag className="h-8 w-8 text-orange-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Order Management</p>
+                    <p className="text-sm font-medium text-orange-600">Manage Orders</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
         </div>
 
         {/* Main Content */}
@@ -125,8 +139,8 @@ const AdminDashboard = () => {
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Review pending seller applications</li>
                   <li>• Monitor platform statistics</li>
-                  <li>• Manage user accounts</li>
-                  <li>• <Link to="/admin/user-management" className="underline">Manage Users</Link></li>
+                  <li>• <Link to="/admin/user-management" className="underline">Manage user accounts</Link></li>
+                  <li>• <Link to="/admin/order-management" className="underline">Manage orders</Link></li>
                 </ul>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">

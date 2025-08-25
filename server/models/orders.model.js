@@ -48,6 +48,12 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
     
+    // Order Number
+    orderNumber: {
+        type: String,
+        unique: true
+    },
+    
     // Order Status
     status: {
         type: String,
@@ -55,6 +61,40 @@ const orderSchema = new mongoose.Schema({
         default: 'pending'
     },
     
+    // Shipping Address
+    shippingAddress: {
+        fullName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        phone: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        address: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        city: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        province: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        zipCode: {
+            type: String,
+            required: true,
+            trim: true
+        }
+    },
+
     // Notes
     notes: {
         type: String,
@@ -78,7 +118,7 @@ const orderSchema = new mongoose.Schema({
 
 // Generate order number
 orderSchema.pre('save', async function(next) {
-    if (this.isNew) {
+    if (this.isNew && !this.orderNumber) {
         const count = await mongoose.model('Order').countDocuments();
         this.orderNumber = `GM${Date.now()}${count + 1}`;
     }

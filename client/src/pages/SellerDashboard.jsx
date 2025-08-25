@@ -74,6 +74,37 @@ const SellerDashboard = () => {
 
   const navigate = useNavigate();
 
+  // Helper function to get empty analytics data
+  const getEmptyAnalyticsData = () => ({
+    overview: {
+      totalRevenue: 0,
+      totalOrders: 0,
+      totalProducts: approvedProducts.length,
+      averageRating: 0,
+      monthlyGrowth: 0,
+      conversionRate: 0
+    },
+    salesData: {
+      daily: [],
+      weekly: [],
+      monthly: []
+    },
+    topProducts: [],
+    categoryPerformance: [],
+    customerInsights: {
+      totalCustomers: 0,
+      repeatCustomers: 0,
+      averageOrderValue: 0,
+      customerSatisfaction: 0
+    },
+    inventoryMetrics: {
+      lowStockItems: 0,
+      outOfStockItems: 0,
+      totalInventoryValue: 0,
+      inventoryTurnover: 0
+    }
+  });
+
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
     if (!storedUser || !storedUser.isSeller || storedUser.sellerStatus !== 'verified') {
@@ -133,16 +164,26 @@ const SellerDashboard = () => {
     setAnalyticsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      console.log('Fetching analytics with token:', token ? 'present' : 'missing');
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
       
-      // First check seller status for debugging
-      try {
-        const statusResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/debug-status`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('Seller debug status:', statusResponse.data);
-      } catch (statusError) {
-        console.error('Failed to check seller status:', statusError.response?.data || statusError.message);
+      console.log('Fetching analytics for user:', {
+        hasToken: !!token,
+        userId: user?._id,
+        isSeller: user?.isSeller,
+        sellerStatus: user?.sellerStatus
+      });
+
+      // Check if user is verified seller before making request
+      if (!user || !user.isSeller) {
+        toast.error('You must be a seller to access analytics.');
+        setAnalyticsData(getEmptyAnalyticsData());
+        return;
+      }
+
+      if (user.sellerStatus !== 'verified') {
+        toast.warning('Analytics are available only for verified sellers. Please complete your seller verification.');
+        setAnalyticsData(getEmptyAnalyticsData());
+        return;
       }
       
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/analytics?timeframe=${analyticsTimeframe}`, {
@@ -151,7 +192,13 @@ const SellerDashboard = () => {
       console.log('Analytics response:', response.data);
       setAnalyticsData(response.data);
     } catch (error) {
-      console.error('Failed to fetch analytics:', error.response?.data || error.message);
+      console.error('Analytics fetch error:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
       
       if (error.response?.status === 401) {
         toast.error('Authentication failed. Please login again.');
@@ -162,45 +209,61 @@ const SellerDashboard = () => {
       }
       
       if (error.response?.status === 403) {
-        toast.error('You must be a verified seller to access analytics.');
+        toast.error(`Access denied: ${error.response?.data?.message || 'You must be a verified seller to access analytics.'}`);
         return;
       }
       
-      // For now, use mock data until backend is implemented
-      const mockTopProducts = await generateMockTopProducts();
-      setAnalyticsData({
-        overview: {
-          totalRevenue: 0, // No revenue since no orders
-          totalOrders: 0, // No orders since this is mock data
-          totalProducts: 0, // Will be updated after products are fetched
-          averageRating: 0, // Will be calculated from real reviews
-          monthlyGrowth: 0, // No growth since no orders
-          conversionRate: 0 // No conversion since no orders
-        },
-        salesData: {
-          daily: generateMockSalesData('daily'),
-          weekly: generateMockSalesData('weekly'),
-          monthly: generateMockSalesData('monthly')
-        },
-        topProducts: mockTopProducts,
-        categoryPerformance: [],
-        customerInsights: {
-          totalCustomers: 0, // No customers since no orders
-          repeatCustomers: 0, // No repeat customers since no orders
-          averageOrderValue: 0, // No average since no orders
-          customerSatisfaction: 0 // Will be calculated from real reviews
-        },
-        inventoryMetrics: {
-          lowStockItems: 3,
-          outOfStockItems: 1,
-          totalInventoryValue: 8500,
-          inventoryTurnover: 0 // No turnover since no orders
-        }
-      });
+      if (error.response?.status === 500) {
+        toast.error('Analytics service is temporarily unavailable. Please try again later.');
+        console.error('Server error details:', error.response?.data);
+        return;
+      }
+      
+      // For other errors, show detailed error message
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load analytics data';
+      toast.error(`Analytics Error: ${errorMessage}`);
+      
+      // Set default/empty analytics data
+      setAnalyticsData(getEmptyAnalyticsData());
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [analyticsTimeframe, navigate]);
+  }, [analyticsTimeframe, navigate, approvedProducts.length]);
+
+  // Debug function to check seller status
+  const checkSellerStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/debug-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      console.log('Seller status check:', response.data);
+      
+      if (!response.data.canAccessAnalytics) {
+        console.log('User cannot access analytics:', {
+          isSeller: response.data.isSeller,
+          sellerStatus: response.data.sellerStatus
+        });
+      }
+    } catch (error) {
+      console.error('Seller status check failed:', error);
+    }
+  }, []);
+
+  // Fetch analytics when timeframe changes
+  useEffect(() => {
+    if (user && user.isSeller && user.sellerStatus === 'verified') {
+      fetchAnalytics();
+    } else {
+      console.log('User not eligible for analytics:', {
+        hasUser: !!user,
+        isSeller: user?.isSeller,
+        sellerStatus: user?.sellerStatus
+      });
+      // Check actual server status
+      checkSellerStatus();
+    }
+  }, [analyticsTimeframe, fetchAnalytics, user, checkSellerStatus]);
 
   // Mock data generators for development
   const generateMockSalesData = (type) => {
@@ -999,6 +1062,15 @@ const SellerDashboard = () => {
                   <div className="text-sm">Total Products</div>
                   <div className="text-3xl font-bold">{approvedProducts.length + pendingProducts.length}</div>
                 </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => navigate('/seller/orders')}
+                    className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 rounded-xl font-semibold text-lg"
+                    size="lg"
+                  >
+                    <FaShoppingBag className="mr-2 h-5 w-5" />
+                    Orders
+                  </Button>
                 <Button
                   onClick={() => navigate('/seller/create-product')}
                   className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 rounded-xl font-semibold text-lg"
@@ -1007,6 +1079,7 @@ const SellerDashboard = () => {
                   <FaPlus className="mr-2 h-5 w-5" />
                   New Product
                 </Button>
+                </div>
               </div>
             </div>
           </div>

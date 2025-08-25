@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart, FaBox } from 'react-icons/fa';
 
 const Navbar = ({ onProductsClick, onAboutClick }) => {
   const navigate = useNavigate();
@@ -33,34 +33,61 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
   }, []);
 
   useEffect(() => {
-    // Cart count logic
+    let timeoutId = null;
+    
+    // Cart count logic with debouncing
     const updateCartCount = async () => {
       try {
         const token = localStorage.getItem('token');
         const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
         let cart = [];
+        
         if (currentUser && token) {
-          // Fetch latest cart from API to avoid stale localStorage values
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          cart = res.data.cart || [];
-          localStorage.setItem('cart', JSON.stringify(cart));
+          // Only fetch from API if we don't have recent localStorage data
+          const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+          const lastCartUpdate = localStorage.getItem('lastCartUpdate');
+          const isRecentUpdate = lastCartUpdate && (Date.now() - parseInt(lastCartUpdate)) < 5000; // 5 seconds
+          
+          if (isRecentUpdate && Array.isArray(storedCart)) {
+            cart = storedCart;
+          } else {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            cart = res.data.cart || [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem('lastCartUpdate', Date.now().toString());
+          }
         } else {
           cart = JSON.parse(localStorage.getItem('cart') || '[]');
         }
         setCartCount(Array.isArray(cart) ? cart.length : 0);
       } catch (err) {
-        setCartCount(0);
+        console.error('Cart count update error:', err);
+        // Fallback to localStorage
+        const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        setCartCount(Array.isArray(storedCart) ? storedCart.length : 0);
       }
     };
+    
+    // Debounced cart update function
+    const debouncedCartUpdate = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateCartCount, 500); // 500ms debounce
+    };
+    
     updateCartCount();
-    const onCartUpdated = () => updateCartCount();
+    
+    const onCartUpdated = debouncedCartUpdate;
+    const onStorageChange = debouncedCartUpdate;
+    
     window.addEventListener('cartUpdated', onCartUpdated);
-    window.addEventListener('storage', onCartUpdated);
+    window.addEventListener('storage', onStorageChange);
+    
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
       window.removeEventListener('cartUpdated', onCartUpdated);
-      window.removeEventListener('storage', onCartUpdated);
+      window.removeEventListener('storage', onStorageChange);
     };
   }, []);
 
@@ -203,6 +230,13 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
                   >
                     <FaUser className="text-emerald-600" /> Profile Settings
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/orders")}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
+                  >
+                    <FaBox className="text-emerald-600" /> My Orders
                   </DropdownMenuItem>
                   
                   <DropdownMenuSeparator className="my-2" />
