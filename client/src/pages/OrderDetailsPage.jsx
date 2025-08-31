@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ReviewForm from '@/components/ReviewForm';
+import ReportButton from '@/components/ReportButton';
 import { 
   FaBox, 
   FaCalendar, 
@@ -16,7 +17,8 @@ import {
   FaStickyNote,
   FaTimes,
   FaStar,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -247,6 +249,21 @@ const OrderDetailsPage = () => {
                   Cancel Order
                 </Button>
               )}
+              {order.status === 'completed' && (
+                <ReportButton
+                  reportedItemType="order"
+                  reportedItemId={order._id}
+                  reportedItemName={`Order #${order.orderNumber}`}
+                  variant="outline"
+                  className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                  onSuccess={() => {
+                    toast.success('Order report submitted successfully!');
+                  }}
+                >
+                  <FaExclamationTriangle className="mr-2" />
+                  Report Order
+                </ReportButton>
+              )}
             </div>
           </div>
 
@@ -299,17 +316,34 @@ const OrderDetailsPage = () => {
                         <p className="font-bold text-emerald-700 text-lg">
                           ₱{(item.price * item.quantity).toFixed(2)}
                         </p>
-                        {canReviewItems() && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => openReviewModal(item.product._id, item.product.name)}
-                            className="mt-2"
-                          >
-                            <FaStar className="mr-1" />
-                            Review
-                          </Button>
-                        )}
+                        <div className="flex flex-col gap-2 mt-2">
+                          {canReviewItems() && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openReviewModal(item.product._id, item.product.name)}
+                            >
+                              <FaStar className="mr-1" />
+                              Review
+                            </Button>
+                          )}
+                          {order.status === 'completed' && (
+                            <ReportButton
+                              reportedItemType="product"
+                              reportedItemId={item.product._id}
+                              reportedItemName={item.product.name}
+                              variant="outline"
+                              size="sm"
+                              className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                              onSuccess={() => {
+                                toast.success('Product report submitted successfully!');
+                              }}
+                            >
+                              <FaExclamationTriangle className="mr-1" />
+                              Report Product
+                            </ReportButton>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

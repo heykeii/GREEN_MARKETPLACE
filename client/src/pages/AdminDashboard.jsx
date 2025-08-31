@@ -4,7 +4,8 @@ import {
   Users, 
   ShoppingBag, 
   CheckCircle, 
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import axios from 'axios';
 import { AdminNavbar } from '@/components/Navbar';
@@ -15,7 +16,9 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalSellers: 0,
     pendingApplications: 0,
-    verifiedSellers: 0
+    verifiedSellers: 0,
+    totalReports: 0,
+    pendingReports: 0
   });
 
   useEffect(() => {
@@ -110,13 +113,13 @@ const AdminDashboard = () => {
           </Card>
 
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <Link to="/admin/order-management">
+            <Link to="/admin/report-management">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <ShoppingBag className="h-8 w-8 text-orange-500" />
+                  <AlertTriangle className="h-8 w-8 text-red-500" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Order Management</p>
-                    <p className="text-sm font-medium text-orange-600">Manage Orders</p>
+                    <p className="text-sm font-medium text-gray-600">Report Management</p>
+                    <p className="text-sm font-medium text-red-600">Manage Reports</p>
                   </div>
                 </div>
               </CardContent>
@@ -140,7 +143,7 @@ const AdminDashboard = () => {
                   <li>• Review pending seller applications</li>
                   <li>• Monitor platform statistics</li>
                   <li>• <Link to="/admin/user-management" className="underline">Manage user accounts</Link></li>
-                  <li>• <Link to="/admin/order-management" className="underline">Manage orders</Link></li>
+                  <li>• <Link to="/admin/report-management" className="underline">Manage reports & complaints</Link></li>
                 </ul>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
@@ -149,6 +152,7 @@ const AdminDashboard = () => {
                   <li>• {stats.pendingApplications} applications pending review</li>
                   <li>• {stats.verifiedSellers} verified sellers active</li>
                   <li>• {stats.totalUsers} total registered users</li>
+                  <li>• {stats.pendingReports} reports pending review</li>
                 </ul>
               </div>
             </div>

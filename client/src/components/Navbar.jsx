@@ -13,7 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart, FaBox } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart, FaBox, FaExclamationTriangle, FaBell } from 'react-icons/fa';
+import NotificationIcon from './NotificationIcon';
 
 const Navbar = ({ onProductsClick, onAboutClick }) => {
   const navigate = useNavigate();
@@ -168,6 +169,9 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
 
           {/* Right Section */}
           <div className="flex items-center gap-4">
+            {/* Notification Icon */}
+            {user && <NotificationIcon />}
+            
             {/* Cart Icon */}
             <button
               onClick={() => user ? navigate('/cart') : null}
@@ -238,6 +242,20 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   >
                     <FaBox className="text-emerald-600" /> My Orders
                   </DropdownMenuItem>
+                  
+                                     <DropdownMenuItem 
+                     onClick={() => navigate("/my-reports")}
+                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
+                   >
+                     <FaExclamationTriangle className="text-emerald-600" /> Reports & Complaints
+                   </DropdownMenuItem>
+                   
+                   <DropdownMenuItem 
+                     onClick={() => navigate("/notifications")}
+                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
+                   >
+                     <FaBell className="text-emerald-600" /> Notifications
+                   </DropdownMenuItem>
                   
                   <DropdownMenuSeparator className="my-2" />
                   
@@ -332,6 +350,87 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   {item.label}
                 </button>
               ))}
+              
+              {/* User-specific mobile menu items */}
+              {user && (
+                <>
+                  <div className="border-t border-gray-200 pt-3 mt-3">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">My Account</div>
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      Profile Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/orders');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      My Orders
+                    </button>
+                                         <button
+                       onClick={() => {
+                         navigate('/my-reports');
+                         setIsMobileMenuOpen(false);
+                       }}
+                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                     >
+                       Reports & Complaints
+                     </button>
+                     <button
+                       onClick={() => {
+                         navigate('/notifications');
+                         setIsMobileMenuOpen(false);
+                       }}
+                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                     >
+                       Notifications
+                     </button>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Seller Portal</div>
+                    <button
+                      onClick={() => {
+                        navigate('/seller/application');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      Seller Application
+                    </button>
+                    {user.isSeller && user.sellerStatus === 'verified' && (
+                      <button
+                        onClick={() => {
+                          navigate('/seller/dashboard');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                      >
+                        Seller Dashboard
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-3">
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-red-700 font-medium hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -365,7 +464,7 @@ export const AdminNavbar = () => {
     { label: "Product Verification", path: "/admin/product-verification" },
     { label: "Seller Verification", path: "/admin/seller-verification" },
     { label: "User Management", path: "/admin/user-management" },
-    { label: "Reports & Complaints", path: "/admin/reports" },
+    { label: "Reports & Complaints", path: "/admin/report-management" },
   ];
 
   return (

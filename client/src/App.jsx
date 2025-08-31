@@ -25,8 +25,11 @@ import Products from './pages/Products';
 import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
-import AdminOrderManagement from './pages/AdminOrderManagement';
+
+import AdminReportManagement from './pages/AdminReportManagement';
+import MyReports from './pages/MyReports';
 import SellerOrderManagement from './pages/SellerOrderManagement';
+import NotificationsPage from './pages/NotificationsPage';
 
 const App = () => {
   return (
@@ -41,9 +44,12 @@ const App = () => {
         <Route path="/seller/application" element={<SellerApplicationForm />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<PublicProfile />} />
+        <Route path="/my-reports" element={<MyReports />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/seller/create-product" element={<CreateProduct />} />
         <Route path="/seller/orders" element={<SellerOrderManagement />} />
+        <Route path="/seller/orders/:orderId" element={<SellerOrderManagement />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/orders" element={<OrdersPage />} />
@@ -83,11 +89,12 @@ const App = () => {
             </ProtectedAdminRoute>
           }
         />
+
         <Route 
-          path="/admin/order-management" 
+          path="/admin/report-management" 
           element={
             <ProtectedAdminRoute>
-              <AdminOrderManagement />
+              <AdminReportManagement />
             </ProtectedAdminRoute>
           }
         />
