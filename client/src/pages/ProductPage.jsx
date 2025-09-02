@@ -31,7 +31,8 @@ import {
   FaToggleOn,
   FaToggleOff,
   FaTimes,
-  FaImage
+  FaImage,
+  FaEnvelope
 } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -159,6 +160,18 @@ const ProductPage = () => {
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const handleMessageSeller = () => {
+    if (!seller) return;
+    const email = seller.email;
+    if (email) {
+      const subject = encodeURIComponent(`Inquiry about ${product?.name || 'your product'}`);
+      const body = encodeURIComponent('Hi, I would like to ask about this product.');
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    } else {
+      toast.error('Seller has no contact email available.');
     }
   };
 
@@ -454,22 +467,34 @@ const ProductPage = () => {
                       </Badge>
                       {/* Seller Avatar & Link */}
                       {seller && (
-                        <button
-                          onClick={() => navigate(`/profile/${seller._id}`)}
-                          className="flex items-center gap-2 hover:opacity-90"
-                          title={`${seller.firstName} ${seller.lastName}`}
-                        >
-                          <img
-                            src={seller.avatar || '/default-avatar.png'}
-                            onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }}
-                            alt="seller"
-                            className="w-8 h-8 rounded-full border"
-                          />
-                          <span className="text-sm text-gray-700 flex items-center gap-1">
-                            <FaUser className="text-emerald-600" />
-                            {seller.firstName}
-                          </span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/profile/${seller._id}`)}
+                            className="flex items-center gap-2 hover:opacity-90"
+                            title={`${seller.firstName} ${seller.lastName}`}
+                          >
+                            <img
+                              src={seller.avatar || '/default-avatar.png'}
+                              onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }}
+                              alt="seller"
+                              className="w-8 h-8 rounded-full border"
+                            />
+                            <span className="text-sm text-gray-700 flex items-center gap-1">
+                              <FaUser className="text-emerald-600" />
+                              {seller.firstName}
+                            </span>
+                          </button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            onClick={handleMessageSeller}
+                            title="Message Seller"
+                          >
+                            <FaEnvelope className="mr-1" />
+                            Message
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
