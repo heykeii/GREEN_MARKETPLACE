@@ -15,6 +15,8 @@ import productRoutes from './routes/product.route.js'
 import cartRoutes from './routes/cart.route.js'
 import reviewRoutes from './routes/review.route.js'
 import orderRoutes from './routes/order.route.js'
+import reportRoutes from './routes/report.route.js'
+import notificationRoutes from './routes/notification.route.js'
 
 dotenv.config();
 
@@ -45,6 +47,8 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/orders", orderRoutes);
+app.use("/api/v1/reports", reportRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

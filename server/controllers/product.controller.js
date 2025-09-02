@@ -368,6 +368,24 @@ export const getRelatedProducts = async (req, res) => {
   }
 };
 
+// Get products by seller (public)
+export const getProductsBySellerPublic = async (req, res) => {
+  try {
+    const { sellerId } = req.params;
+    if (!sellerId) {
+      return res.status(400).json({ success: false, message: 'Seller ID is required' });
+    }
+
+    const products = await Product.find({ seller: sellerId })
+      .select('name images price category quantity createdAt')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ success: true, products });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch seller products', error: error.message });
+  }
+};
+
 
 
 

@@ -13,6 +13,7 @@ import {
   searchProducts,
   filterProducts,
   getRelatedProducts
+  , getProductsBySellerPublic
 } from '../controllers/product.controller.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -34,5 +35,7 @@ router.get('/view/:productId', getProductById);
 router.get('/search', searchProducts);
 router.get('/filter', filterProducts);
 router.get('/related/:productId', getRelatedProducts);
+// Public: products by seller
+router.get('/by-seller/:sellerId', getProductsBySellerPublic);
 
 export default router;

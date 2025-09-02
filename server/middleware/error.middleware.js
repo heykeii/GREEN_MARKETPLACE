@@ -14,4 +14,22 @@ export const notFound = (req, res) => {
     success: false,
     message: "Route not found"
   });
+};
+
+// Helper function for error responses
+export const errorResponse = (res, status, message, error = null, details = null) => {
+  const response = {
+    success: false,
+    message: message
+  };
+
+  if (error && process.env.NODE_ENV === "development") {
+    response.error = error;
+  }
+
+  if (details) {
+    response.details = details;
+  }
+
+  return res.status(status).json(response);
 }; 

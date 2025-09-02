@@ -1,6 +1,7 @@
 import Order from '../models/orders.model.js';
 import Cart from '../models/cart.model.js';
 import Product from '../models/products.model.js';
+import { NotificationService } from '../utils/notificationService.js';
 
 // Create a new order from cart
 export const createOrder = async (req, res) => {
@@ -89,6 +90,23 @@ export const createOrder = async (req, res) => {
         // Populate order for response
         await order.populate('items.product');
         await order.populate('customer', 'firstName lastName email');
+
+        // Notify sellers about new order
+        try {
+            const sellerIds = new Set();
+            for (const item of validItems) {
+                if (item.product.seller) {
+                    sellerIds.add(item.product.seller.toString());
+                }
+            }
+            
+            for (const sellerId of sellerIds) {
+                await NotificationService.notifyNewOrder(sellerId, order);
+            }
+        } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
+            // Don't fail the order creation if notification fails
+        }
 
         res.status(201).json({
             success: true,
@@ -231,6 +249,9 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
+        // Store old status for notification
+        const oldStatus = order.status;
+
         // Update the order status
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
@@ -238,6 +259,19 @@ export const updateOrderStatus = async (req, res) => {
             { new: true }
         ).populate('items.product', 'name images price')
         .populate('customer', 'firstName lastName email');
+
+        // Notify customer about status change
+        try {
+            await NotificationService.notifyOrderStatusUpdate(
+                order.customer._id,
+                order,
+                status,
+                oldStatus
+            );
+        } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
+            // Don't fail the status update if notification fails
+        }
 
         res.json({
             success: true,
@@ -397,6 +431,23 @@ export const cancelOrder = async (req, res) => {
         // Update order status
         order.status = 'cancelled';
         await order.save();
+
+        // Notify sellers about order cancellation
+        try {
+            const sellerIds = new Set();
+            for (const item of order.items) {
+                if (item.product.seller) {
+                    sellerIds.add(item.product.seller.toString());
+                }
+            }
+            
+            for (const sellerId of sellerIds) {
+                await NotificationService.notifyOrderCancelledByCustomer(sellerId, order);
+            }
+        } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
+            // Don't fail the cancellation if notification fails
+        }
 
         res.json({
             success: true,

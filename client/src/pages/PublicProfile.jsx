@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import noProfile from '@/assets/no_profile.jpg';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import { Button } from '@/components/ui/button';
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 
 const getSocialIcon = (platform) => {
@@ -30,6 +31,7 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [products, setProducts] = useState([]);
   const isAdmin = typeof window !== 'undefined' && localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -39,6 +41,11 @@ const PublicProfile = () => {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/profile/${userId}`);
         setProfile(res.data.profile);
         setError(null);
+        // fetch seller products
+        try {
+          const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/by-seller/${userId}`);
+          if (prodRes.data?.success) setProducts(prodRes.data.products || []);
+        } catch(e) {}
       } catch (e) {
         setError('Failed to load profile.');
       } finally {
@@ -166,6 +173,28 @@ const PublicProfile = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Seller Products */}
+        <div className="max-w-5xl mx-auto mt-8">
+          <h2 className="text-xl font-bold text-green-800 mb-4">Products by {profile.firstName}</h2>
+          {products.length === 0 ? (
+            <div className="text-center text-green-700">No products listed yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {products.map((p) => (
+                <div key={p._id} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition p-3">
+                  <img src={(p.images && p.images[0]) || '/placeholder-product.jpg'} alt={p.name} className="w-full h-40 object-cover rounded" />
+                  <div className="mt-3">
+                    <div className="font-semibold text-gray-900 truncate">{p.name}</div>
+                    <div className="text-emerald-700 font-bold">₱{(p.price||0).toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">{p.category}</div>
+                    <Button onClick={()=>window.location.href=`/product/${p._id}`} variant="outline" className="mt-2 w-full">View</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>

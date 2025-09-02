@@ -4,6 +4,7 @@ import Order from '../models/orders.model.js';
 import Product from '../models/products.model.js';
 import User from '../models/user.model.js';
 import cloudinary from '../utils/cloudinary.js';
+import { NotificationService } from '../utils/notificationService.js';
 
 // Helper function for error responses
 const errorResponse = (res, statusCode, message, error = null, details = null) => {
@@ -130,6 +131,18 @@ export const createReview = async (req, res) => {
       .populate('reviewer', 'firstName lastName profilePicture')
       .populate('product', 'name images')
       .populate('seller', 'firstName lastName');
+
+    // Notify seller about new review
+    try {
+      await NotificationService.notifyNewReview(
+        product.seller._id,
+        populatedReview,
+        product
+      );
+    } catch (notificationError) {
+      console.error('Failed to send notification:', notificationError);
+      // Don't fail the review creation if notification fails
+    }
 
     res.status(201).json({
       success: true,

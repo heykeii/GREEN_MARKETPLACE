@@ -67,6 +67,7 @@ const ProductPage = () => {
   const [editImages, setEditImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [seller, setSeller] = useState(null);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -81,6 +82,15 @@ const ProductPage = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/view/${productId}`);
       setProduct(response.data.product);
+      // fetch seller basic for avatar link if present
+      if (response.data?.product?.seller) {
+        try {
+          const profileRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/profile/${response.data.product.seller}`);
+          setSeller(profileRes.data?.profile || null);
+        } catch (e) {
+          // ignore silently
+        }
+      }
       
       // Check if current user is the seller
       const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -442,6 +452,25 @@ const ProductPage = () => {
                       <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
                         {product.category}
                       </Badge>
+                      {/* Seller Avatar & Link */}
+                      {seller && (
+                        <button
+                          onClick={() => navigate(`/profile/${seller._id}`)}
+                          className="flex items-center gap-2 hover:opacity-90"
+                          title={`${seller.firstName} ${seller.lastName}`}
+                        >
+                          <img
+                            src={seller.avatar || '/default-avatar.png'}
+                            onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }}
+                            alt="seller"
+                            className="w-8 h-8 rounded-full border"
+                          />
+                          <span className="text-sm text-gray-700 flex items-center gap-1">
+                            <FaUser className="text-emerald-600" />
+                            {seller.firstName}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
