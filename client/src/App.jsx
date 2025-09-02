@@ -30,6 +30,8 @@ import AdminReportManagement from './pages/AdminReportManagement';
 import MyReports from './pages/MyReports';
 import SellerOrderManagement from './pages/SellerOrderManagement';
 import NotificationsPage from './pages/NotificationsPage';
+import Messages from './pages/Messages';
+import ChatView from './pages/ChatView';
 
 const App = () => {
   return (
@@ -56,6 +58,8 @@ const App = () => {
         <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:productId" element={<ProductPage />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/messages/:conversationId" element={<ChatView />} />
         <Route path="/search" element={<SearchResults />} />
         <Route 
           path="/admin" 

@@ -17,10 +17,16 @@ import reviewRoutes from './routes/review.route.js'
 import orderRoutes from './routes/order.route.js'
 import reportRoutes from './routes/report.route.js'
 import notificationRoutes from './routes/notification.route.js'
+import chatRoutes from './routes/chat.route.js'
+import http from 'http'
+import { Server as SocketIOServer } from 'socket.io'
+import jwt from 'jsonwebtoken'
+import { setIO } from './utils/socket.js'
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 
 // Middleware
 app.use(cors({
@@ -50,6 +56,7 @@ app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/chat", chatRoutes);
 
 // Test route
 app.get("/api", (req, res) => {
@@ -62,11 +69,45 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
+// Socket.IO setup
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+  }
+});
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+    if (!token) return next(new Error('Unauthorized'));
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = { _id: decoded.userId };
+    next();
+  } catch (err) {
+    next(new Error('Unauthorized'));
+  }
+});
+
+io.on('connection', (socket) => {
+  // Join conversation room
+  socket.on('join_conversation', ({ conversationId }) => {
+    if (conversationId) socket.join(conversationId);
+  });
+
+  // Typing indicator relay
+  socket.on('typing', ({ conversationId, isTyping }) => {
+    if (conversationId) socket.to(conversationId).emit('typing', { userId: socket.user._id, isTyping });
+  });
+});
+
+setIO(io);
+
 // Start server and connect to MongoDB
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
   } catch (error) {

@@ -14,6 +14,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart, FaBox, FaExclamationTriangle, FaBell } from 'react-icons/fa';
+import { FaEnvelope } from 'react-icons/fa';
 import NotificationIcon from './NotificationIcon';
 
 const Navbar = ({ onProductsClick, onAboutClick }) => {
@@ -31,6 +32,37 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Chat unread count polling
+  useEffect(() => {
+    let intervalId;
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+        if (!token) return;
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/chat/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 200 && typeof res.data?.unreadCount === 'number') {
+          const el = document.getElementById('chat-unread-badge');
+          if (el) {
+            const count = res.data.unreadCount;
+            if (count > 0) {
+              el.textContent = count > 99 ? '99+' : String(count);
+              el.classList.remove('hidden');
+            } else {
+              el.classList.add('hidden');
+            }
+          }
+        }
+      } catch (e) {
+        // silent
+      }
+    };
+    fetchUnread();
+    intervalId = setInterval(fetchUnread, 30000);
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -171,6 +203,18 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
           <div className="flex items-center gap-4">
             {/* Notification Icon */}
             {user && <NotificationIcon />}
+            {/* Messages Icon */}
+            {user && (
+              <button
+                onClick={() => navigate('/messages')}
+                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                aria-label="Messages"
+                title="Messages"
+              >
+                <FaEnvelope className="text-2xl text-emerald-600" />
+                <span id="chat-unread-badge" className="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold shadow"></span>
+              </button>
+            )}
             
             {/* Cart Icon */}
             <button
@@ -250,6 +294,13 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                      <FaExclamationTriangle className="text-emerald-600" /> Reports & Complaints
                    </DropdownMenuItem>
                    
+                   <DropdownMenuItem 
+                     onClick={() => navigate("/messages")}
+                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
+                   >
+                     <FaEnvelope className="text-emerald-600" /> Messages
+                   </DropdownMenuItem>
+                  
                    <DropdownMenuItem 
                      onClick={() => navigate("/notifications")}
                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
@@ -382,6 +433,15 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                        className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                      >
                        Reports & Complaints
+                     </button>
+                     <button
+                       onClick={() => {
+                         navigate('/messages');
+                         setIsMobileMenuOpen(false);
+                       }}
+                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                     >
+                       Messages
                      </button>
                      <button
                        onClick={() => {

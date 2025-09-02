@@ -165,14 +165,23 @@ const ProductPage = () => {
 
   const handleMessageSeller = () => {
     if (!seller) return;
-    const email = seller.email;
-    if (email) {
-      const subject = encodeURIComponent(`Inquiry about ${product?.name || 'your product'}`);
-      const body = encodeURIComponent('Hi, I would like to ask about this product.');
-      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-    } else {
-      toast.error('Seller has no contact email available.');
+    // Create/find conversation and navigate
+    const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+    if (!token) {
+      toast.error('Please login to send a message');
+      return;
     }
+    axios.post(`${import.meta.env.VITE_API_URL}/api/v1/chat/conversations`, {
+      recipientId: seller._id,
+      productId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then((res) => {
+      const conversationId = res.data?.conversation?._id;
+      if (conversationId) navigate(`/messages/${conversationId}`);
+    }).catch(() => {
+      toast.error('Unable to start chat');
+    });
   };
 
   const handleEditProduct = () => {
