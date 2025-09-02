@@ -30,7 +30,8 @@ app.use(cors({
 app.use(morgan("dev")); // HTTP request logger
 app.use(
   helmet({
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginOpenerPolicy: false,
+    crossOriginEmbedderPolicy: false,
   })
 );
 app.use(compression()); // Compress responses

@@ -20,17 +20,39 @@ const NotificationIcon = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
+  const getAuthToken = () => localStorage.getItem('token') || localStorage.getItem('admin_token') || '';
+
+  const getTokenSource = () => {
+    if (localStorage.getItem('token')) return 'user';
+    if (localStorage.getItem('admin_token')) return 'admin';
+    return 'none';
+  };
+
   const fetchUnreadCount = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/notifications/unread-count`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       });
       
       if (response.ok) {
         const data = await response.json();
         setUnreadCount(data.unreadCount);
+      } else {
+        const text = await response.text();
+        console.error('[Notifications] Unread count error', {
+          status: response.status,
+          statusText: response.statusText,
+          tokenSource: getTokenSource(),
+          hasToken: !!getAuthToken(),
+          url: `${import.meta.env.VITE_API_URL}/api/v1/notifications/unread-count`,
+          body: text
+        });
+        if (response.status === 401) {
+          // Surface a small, non-intrusive hint once
+          console.warn('Unauthorized fetching unread count. Check token validity and backend auth.');
+        }
       }
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -42,13 +64,26 @@ const NotificationIcon = () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/notifications?limit=10`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       });
       
       if (response.ok) {
         const data = await response.json();
         setNotifications(data.notifications);
+      } else {
+        const text = await response.text();
+        console.error('[Notifications] List error', {
+          status: response.status,
+          statusText: response.statusText,
+          tokenSource: getTokenSource(),
+          hasToken: !!getAuthToken(),
+          url: `${import.meta.env.VITE_API_URL}/api/v1/notifications?limit=10`,
+          body: text
+        });
+        if (response.status === 401) {
+          toast.error('Unauthorized. Please re-login.');
+        }
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -63,7 +98,7 @@ const NotificationIcon = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       });
       
@@ -77,6 +112,16 @@ const NotificationIcon = () => {
           )
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
+      } else {
+        const text = await response.text();
+        console.error('[Notifications] Mark read error', {
+          status: response.status,
+          statusText: response.statusText,
+          tokenSource: getTokenSource(),
+          hasToken: !!getAuthToken(),
+          url: `${import.meta.env.VITE_API_URL}/api/v1/notifications/${notificationId}/read`,
+          body: text
+        });
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -88,7 +133,7 @@ const NotificationIcon = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/notifications/mark-all-read`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       });
       
@@ -96,6 +141,19 @@ const NotificationIcon = () => {
         setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
         setUnreadCount(0);
         toast.success('All notifications marked as read');
+      } else {
+        const text = await response.text();
+        console.error('[Notifications] Mark all read error', {
+          status: response.status,
+          statusText: response.statusText,
+          tokenSource: getTokenSource(),
+          hasToken: !!getAuthToken(),
+          url: `${import.meta.env.VITE_API_URL}/api/v1/notifications/mark-all-read`,
+          body: text
+        });
+        if (response.status === 401) {
+          toast.error('Unauthorized. Please re-login.');
+        }
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
