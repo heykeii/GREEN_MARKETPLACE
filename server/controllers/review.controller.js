@@ -604,3 +604,78 @@ export const toggleReviewVisibility = async (req, res) => {
     return errorResponse(res, 500, 'Internal server error', error.message);
   }
 };
+
+// Seller: Create or update a reply to a review
+export const replyToReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    if (!content || !content.trim()) {
+      return errorResponse(res, 400, 'Reply content is required');
+    }
+
+    const review = await Review.findById(reviewId).populate('seller', '_id');
+    if (!review) {
+      return errorResponse(res, 404, 'Review not found');
+    }
+
+    // Only the seller of the product can reply
+    const sellerId = typeof review.seller === 'object' && review.seller !== null
+      ? review.seller._id
+      : review.seller;
+    if (sellerId.toString() !== userId.toString()) {
+      return errorResponse(res, 403, 'Only the seller can reply to this review');
+    }
+
+    const now = new Date();
+    const update = {
+      sellerReply: review.sellerReply && review.sellerReply.content
+        ? { content: content.trim(), createdAt: review.sellerReply.createdAt || now, updatedAt: now }
+        : { content: content.trim(), createdAt: now, updatedAt: now }
+    };
+
+    const updated = await Review.findByIdAndUpdate(
+      reviewId,
+      update,
+      { new: true }
+    ).populate('reviewer', 'firstName lastName profilePicture');
+
+    return res.json({ success: true, message: 'Reply saved', review: updated });
+  } catch (error) {
+    console.error('Reply to review error:', error);
+    return errorResponse(res, 500, 'Internal server error', error.message);
+  }
+};
+
+// Seller: Delete reply
+export const deleteReply = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const userId = req.user._id;
+
+    const review = await Review.findById(reviewId).populate('seller', '_id');
+    if (!review) {
+      return errorResponse(res, 404, 'Review not found');
+    }
+
+    const sellerId = typeof review.seller === 'object' && review.seller !== null
+      ? review.seller._id
+      : review.seller;
+    if (sellerId.toString() !== userId.toString()) {
+      return errorResponse(res, 403, 'Only the seller can delete this reply');
+    }
+
+    const updated = await Review.findByIdAndUpdate(
+      reviewId,
+      { $unset: { sellerReply: '' } },
+      { new: true }
+    ).populate('reviewer', 'firstName lastName profilePicture');
+
+    return res.json({ success: true, message: 'Reply deleted', review: updated });
+  } catch (error) {
+    console.error('Delete reply error:', error);
+    return errorResponse(res, 500, 'Internal server error', error.message);
+  }
+};

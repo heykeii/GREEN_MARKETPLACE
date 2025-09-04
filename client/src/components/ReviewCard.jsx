@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaThumbsUp, FaFlag, FaEdit, FaTrash, FaUser } from 'react-icons/fa';
+import { FaThumbsUp, FaFlag, FaEdit, FaTrash, FaUser, FaReply } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import StarRating from './StarRating';
@@ -17,6 +17,9 @@ const ReviewCard = ({
       : false
   );
   const [isVoting, setIsVoting] = useState(false);
+  const [replyEditing, setReplyEditing] = useState(false);
+  const [replyText, setReplyText] = useState(review.sellerReply?.content || '');
+  const [savingReply, setSavingReply] = useState(false);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -93,6 +96,52 @@ const ReviewCard = ({
   };
 
   const isOwnReview = currentUser && review.reviewer._id === currentUser._id;
+  const sellerIdOfReview = typeof review.seller === 'object' ? review.seller._id : review.seller;
+  const canReply = currentUser && sellerIdOfReview && sellerIdOfReview === currentUser._id;
+
+  const saveReply = async () => {
+    if (!replyText.trim()) {
+      toast.error('Reply cannot be empty');
+      return;
+    }
+    try {
+      setSavingReply(true);
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
+      const base = import.meta?.env?.VITE_API_URL || '';
+      const res = await axios.post(`${base}/api/v1/reviews/${review._id}/reply`, { content: replyText.trim() }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        toast.success('Reply saved');
+        setReplyEditing(false);
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to save reply');
+    } finally {
+      setSavingReply(false);
+    }
+  };
+
+  const removeReply = async () => {
+    if (!window.confirm('Delete this reply?')) return;
+    try {
+      setSavingReply(true);
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
+      const base = import.meta?.env?.VITE_API_URL || '';
+      const res = await axios.delete(`${base}/api/v1/reviews/${review._id}/reply`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        toast.success('Reply deleted');
+        setReplyText('');
+        setReplyEditing(false);
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to delete reply');
+    } finally {
+      setSavingReply(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
@@ -191,19 +240,81 @@ const ReviewCard = ({
               : 'text-gray-600 hover:bg-gray-100'
           } ${!currentUser ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <FaThumbsUp className="text-xs" />
-          <span>Helpful ({helpfulVotes})</span>
+         
+          
         </button>
 
-        {/* Report button (for other users' reviews) */}
-        {!isOwnReview && currentUser && (
-          <button className="flex items-center gap-2 px-3 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors">
-            <FaFlag className="text-xs" />
-            <span>Report</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canReply ? (
+            <button
+              onClick={() => setReplyEditing(true)}
+              className="flex items-center gap-2 px-3 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+              title="Reply to this review"
+            >
+              <FaReply className="text-xs" />
+              <span>Reply</span>
+            </button>
+          ) : null}
+          {/* Report button (for other users' reviews) */}
+          {!isOwnReview && currentUser ? (
+            <button className="flex items-center gap-2 px-3 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors">
+              <FaFlag className="text-xs" />
+              <span>Report</span>
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Seller Reply Section */}
+      <div className="mt-4 border-t border-gray-100 pt-4">
+        <div className="text-sm font-medium text-gray-700 mb-2">Seller reply</div>
+        {review.sellerReply && review.sellerReply.content && !replyEditing ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-gray-700">
+            {review.sellerReply.content}
+            {canReply ? (
+              <div className="mt-2 flex gap-3">
+                <button onClick={() => setReplyEditing(true)} className="text-xs text-emerald-700 hover:underline">Edit reply</button>
+                <button onClick={removeReply} className="text-xs text-red-600 hover:underline">Delete reply</button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {canReply ? (
+          <div className="mt-2">
+            {(!review.sellerReply || !review.sellerReply.content || replyEditing) ? (
+              <div className="space-y-2">
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Write a reply to this review"
+                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  rows={3}
+                />
+                <div className="flex gap-2">
+                  <button
+                    disabled={savingReply}
+                    onClick={saveReply}
+                    className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {savingReply ? 'Saving...' : 'Save reply'}
+                  </button>
+                  {replyEditing ? (
+                    <button
+                      type="button"
+                      onClick={() => setReplyEditing(false)}
+                      className="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+                    >
+                      Cancel
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
+
   );
 };
 

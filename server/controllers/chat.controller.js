@@ -56,7 +56,8 @@ export const getMessages = async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
 
-    const conversation = await Conversation.findById(conversationId);
+    const conversation = await Conversation.findById(conversationId)
+      .populate('product', 'name price images category');
     if (!conversation || !conversation.participants.map(String).includes(userId.toString())) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
@@ -69,7 +70,7 @@ export const getMessages = async (req, res) => {
       .populate('recipient', 'firstName lastName avatar');
 
     const total = await Message.countDocuments({ conversation: conversationId });
-    return res.json({ success: true, messages: messages.reverse(), page, limit, total });
+    return res.json({ success: true, messages: messages.reverse(), page, limit, total, conversation });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch messages', error: error.message });
   }

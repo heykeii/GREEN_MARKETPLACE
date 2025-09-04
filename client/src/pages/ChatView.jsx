@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useParams, useNavigate } from 'react-router-dom';
 import { joinConversation, onMessage, emitTyping } from '@/lib/socket';
+import { FaShoppingCart, FaTimes, FaQuestion } from 'react-icons/fa';
 
 const ChatView = () => {
   const { conversationId } = useParams();
@@ -11,6 +12,9 @@ const ChatView = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState('');
+  const [conversation, setConversation] = useState(null);
+  const [showProductCard, setShowProductCard] = useState(true);
+  const [attachProductNext, setAttachProductNext] = useState(false);
   const listRef = useRef(null);
   const seenIdsRef = useRef(new Set());
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
@@ -29,6 +33,7 @@ const ChatView = () => {
         msgs.forEach(m => m && m._id && setIds.add(m._id));
         seenIdsRef.current = setIds;
         setMessages(msgs);
+        setConversation(data.conversation);
       }
     } finally {
       setLoading(false);
@@ -64,16 +69,124 @@ const ChatView = () => {
     if (!content) return;
 
     const body = { conversationId, content };
+    if (attachProductNext && conversation?.product?._id) {
+      body.attachments = [{ type: 'product', url: conversation.product._id }];
+    }
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body)
     });
     if (res.ok) {
-      // Do not append here to avoid duplicate with socket echo
       setText('');
+      setAttachProductNext(false);
       emitTyping(conversationId, false);
     }
+  };
+
+  const askProduct = (question) => {
+    setText(question);
+    setAttachProductNext(true);
+  };
+
+  const ProductCard = () => {
+    if (!conversation?.product || !showProductCard) return null;
+
+    const product = conversation.product;
+    return (
+      <div className="bg-white border border-emerald-200 rounded-xl p-4 mb-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            <img
+              src={product.images?.[0] || '/default-product.png'}
+              alt={product.name}
+              className="w-16 h-16 object-cover rounded-lg border"
+              onError={(e) => { e.currentTarget.src = '/default-product.png'; }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-emerald-700 font-semibold">₱{product.price?.toLocaleString()}</p>
+              {product.category && <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">{product.category}</span>}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowProductCard(false)}
+            className="text-gray-400 hover:text-gray-600 p-1"
+            title="Hide"
+          >
+            <FaTimes className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const InlineProductAttachment = ({ isMe }) => {
+    if (!conversation?.product) return null;
+    const p = conversation.product;
+    return (
+      <div className={`mt-2 border rounded-lg ${isMe ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white'} overflow-hidden`}> 
+        <div className="flex items-center gap-3 p-2">
+          <img
+            src={p.images?.[0] || '/default-product.png'}
+            alt={p.name}
+            className="w-12 h-12 rounded-md object-cover border"
+            onError={(e)=>{ e.currentTarget.src='/default-product.png'; }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className={`text-sm font-medium truncate ${isMe ? 'text-emerald-800' : 'text-gray-900'}`}>{p.name}</div>
+            <div className={`text-xs ${isMe ? 'text-emerald-700' : 'text-gray-600'}`}>₱{p.price?.toLocaleString()}</div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className={isMe ? 'border-emerald-300 text-emerald-700' : 'border-gray-300 text-gray-700'}
+            onClick={()=>navigate(`/product/${p._id || ''}`)}
+          >
+            View
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const AskProductButton = () => {
+    if (!conversation?.product) return null;
+
+    const quickQuestions = [
+      "Hi! I'm interested in this product. Can you tell me more about it?",
+      "Is this product still available?",
+      "What are the shipping options?",
+      "Do you have any discounts available?",
+      "Can I see more photos of this product?"
+    ];
+
+    return (
+      <div className="mb-4 space-y-3">
+        <Button
+          onClick={() => askProduct(quickQuestions[0])}
+          className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 text-lg font-semibold rounded-lg"
+        >
+          <FaQuestion className="mr-2 h-5 w-5" />
+          Ask Product
+        </Button>
+        
+        <div className="grid grid-cols-1 gap-2">
+          {quickQuestions.slice(1).map((question, index) => (
+            <Button
+              key={index}
+              onClick={() => askProduct(question)}
+              variant="outline"
+              className="text-sm py-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -87,6 +200,8 @@ const ChatView = () => {
           </div>
           <div className="h-[70vh] flex flex-col">
             <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+              <ProductCard />
+              <AskProductButton />
               {loading ? (
                 <div className="text-center text-gray-500">Loading...</div>
               ) : messages.length === 0 ? (
@@ -107,6 +222,9 @@ const ChatView = () => {
                         <div className={`text-[11px] mb-1 ${isMe ? 'text-emerald-700' : 'text-gray-500'}`}>{displayName || (isMe ? 'You' : 'User')}</div>
                         <div className={`w-full px-3 py-2 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
                           <div className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</div>
+                          {Array.isArray(m.attachments) && m.attachments.some(att => att?.type === 'product') && (
+                            <InlineProductAttachment isMe={isMe} />
+                          )}
                           <div className={`text-[10px] mt-1 ${isMe ? 'text-emerald-100' : 'text-gray-500'}`}>{new Date(m.createdAt).toLocaleTimeString()}</div>
                         </div>
                       </div>
@@ -120,15 +238,25 @@ const ChatView = () => {
                 })
               )}
             </div>
-            <form onSubmit={sendMessage} className="border-t bg-white/70 backdrop-blur px-3 py-3 flex items-center gap-2">
-              <input
-                value={text}
-                onChange={(e)=>{ setText(e.target.value); emitTyping(conversationId, true); }}
-                onBlur={()=>emitTyping(conversationId, false)}
-                className="flex-1 border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-full px-4 py-2 outline-none shadow-sm"
-                placeholder="Type a message"
-              />
-              <Button type="submit" className="rounded-full px-5">Send</Button>
+            <form onSubmit={sendMessage} className="border-t bg-white/70 backdrop-blur px-3 py-3 flex flex-col gap-3">
+              <div className="flex gap-2">
+                <input
+                  value={text}
+                  onChange={(e)=>{ setText(e.target.value); emitTyping(conversationId, true); }}
+                  onBlur={()=>emitTyping(conversationId, false)}
+                  className="flex-1 border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-full px-4 py-2 outline-none shadow-sm"
+                  placeholder="Type a message"
+                />
+                <Button type="submit" className="rounded-full px-5">Send</Button>
+              </div>
+              {conversation?.product && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500 flex items-center gap-2">
+                    <input type="checkbox" checked={attachProductNext} onChange={(e)=>setAttachProductNext(e.target.checked)} />
+                    Attach product card with this message
+                  </label>
+                </div>
+              )}
             </form>
           </div>
         </div>

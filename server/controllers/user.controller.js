@@ -184,7 +184,7 @@ export const googleLogin = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+        expiresIn: process.env.JWT_EXPIRES_IN || "48h",
         algorithm: "HS256",
       }
     );
@@ -193,7 +193,7 @@ export const googleLogin = async (req, res) => {
     res.cookie("token", jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600000, // 1 hour
+      maxAge: 48 * 60 * 60 * 1000, // 48 hours
     });
 
     console.log("Google login process completed successfully.");
@@ -367,7 +367,7 @@ export const login = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+        expiresIn: process.env.JWT_EXPIRES_IN || "48h",
         algorithm: "HS256",
       }
     );
@@ -376,7 +376,7 @@ export const login = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600000, // 1 hour
+      maxAge: 48 * 60 * 60 * 1000, // 48 hours
     });
 
     res.status(200).json({

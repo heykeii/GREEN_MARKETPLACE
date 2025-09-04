@@ -9,7 +9,9 @@ import {
   toggleHelpful,
   getReviewableProducts,
   getAllReviews,
-  toggleReviewVisibility
+  toggleReviewVisibility,
+  replyToReview,
+  deleteReply
 } from '../controllers/review.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
@@ -47,6 +49,9 @@ router.get('/reviewable', getReviewableProducts); // Get products user can revie
 router.put('/:reviewId', upload.array('images', 5), updateReview); // Update a review
 router.delete('/:reviewId', deleteReview); // Delete a review
 router.post('/:reviewId/helpful', toggleHelpful); // Mark review as helpful/unhelpful
+// Seller reply routes
+router.post('/:reviewId/reply', replyToReview);
+router.delete('/:reviewId/reply', deleteReply);
 
 // Admin routes
 router.get('/admin/all', isAdmin, getAllReviews); // Get all reviews (admin)

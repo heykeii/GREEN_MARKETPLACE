@@ -79,7 +79,14 @@ const reviewSchema = new mongoose.Schema({
   helpfulBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }]
+  }],
+
+  // Seller's reply to the review
+  sellerReply: {
+    content: { type: String, trim: true, maxlength: 1000 },
+    createdAt: { type: Date },
+    updatedAt: { type: Date }
+  }
 }, {
   timestamps: true
 });

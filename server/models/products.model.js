@@ -77,6 +77,19 @@ const productSchema = new mongoose.Schema({
     default: true,
   },
 
+  externalUrls: [{
+    platform: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    url: {
+      type: String,
+      required: true,
+      trim: true
+    }
+  }],
+
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],

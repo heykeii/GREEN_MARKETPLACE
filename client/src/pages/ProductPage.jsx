@@ -62,7 +62,8 @@ const ProductPage = () => {
     origin: '',
     productionMethod: '',
     materialsUsed: '',
-    tags: ''
+    tags: '',
+    externalUrls: []
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editImages, setEditImages] = useState([]);
@@ -195,7 +196,8 @@ const ProductPage = () => {
       origin: product.origin || '',
       productionMethod: product.productionMethod || '',
       materialsUsed: Array.isArray(product.materialsUsed) ? product.materialsUsed.join(', ') : '',
-      tags: Array.isArray(product.tags) ? product.tags.join(', ') : ''
+      tags: Array.isArray(product.tags) ? product.tags.join(', ') : '',
+      externalUrls: product.externalUrls || []
     });
     
     // Set existing images
@@ -282,6 +284,12 @@ const ProductPage = () => {
       editForm.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => {
         formData.append('tags', val);
       });
+
+      // Add external URLs
+      const validUrls = editForm.externalUrls.filter(url => url.platform.trim() && url.url.trim());
+      if (validUrls.length > 0) {
+        formData.append('externalUrls', JSON.stringify(validUrls));
+      }
 
       // Add existing images
       editImages.forEach(url => {
@@ -493,40 +501,23 @@ const ProductPage = () => {
                               {seller.firstName}
                             </span>
                           </button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                            onClick={handleMessageSeller}
-                            title="Message Seller"
-                          >
-                            <FaEnvelope className="mr-1" />
-                            Message
-                          </Button>
+                          {!isOwner && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                              onClick={handleMessageSeller}
+                              title="Message Seller"
+                            >
+                              <FaEnvelope className="mr-1" />
+                              Message
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleWishlist}
-                      className={`border-gray-200 hover:border-red-300 ${
-                        isWishlisted ? 'text-red-500' : 'text-gray-500'
-                      }`}
-                    >
-                      <FaHeart className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShare}
-                      className="border-gray-200 text-gray-500 hover:border-emerald-300"
-                    >
-                      <FaShare className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  
                 </div>
 
                 {/* Price */}
@@ -608,6 +599,32 @@ const ProductPage = () => {
                   )}
                 </div>
               </div>
+
+              {/* External URLs Section */}
+              {product.externalUrls && product.externalUrls.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Buy on Other Platforms</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {product.externalUrls.map((url, index) => (
+                      <a
+                        key={index}
+                        href={url.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors group"
+                      >
+                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                          <FaShoppingCart className="text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 group-hover:text-emerald-600">{url.platform}</p>
+                          <p className="text-sm text-gray-600">View on {url.platform}</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Sustainability Features */}
               <div className="space-y-4">
@@ -866,6 +883,67 @@ const ProductPage = () => {
                      onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
                      placeholder="e.g., Eco-friendly, Sustainable, Organic"
                    />
+                 </div>
+
+                 {/* External URLs Section */}
+                 <div className="space-y-3">
+                   <Label>External Product URLs</Label>
+                   {editForm.externalUrls.map((url, index) => (
+                     <div key={index} className="flex gap-3">
+                       <div className="flex-1">
+                         <Input
+                           placeholder="Platform (e.g., Shopee, Lazada)"
+                           value={url.platform}
+                           onChange={(e) => {
+                             const newUrls = [...editForm.externalUrls];
+                             newUrls[index].platform = e.target.value;
+                             setEditForm(f => ({ ...f, externalUrls: newUrls }));
+                           }}
+                         />
+                       </div>
+                       <div className="flex-[2]">
+                         <Input
+                           placeholder="Product URL"
+                           value={url.url}
+                           onChange={(e) => {
+                             const newUrls = [...editForm.externalUrls];
+                             newUrls[index].url = e.target.value;
+                             setEditForm(f => ({ ...f, externalUrls: newUrls }));
+                           }}
+                         />
+                       </div>
+                       {index > 0 && (
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="icon"
+                           className="shrink-0 text-red-600 hover:text-red-700"
+                           onClick={() => {
+                             setEditForm(f => ({
+                               ...f,
+                               externalUrls: f.externalUrls.filter((_, i) => i !== index)
+                             }));
+                           }}
+                         >
+                           <FaTimes className="h-4 w-4" />
+                         </Button>
+                       )}
+                     </div>
+                   ))}
+                   <Button
+                     type="button"
+                     variant="outline"
+                     size="sm"
+                     onClick={() => {
+                       setEditForm(f => ({
+                         ...f,
+                         externalUrls: [...f.externalUrls, { platform: '', url: '' }]
+                       }));
+                     }}
+                   >
+                     <FaPlus className="mr-2 h-4 w-4" />
+                     Add Another URL
+                   </Button>
                  </div>
 
                  {/* Image Upload Section */}

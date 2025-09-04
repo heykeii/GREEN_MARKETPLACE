@@ -22,7 +22,8 @@ const CreateProduct = () => {
     productionMethod: '',
     materialsUsed: '',
     tags: '',
-    images: []
+    images: [],
+    externalUrls: [{ platform: '', url: '' }]
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -67,6 +68,11 @@ const CreateProduct = () => {
       form.materialsUsed.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('materialsUsed', val));
       form.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('tags', val));
       form.images.forEach(img => formData.append('images', img));
+      // Add external URLs
+      const validUrls = form.externalUrls.filter(url => url.platform.trim() && url.url.trim());
+      if (validUrls.length > 0) {
+        formData.append('externalUrls', JSON.stringify(validUrls));
+      }
       await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/products/create/product`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -343,6 +349,70 @@ const CreateProduct = () => {
                         placeholder="e.g., Handmade, Unique, Eco-Friendly, Sustainable"
                         className="w-full"
                       />
+                    </div>
+
+                    {/* External URLs Section */}
+                    <div className="col-span-full">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">External Product URLs</Label>
+                      <div className="space-y-3">
+                        {form.externalUrls.map((url, index) => (
+                          <div key={index} className="flex gap-3">
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Platform (e.g., Shopee, Lazada)"
+                                value={url.platform}
+                                onChange={(e) => {
+                                  const newUrls = [...form.externalUrls];
+                                  newUrls[index].platform = e.target.value;
+                                  setForm(f => ({ ...f, externalUrls: newUrls }));
+                                }}
+                              />
+                            </div>
+                            <div className="flex-[2]">
+                              <Input
+                                placeholder="Product URL"
+                                value={url.url}
+                                onChange={(e) => {
+                                  const newUrls = [...form.externalUrls];
+                                  newUrls[index].url = e.target.value;
+                                  setForm(f => ({ ...f, externalUrls: newUrls }));
+                                }}
+                              />
+                            </div>
+                            {index > 0 && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="shrink-0 text-red-600 hover:text-red-700"
+                                onClick={() => {
+                                  setForm(f => ({
+                                    ...f,
+                                    externalUrls: f.externalUrls.filter((_, i) => i !== index)
+                                  }));
+                                }}
+                              >
+                                <FaTimes className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => {
+                            setForm(f => ({
+                              ...f,
+                              externalUrls: [...f.externalUrls, { platform: '', url: '' }]
+                            }));
+                          }}
+                        >
+                          <FaPlus className="mr-2 h-4 w-4" />
+                          Add Another URL
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <Button 

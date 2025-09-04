@@ -67,7 +67,8 @@ const SellerDashboard = () => {
     productionMethod: '',
     materialsUsed: '',
     tags: '',
-    images: []
+    images: [],
+    externalUrls: [{ platform: '', url: '' }]
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -363,7 +364,8 @@ const SellerDashboard = () => {
       materialsUsed: product.materialsUsed.join(', '),
       tags: product.tags ? product.tags.join(', ') : '',
       images: product.images || [],
-      editImages: []
+      editImages: [],
+      externalUrls: product.externalUrls || [{ platform: '', url: '' }]
     });
     setImagePreviews([]);
     setShowEditForm(true);
@@ -395,6 +397,11 @@ const SellerDashboard = () => {
       formData.append('productionMethod', form.productionMethod);
       form.materialsUsed.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('materialsUsed', val));
       form.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('tags', val));
+      // External URLs
+      const validUrls = (form.externalUrls || []).filter(u => u.platform?.trim() && u.url?.trim());
+      if (validUrls.length > 0) {
+        formData.append('externalUrls', JSON.stringify(validUrls));
+      }
       keptImages.forEach(url => formData.append('existingImages', url));
       newImages.forEach(img => formData.append('images', img));
       await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/products/update/${editProduct._id}`, formData, {
@@ -1426,6 +1433,67 @@ const SellerDashboard = () => {
                     onChange={handleInputChange}
                     placeholder="e.g., Eco-friendly, Sustainable, Organic"
                   />
+                </div>
+
+                {/* External URLs Section */}
+                <div className="space-y-3">
+                  <Label>External Product URLs</Label>
+                  {form.externalUrls.map((url, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Platform (e.g., Shopee, Lazada)"
+                          value={url.platform}
+                          onChange={(e) => {
+                            const newUrls = [...form.externalUrls];
+                            newUrls[index].platform = e.target.value;
+                            setForm(f => ({ ...f, externalUrls: newUrls }));
+                          }}
+                        />
+                      </div>
+                      <div className="flex-[2]">
+                        <Input
+                          placeholder="Product URL"
+                          value={url.url}
+                          onChange={(e) => {
+                            const newUrls = [...form.externalUrls];
+                            newUrls[index].url = e.target.value;
+                            setForm(f => ({ ...f, externalUrls: newUrls }));
+                          }}
+                        />
+                      </div>
+                      {index > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0 text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            setForm(f => ({
+                              ...f,
+                              externalUrls: f.externalUrls.filter((_, i) => i !== index)
+                            }));
+                          }}
+                        >
+                          <FaTimes className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(f => ({
+                        ...f,
+                        externalUrls: [...f.externalUrls, { platform: '', url: '' }]
+                      }));
+                    }}
+                  >
+                    <FaPlus className="mr-2 h-4 w-4" />
+                    Add Another URL
+                  </Button>
                 </div>
 
                 {/* Image Upload Section */}
