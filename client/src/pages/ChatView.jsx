@@ -48,8 +48,34 @@ const ChatView = () => {
         const id = payload.message?._id;
         if (id && seenIdsRef.current.has(id)) return;
         if (id) seenIdsRef.current.add(id);
-        setMessages(prev => [...prev, payload.message]);
-        setTimeout(() => listRef.current?.lastElementChild?.scrollIntoView({ behavior: 'smooth' }), 0);
+        
+        // Check if this message replaces an optimistic message from the same sender with similar content
+        setMessages(prev => {
+          const newMessage = payload.message;
+          const optimisticIndex = prev.findIndex(msg => 
+            msg.isOptimistic && 
+            msg.sender?._id === newMessage.sender?._id && 
+            msg.content === newMessage.content &&
+            Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 10000 // within 10 seconds
+          );
+          
+          if (optimisticIndex >= 0) {
+            // Replace the optimistic message with the real one
+            const updated = [...prev];
+            seenIdsRef.current.delete(updated[optimisticIndex]._id);
+            updated[optimisticIndex] = newMessage;
+            return updated;
+          } else {
+            // Add new message normally
+            return [...prev, newMessage];
+          }
+        });
+        
+        setTimeout(() => {
+          if (listRef.current) {
+            listRef.current.scrollTop = listRef.current.scrollHeight;
+          }
+        }, 0);
       }
     };
     onMessage(handler);
@@ -72,15 +98,74 @@ const ChatView = () => {
     if (attachProductNext && conversation?.product?._id) {
       body.attachments = [{ type: 'product', url: conversation.product._id }];
     }
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body)
-    });
-    if (res.ok) {
-      setText('');
-      setAttachProductNext(false);
-      emitTyping(conversationId, false);
+
+    // Create optimistic message for immediate UI update
+    const optimisticMessage = {
+      _id: `temp-${Date.now()}`, // temporary ID
+      conversation: conversationId,
+      sender: me,
+      content: content,
+      attachments: body.attachments || [],
+      createdAt: new Date().toISOString(),
+      isOptimistic: true // flag to identify optimistic messages
+    };
+
+    // Clear input and add optimistic message immediately
+    setText('');
+    setAttachProductNext(false);
+    emitTyping(conversationId, false);
+    
+    // Add optimistic message to UI immediately
+    setMessages(prev => [...prev, optimisticMessage]);
+    seenIdsRef.current.add(optimisticMessage._id);
+    
+    // Scroll to bottom of messages container
+    setTimeout(() => {
+      if (listRef.current) {
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+      }
+    }, 0);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const realMessage = data.message;
+        
+        // Replace optimistic message with real one
+        setMessages(prev => prev.map(msg => 
+          msg._id === optimisticMessage._id ? realMessage : msg
+        ));
+        
+        // Update seen IDs
+        seenIdsRef.current.delete(optimisticMessage._id);
+        seenIdsRef.current.add(realMessage._id);
+      } else {
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
+        seenIdsRef.current.delete(optimisticMessage._id);
+        
+        // Restore the text input
+        setText(content);
+        if (body.attachments) setAttachProductNext(true);
+        
+        console.error('Failed to send message');
+      }
+    } catch (error) {
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
+      seenIdsRef.current.delete(optimisticMessage._id);
+      
+      // Restore the text input
+      setText(content);
+      if (body.attachments) setAttachProductNext(true);
+      
+      console.error('Error sending message:', error);
     }
   };
 
@@ -220,12 +305,17 @@ const ChatView = () => {
                       )}
                       <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}> 
                         <div className={`text-[11px] mb-1 ${isMe ? 'text-emerald-700' : 'text-gray-500'}`}>{displayName || (isMe ? 'You' : 'User')}</div>
-                        <div className={`w-full px-3 py-2 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
+                        <div className={`w-full px-3 py-2 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'} ${m.isOptimistic ? 'opacity-70' : ''}`}>
                           <div className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</div>
                           {Array.isArray(m.attachments) && m.attachments.some(att => att?.type === 'product') && (
                             <InlineProductAttachment isMe={isMe} />
                           )}
-                          <div className={`text-[10px] mt-1 ${isMe ? 'text-emerald-100' : 'text-gray-500'}`}>{new Date(m.createdAt).toLocaleTimeString()}</div>
+                          <div className={`text-[10px] mt-1 flex items-center gap-1 ${isMe ? 'text-emerald-100' : 'text-gray-500'}`}>
+                            <span>{new Date(m.createdAt).toLocaleTimeString()}</span>
+                            {m.isOptimistic && isMe && (
+                              <span className="animate-pulse">•••</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {isMe && (

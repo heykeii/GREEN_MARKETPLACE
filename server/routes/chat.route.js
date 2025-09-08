@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
-import { findOrCreateConversation, getConversations, getMessages, postMessage, getUnreadChatCount, markConversationRead } from '../controllers/chat.controller.js';
+import { findOrCreateConversation, getConversations, getMessages, postMessage, getUnreadChatCount, markConversationRead, deleteConversation } from '../controllers/chat.controller.js';
 
 const router = express.Router();
 
@@ -10,6 +10,7 @@ router.get('/messages/:conversationId', protect, getMessages);
 router.post('/messages', protect, postMessage);
 router.get('/unread-count', protect, getUnreadChatCount);
 router.patch('/conversations/:conversationId/mark-read', protect, markConversationRead);
+router.delete('/conversations/:conversationId', protect, deleteConversation);
 
 export default router;
 

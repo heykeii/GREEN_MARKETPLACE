@@ -12,8 +12,9 @@ import {
   getProductById,
   searchProducts,
   filterProducts,
-  getRelatedProducts
-  , getProductsBySellerPublic
+  getRelatedProducts,
+  getProductsBySellerPublic,
+  getProductsBySellers
 } from '../controllers/product.controller.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -37,5 +38,7 @@ router.get('/filter', filterProducts);
 router.get('/related/:productId', getRelatedProducts);
 // Public: products by seller
 router.get('/by-seller/:sellerId', getProductsBySellerPublic);
+// Public: products by multiple sellers (for campaigns)
+router.get('/by-sellers', getProductsBySellers);
 
 export default router;

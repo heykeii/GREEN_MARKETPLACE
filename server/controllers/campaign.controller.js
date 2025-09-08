@@ -1,0 +1,470 @@
+import Campaign from "../models/campaign.model.js";
+import User from "../models/user.model.js";
+import cloudinary from "../utils/cloudinary.js";
+
+// Create campaign (pending admin verification)
+const createCampaign = async (req, res) => {
+  try {
+    const { title, description, type, startDate, endDate, image, featuredBusinesses, goal } = req.body;
+    // Normalize fields that may arrive as strings when using multipart/form-data
+    let parsedFeaturedBusinesses = [];
+    if (featuredBusinesses) {
+      if (typeof featuredBusinesses === 'string') {
+        try {
+          parsedFeaturedBusinesses = JSON.parse(featuredBusinesses);
+        } catch (e) {
+          parsedFeaturedBusinesses = [];
+        }
+      } else if (Array.isArray(featuredBusinesses)) {
+        parsedFeaturedBusinesses = featuredBusinesses;
+      }
+    }
+    const parsedGoal = goal ? parseInt(goal) : 0;
+    let mediaUrl = image; // backward compatibility if URL is sent
+    const mediaUrls = [];
+
+    // If files were uploaded, stream them to Cloudinary (max 10)
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      const folder = `campaigns/${type || 'general'}`;
+      const resourceType = 'image';
+
+      const uploadOne = (buffer) => new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder, resource_type: resourceType },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result.secure_url);
+          }
+        );
+        stream.end(buffer);
+      });
+
+      try {
+        for (const file of req.files.slice(0, 10)) {
+          const url = await uploadOne(file.buffer);
+          mediaUrls.push(url);
+        }
+        mediaUrl = mediaUrls[0] || mediaUrl;
+      } catch (err) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload media",
+          error: err.message
+        });
+      }
+    }
+
+    // Enforce required image/media
+    if (!mediaUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Image is required for creating a campaign"
+      });
+    }
+    
+    const campaign = new Campaign({
+      title,
+      description,
+      type,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      image: mediaUrl,
+      media: mediaUrls.length ? mediaUrls : undefined,
+      createdBy: req.user.id,
+      featuredBusinesses: parsedFeaturedBusinesses,
+      goal: parsedGoal || 0,
+      verified: false // Requires admin verification
+    });
+
+    await campaign.save();
+    await campaign.populate('createdBy', 'firstName lastName email avatar');
+    
+    res.status(201).json({
+      success: true,
+      message: "Campaign created successfully. Pending admin verification.",
+      campaign
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error creating campaign",
+      error: error.message
+    });
+  }
+};
+
+// Get all campaigns (filter by type/status)
+const getCampaigns = async (req, res) => {
+  try {
+    const { type, status, verified } = req.query;
+    const filter = {};
+
+    // Only show verified campaigns to regular users
+    if (req.user?.role !== 'admin') {
+      filter.verified = true;
+    } else if (verified !== undefined) {
+      filter.verified = verified === 'true';
+    }
+
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+
+    const campaigns = await Campaign.find(filter)
+      .populate('createdBy', 'firstName lastName email avatar')
+      .populate('featuredBusinesses', 'name email businessName')
+      .populate('participants', 'firstName lastName email avatar')
+      .populate('likes', 'firstName lastName email avatar')
+      .populate('comments.user', 'firstName lastName email avatar')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      campaigns
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching campaigns",
+      error: error.message
+    });
+  }
+};
+
+// Get campaign details
+const getCampaignById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const campaign = await Campaign.findById(id)
+      .populate('createdBy', 'firstName lastName email avatar businessName')
+      .populate('featuredBusinesses', 'name email businessName')
+      .populate('participants', 'firstName lastName email avatar')
+      .populate('likes', 'firstName lastName email avatar')
+      .populate('comments.user', 'firstName lastName email avatar');
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    // Only allow verified campaigns for regular users
+    if (req.user?.role !== 'admin' && !campaign.verified) {
+      return res.status(403).json({
+        success: false,
+        message: "Campaign not available"
+      });
+    }
+
+    res.json({
+      success: true,
+      campaign
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching campaign",
+      error: error.message
+    });
+  }
+};
+
+// Update campaign (admin or creator)
+const updateCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const campaign = await Campaign.findById(id);
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    // Check if user is admin or campaign creator
+    if (req.user.role !== 'admin' && campaign.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this campaign"
+      });
+    }
+
+    const updates = req.body;
+    // Remove fields that shouldn't be updated directly
+    delete updates.verified;
+    delete updates.createdBy;
+    delete updates.likes;
+    delete updates.comments;
+    delete updates.participants;
+
+    const updatedCampaign = await Campaign.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true, runValidators: true }
+    ).populate('createdBy', 'firstName lastName email avatar')
+     .populate('featuredBusinesses', 'name email businessName');
+
+    res.json({
+      success: true,
+      message: "Campaign updated successfully",
+      campaign: updatedCampaign
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating campaign",
+      error: error.message
+    });
+  }
+};
+
+// Delete campaign
+const deleteCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const campaign = await Campaign.findById(id);
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    // Check if user is admin or campaign creator
+    if (req.user.role !== 'admin' && campaign.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this campaign"
+      });
+    }
+
+    // Best-effort: delete media from Cloudinary if hosted there
+    try {
+      if (campaign.image && /^https?:\/\//.test(campaign.image)) {
+        const url = new URL(campaign.image);
+        // path like: /<cloud_name>/image/upload/v123/campaigns/type/filename.jpg
+        const afterUpload = url.pathname.split('/upload/')[1] || '';
+        let publicIdWithVer = afterUpload;
+        // strip leading version segment v12345/
+        if (publicIdWithVer.startsWith('v')) {
+          publicIdWithVer = publicIdWithVer.substring(publicIdWithVer.indexOf('/') + 1);
+        }
+        const publicId = publicIdWithVer.replace(/\.[^/.]+$/, '');
+        if (publicId) {
+          try { await cloudinary.uploader.destroy(publicId, { resource_type: 'image' }); } catch (_) {}
+          try { await cloudinary.uploader.destroy(publicId, { resource_type: 'video' }); } catch (_) {}
+        }
+      }
+    } catch (e) {
+      // ignore cloudinary deletion errors
+    }
+
+    await Campaign.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: "Campaign deleted successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error deleting campaign",
+      error: error.message
+    });
+  }
+};
+
+// Admin verify campaign
+const verifyCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { verified } = req.body;
+
+    const campaign = await Campaign.findByIdAndUpdate(
+      id,
+      { verified },
+      { new: true }
+    ).populate('createdBy', 'firstName lastName email avatar');
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Campaign ${verified ? 'verified' : 'rejected'} successfully`,
+      campaign
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error verifying campaign",
+      error: error.message
+    });
+  }
+};
+
+// Like/unlike campaign (Awareness campaigns)
+const toggleLikeCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    // Allow likes on all campaign types
+    const isLiked = campaign.likes.some((u) => u.toString() === userId);
+    
+    if (isLiked) {
+      campaign.likes.pull(userId);
+    } else {
+      campaign.likes.push(userId);
+    }
+
+    await campaign.save();
+
+    res.json({
+      success: true,
+      message: isLiked ? "Campaign unliked" : "Campaign liked",
+      likesCount: campaign.likes.length,
+      isLiked: !isLiked
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error toggling like",
+      error: error.message
+    });
+  }
+};
+
+// Add comment to campaign (Awareness campaigns)
+const addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+    const userId = req.user.id;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment text is required"
+      });
+    }
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    if (campaign.type !== 'awareness') {
+      return res.status(400).json({
+        success: false,
+        message: "Only awareness campaigns can have comments"
+      });
+    }
+
+    const comment = {
+      user: userId,
+      text: text.trim(),
+      createdAt: new Date()
+    };
+
+    campaign.comments.push(comment);
+    await campaign.save();
+
+    // Populate the new comment
+    const updatedCampaign = await Campaign.findById(id)
+      .populate('comments.user', 'firstName lastName email avatar');
+
+    const newComment = updatedCampaign.comments[updatedCampaign.comments.length - 1];
+
+    res.status(201).json({
+      success: true,
+      message: "Comment added successfully",
+      comment: newComment
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error adding comment",
+      error: error.message
+    });
+  }
+};
+
+// Join campaign as participant (Community campaigns)
+const joinCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not found"
+      });
+    }
+
+    if (campaign.type !== 'community') {
+      return res.status(400).json({
+        success: false,
+        message: "Only community campaigns can be joined"
+      });
+    }
+
+    const isParticipant = campaign.participants.includes(userId);
+    
+    if (isParticipant) {
+      campaign.participants.pull(userId);
+      campaign.progress = Math.max(0, campaign.progress - 1);
+    } else {
+      campaign.participants.push(userId);
+      campaign.progress += 1;
+    }
+
+    await campaign.save();
+
+    res.json({
+      success: true,
+      message: isParticipant ? "Left campaign" : "Joined campaign",
+      participantsCount: campaign.participants.length,
+      progress: campaign.progress,
+      isParticipant: !isParticipant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error joining campaign",
+      error: error.message
+    });
+  }
+};
+
+export {
+  createCampaign,
+  getCampaigns,
+  getCampaignById,
+  updateCampaign,
+  deleteCampaign,
+  verifyCampaign,
+  toggleLikeCampaign,
+  addComment,
+  joinCampaign
+};

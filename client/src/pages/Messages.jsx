@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Messages = () => {
@@ -23,6 +24,21 @@ const Messages = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteConversation = async (conversationId) => {
+    if (!window.confirm('Delete this conversation? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/conversations/${conversationId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setConversations(prev => prev.filter(c => c._id !== conversationId));
+      }
+    } catch (e) {
+      // no-op
     }
   };
 
@@ -52,7 +68,12 @@ const Messages = () => {
                         <div className="text-sm text-gray-600 line-clamp-1">{conv.lastMessage?.content || 'No messages yet'}</div>
                       </div>
                     </div>
-                    <Button size="sm" onClick={()=>navigate(`/messages/${conv._id}`)}>Open</Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => deleteConversation(conv._id)} title="Delete conversation">
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                      <Button size="sm" onClick={()=>navigate(`/messages/${conv._id}`)}>Open</Button>
+                    </div>
                   </div>
                 );
               })}

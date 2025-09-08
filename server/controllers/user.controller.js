@@ -553,3 +553,45 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Failed to update profile" });
   }
 };
+
+// Search for verified sellers (for promotional campaigns)
+export const searchSellers = async (req, res) => {
+  try {
+    const { search, limit = 10 } = req.query;
+    
+    if (!search || search.trim().length < 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Search query must be at least 2 characters long' 
+      });
+    }
+
+    const filter = {
+      isSeller: true,
+      sellerStatus: 'verified',
+      isActive: true,
+      $or: [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { businessName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ]
+    };
+
+    const sellers = await User.find(filter)
+      .select('firstName lastName email businessName avatar')
+      .limit(parseInt(limit))
+      .sort({ businessName: 1, firstName: 1 });
+
+    res.status(200).json({ 
+      success: true, 
+      sellers 
+    });
+  } catch (error) {
+    console.error('Search sellers error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to search sellers' 
+    });
+  }
+};

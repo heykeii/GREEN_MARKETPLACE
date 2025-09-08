@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile } from "../controllers/user.controller.js";
+import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile, searchSellers } from "../controllers/user.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import multer from 'multer';
 
@@ -16,6 +16,9 @@ router.post("/resend-verification", resendVerification);
 
 // Public profile route
 router.get("/profile/:userId", getProfile);
+
+// Seller search route (protected for campaign creation)
+router.get("/sellers", protect, searchSellers);
 
 // Protected routes
 router.get("/me", protect, getUser);

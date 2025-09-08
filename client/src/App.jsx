@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -32,11 +33,16 @@ import SellerOrderManagement from './pages/SellerOrderManagement';
 import NotificationsPage from './pages/NotificationsPage';
 import Messages from './pages/Messages';
 import ChatView from './pages/ChatView';
+import Campaigns from './pages/Campaigns';
+import CampaignDetail from './pages/CampaignDetail';
+import CreateCampaign from './pages/CreateCampaign';
+import AdminCampaignManagement from './pages/AdminCampaignManagement';
 
 const App = () => {
   return (
     <>
       <ToastContainer position="top-right" autoClose={5000} />
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/login" element={<Login />} />
@@ -61,6 +67,9 @@ const App = () => {
         <Route path="/messages" element={<Messages />} />
         <Route path="/messages/:conversationId" element={<ChatView />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="/campaigns" element={<Campaigns />} />
+        <Route path="/campaigns/:id" element={<CampaignDetail />} />
+        <Route path="/create-campaign" element={<CreateCampaign />} />
         <Route 
           path="/admin" 
           element={
@@ -99,6 +108,14 @@ const App = () => {
           element={
             <ProtectedAdminRoute>
               <AdminReportManagement />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/campaign-management" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminCampaignManagement />
             </ProtectedAdminRoute>
           }
         />

@@ -18,6 +18,7 @@ import orderRoutes from './routes/order.route.js'
 import reportRoutes from './routes/report.route.js'
 import notificationRoutes from './routes/notification.route.js'
 import chatRoutes from './routes/chat.route.js'
+import campaignRoutes from './routes/campaign.route.js'
 import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import jwt from 'jsonwebtoken'
@@ -57,6 +58,7 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/campaigns", campaignRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

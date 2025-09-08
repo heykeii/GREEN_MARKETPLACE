@@ -3,10 +3,10 @@ import Message from '../models/message.model.js';
 import User from '../models/user.model.js';
 import { getIO } from '../utils/socket.js';
 
-// Utility to build unique key for buyer-seller-product conversation
-function buildUniqueKey(userIdA, userIdB, productId) {
+// Utility to build unique key for buyer-seller conversation (one per user pair)
+function buildUniqueKey(userIdA, userIdB) {
   const [a, b] = [userIdA.toString(), userIdB.toString()].sort();
-  return productId ? `${a}:${b}:${productId.toString()}` : `${a}:${b}`;
+  return `${a}:${b}`;
 }
 
 export const findOrCreateConversation = async (req, res) => {
@@ -17,16 +17,20 @@ export const findOrCreateConversation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'recipientId is required' });
     }
 
-    const uniqueKey = buildUniqueKey(userId, recipientId, productId);
+    const uniqueKey = buildUniqueKey(userId, recipientId);
     let conversation = await Conversation.findOne({ uniqueKey }).populate('participants', 'firstName lastName avatar');
 
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [userId, recipientId],
-        product: productId || undefined,
+        product: productId || undefined, // Store the most recent product context
         uniqueKey
       });
       conversation = await conversation.populate('participants', 'firstName lastName avatar');
+    } else if (productId) {
+      // Update the conversation's product context to the most recent product being discussed
+      conversation.product = productId;
+      await conversation.save();
     }
 
     return res.json({ success: true, conversation });
@@ -142,6 +146,32 @@ export const markConversationRead = async (req, res) => {
     return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to mark as read', error: error.message });
+  }
+};
+
+export const deleteConversation = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ success: false, message: 'Conversation not found' });
+    }
+
+    const isParticipant = conversation.participants
+      .map((p) => p.toString())
+      .includes(userId.toString());
+    if (!isParticipant) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    await Message.deleteMany({ conversation: conversationId });
+    await Conversation.findByIdAndDelete(conversationId);
+
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete conversation', error: error.message });
   }
 };
 

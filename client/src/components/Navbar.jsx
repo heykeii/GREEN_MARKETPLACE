@@ -152,7 +152,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
   const navItems = [
     { label: "Home", path: "/" },
     { label: "Products", path: "/products", onClick: onProductsClick },
-    { label: "Campaign", path: "/campaign" },
+    { label: "Campaigns", path: "/campaigns" },
     { label: "About Us", path: "/about", onClick: onAboutClick },
   ];
 
@@ -524,6 +524,7 @@ export const AdminNavbar = () => {
     { label: "Product Verification", path: "/admin/product-verification" },
     { label: "Seller Verification", path: "/admin/seller-verification" },
     { label: "User Management", path: "/admin/user-management" },
+    { label: "Campaign Management", path: "/admin/campaign-management" },
     { label: "Reports & Complaints", path: "/admin/report-management" },
   ];
 

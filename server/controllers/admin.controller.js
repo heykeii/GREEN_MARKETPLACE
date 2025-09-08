@@ -1,6 +1,7 @@
 import User from '../models/user.model.js';
 import SellerApplication from '../models/seller.model.js';
 import Product from '../models/products.model.js';
+import Campaign from '../models/campaign.model.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null, details = null) => {
@@ -359,5 +360,153 @@ export const deleteUserByAdmin = async (req, res) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     errorResponse(res, 500, 'Failed to delete user', error);
+  }
+};
+
+// Get all campaigns for admin management
+export const getAllCampaigns = async (req, res) => {
+  try {
+    console.log('Fetching all campaigns for admin...');
+    
+    const { 
+      page = 1, 
+      limit = 20,
+      type,
+      status,
+      verified,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (verified !== undefined) filter.verified = verified === 'true';
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [campaigns, total] = await Promise.all([
+      Campaign.find(filter)
+        .populate('createdBy', 'firstName lastName email')
+        .populate('featuredBusinesses', 'firstName lastName email businessName')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Campaign.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    console.log(`Found ${campaigns.length} campaigns out of ${total} total`);
+
+    res.status(200).json({ 
+      success: true,
+      campaigns,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching campaigns:', error);
+    errorResponse(res, 500, 'Failed to fetch campaigns', error);
+  }
+};
+
+// Get pending campaigns for verification
+export const getPendingCampaigns = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const filter = { verified: false };
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [campaigns, total] = await Promise.all([
+      Campaign.find(filter)
+        .populate('createdBy', 'firstName lastName email')
+        .populate('featuredBusinesses', 'firstName lastName email businessName')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Campaign.countDocuments(filter)
+    ]);
+    
+    const totalPages = Math.ceil(total / parseInt(limit));
+    
+    res.status(200).json({
+      success: true,
+      campaigns,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending campaigns:', error);
+    errorResponse(res, 500, 'Failed to fetch pending campaigns', error);
+  }
+};
+
+// Verify/reject a campaign
+export const verifyCampaign = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { verified, rejectionMessage } = req.body;
+
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) {
+      return errorResponse(res, 404, 'Campaign not found');
+    }
+
+    campaign.verified = verified;
+    if (rejectionMessage) {
+      campaign.rejectionMessage = rejectionMessage;
+    }
+
+    await campaign.save();
+
+    res.status(200).json({ 
+      success: true,
+      message: `Campaign ${verified ? 'verified' : 'rejected'} successfully`,
+      campaign
+    });
+  } catch (error) {
+    console.error('Error verifying campaign:', error);
+    errorResponse(res, 500, 'Failed to verify campaign', error);
+  }
+};
+
+// Delete a campaign by admin
+export const deleteCampaignByAdmin = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const campaign = await Campaign.findById(campaignId);
+    
+    if (!campaign) {
+      return errorResponse(res, 404, 'Campaign not found');
+    }
+
+    await Campaign.findByIdAndDelete(campaignId);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Campaign deleted successfully.' 
+    });
+  } catch (error) {
+    console.error('Error deleting campaign:', error);
+    errorResponse(res, 500, 'Failed to delete campaign', error);
   }
 };

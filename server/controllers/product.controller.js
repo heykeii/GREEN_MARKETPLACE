@@ -386,6 +386,41 @@ export const getProductsBySellerPublic = async (req, res) => {
   }
 };
 
+// Get products by multiple sellers (for promotional campaigns)
+export const getProductsBySellers = async (req, res) => {
+  try {
+    const { sellers, limit = 6 } = req.query;
+    
+    if (!sellers) {
+      return res.status(400).json({ success: false, message: 'Sellers parameter is required' });
+    }
+
+    const sellerIds = sellers.split(',').filter(id => id.trim().match(/^[0-9a-fA-F]{24}$/));
+    
+    if (sellerIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Valid seller IDs are required' });
+    }
+
+    const products = await Product.find({ 
+      seller: { $in: sellerIds },
+      status: 'approved',
+      isAvailable: true
+    })
+    .populate('seller', 'name email businessName')
+    .select('name images price category description rating createdAt')
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit));
+
+    return res.status(200).json({ success: true, products });
+  } catch (error) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch products from sellers', 
+      error: error.message 
+    });
+  }
+};
+
 
 
 
