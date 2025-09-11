@@ -30,6 +30,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
   const [initialForm, setInitialForm] = useState(null);
+  const [myCampaigns, setMyCampaigns] = useState([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
 
   useEffect(() => {
     // Load user from localStorage
@@ -93,6 +95,26 @@ const Profile = () => {
     };
     
     fetchLatestUserData();
+
+    // Fetch campaigns created by this user
+    const fetchMyCampaigns = async () => {
+      try {
+        setLoadingCampaigns(true);
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(`/api/campaigns/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data?.success) {
+          setMyCampaigns(res.data.campaigns || []);
+        }
+      } catch (e) {
+        console.error('Error fetching my campaigns:', e);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+    fetchMyCampaigns();
   }, []);
 
   const handleInputChange = (e) => {
@@ -709,6 +731,68 @@ const Profile = () => {
                       )}
                     </div>
                   </form>
+                </CardContent>
+              </Card>
+
+              {/* My Campaigns Section */}
+              <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm mt-8">
+                <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+                  <CardTitle className="text-2xl font-bold flex items-center">
+                    <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                    </svg>
+                    My Campaigns
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  {loadingCampaigns ? (
+                    <div className="text-green-700">Loading campaigns...</div>
+                  ) : myCampaigns.length === 0 ? (
+                    <div className="text-green-700">You haven't created any campaigns yet.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {myCampaigns.map((c) => (
+                        <div key={c._id} className="border rounded-lg overflow-hidden bg-white shadow">
+                          {c.image && (
+                            <img src={c.image} alt={c.title} className="w-full h-40 object-cover" />
+                          )}
+                          <div className="p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-emerald-800 truncate">{c.title}</h4>
+                              <span className={`px-2 py-0.5 text-xs rounded-full ${c.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{c.verified ? 'Verified' : 'Pending'}</span>
+                            </div>
+                            {c.description && (
+                              <p className="text-sm text-emerald-700 line-clamp-2">{c.description}</p>
+                            )}
+                            <div className="flex items-center justify-between text-sm text-emerald-600">
+                              <span className="capitalize">{c.type}</span>
+                              <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center justify-end gap-2 pt-2">
+                              <a href={`/campaigns/${c._id}`} className="px-3 py-1 rounded-md border border-emerald-300 text-emerald-700 hover:bg-emerald-50">View</a>
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm('Delete this campaign? This cannot be undone.')) return;
+                                  try {
+                                    const token = localStorage.getItem('token');
+                                    await axios.delete(`/api/campaigns/${c._id}`, { headers: { Authorization: `Bearer ${token}` } });
+                                    setMyCampaigns((prev) => prev.filter((x) => x._id !== c._id));
+                                    toast.success('Campaign deleted');
+                                  } catch (e) {
+                                    console.error(e);
+                                    toast.error('Failed to delete campaign');
+                                  }
+                                }}
+                                className="px-3 py-1 rounded-md border border-red-300 text-red-600 hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

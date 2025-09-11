@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
 import axios from 'axios';
+import ImageCarousel from './ImageCarousel';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { toast } from 'react-hot-toast';
 
@@ -67,11 +68,11 @@ const PromotionalCampaign = ({ campaign }) => {
             <Avatar className="h-12 w-12 ring-2 ring-blue-100">
               <AvatarImage 
                 src={campaign.createdBy?.avatar} 
-                alt={campaign.createdBy?.name}
+                alt={campaign.createdBy?.firstName || campaign.createdBy?.name}
                 className="object-cover"
               />
               <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-500 text-white font-semibold">
-                {(campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
+                {(campaign.createdBy?.firstName || campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -123,13 +124,13 @@ const PromotionalCampaign = ({ campaign }) => {
         </div>
       </CardHeader>
 
-      {/* Campaign Image */}
-      {campaign.image && (
+      {/* Campaign Media */}
+      {(campaign.media?.length || campaign.image) && (
         <div className="relative">
-          <img
-            src={campaign.image}
-            alt={campaign.title}
-            className="w-full h-80 object-cover"
+          <ImageCarousel
+            images={(campaign.media && campaign.media.length ? campaign.media : [campaign.image]).slice(0, 10)}
+            className="w-full h-80"
+            imgClassName="h-80"
           />
           <div className="absolute top-4 right-4">
             <Badge className="bg-blue-600 text-white">

@@ -23,6 +23,7 @@ const campaignSchema = new mongoose.Schema({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   goal: Number, // e.g., target volunteers
   progress: { type: Number, default: 0 },
+  objectives: [{ type: String }],
 
   // Awareness (social features)
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

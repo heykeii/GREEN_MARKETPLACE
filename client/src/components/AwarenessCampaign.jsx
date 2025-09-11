@@ -8,7 +8,9 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { toast } from 'react-hot-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import ImageCarousel from './ImageCarousel';
 import axios from 'axios';
+import { getLikedCampaignIds, setLikedForCampaign } from '../lib/utils';
 
 const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
   const [showComments, setShowComments] = useState(false);
@@ -31,7 +33,14 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
     }
   };
 
-  const isLiked = campaign.likes?.some(like => like._id === currentUser?.id);
+  const isSameUser = (a, b) => {
+    if (!a || !b) return false;
+    return String(a) === String(b);
+  };
+  const currentUserId = currentUser?._id || currentUser?.id;
+  const likedFromServer = (campaign.likes || []).some(like => isSameUser(like?._id || like?.id, currentUserId));
+  const likedFromStorage = !currentUserId && getLikedCampaignIds().includes(String(campaign._id));
+  const isLiked = likedFromServer || likedFromStorage;
   const likesCount = campaign.likes?.length || 0;
   const commentsCount = campaign.comments?.length || 0;
 
@@ -41,7 +50,10 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
       return;
     }
     try {
-      await onLike(campaign._id);
+      const res = await onLike(campaign._id);
+      if (res?.data?.success) {
+        setLikedForCampaign(campaign._id, res.data.isLiked);
+      }
     } catch (error) {
       toast.error('Failed to like campaign');
     }
@@ -124,21 +136,23 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12 ring-2 ring-green-100">
-              <AvatarImage 
-                src={campaign.createdBy?.avatar} 
-                alt={campaign.createdBy?.name}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-gradient-to-br from-green-400 to-emerald-500 text-white font-semibold">
-                {(campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <a href={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`}>
+              <Avatar className="h-12 w-12 ring-2 ring-green-100 cursor-pointer">
+                <AvatarImage 
+                  src={campaign.createdBy?.avatar} 
+                  alt={campaign.createdBy?.firstName || campaign.createdBy?.name}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-gradient-to-br from-green-400 to-emerald-500 text-white font-semibold">
+                  {(campaign.createdBy?.firstName || campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </a>
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-gray-900 text-base">
+                <a href={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`} className="font-semibold text-gray-900 text-base hover:underline">
                   {campaign.createdBy?.firstName ? `${campaign.createdBy.firstName}${campaign.createdBy.lastName ? ' ' + campaign.createdBy.lastName : ''}` : (campaign.createdBy?.name || 'User')}
-                </h3>
+                </a>
                 {campaign.createdBy?.isVerified && (
                   <Verified className="h-4 w-4 text-blue-500" />
                 )}
@@ -179,13 +193,13 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
         </div>
       </CardHeader>
 
-      {/* Campaign Image */}
-      {campaign.image && (
+      {/* Campaign Media */}
+      {(campaign.media?.length || campaign.image) && (
         <div className="relative">
-          <img
-            src={campaign.image}
-            alt={campaign.title}
-            className="w-full h-80 object-cover"
+          <ImageCarousel
+            images={(campaign.media && campaign.media.length ? campaign.media : [campaign.image]).slice(0, 10)}
+            className="w-full h-80"
+            imgClassName="h-80"
           />
           <div className="absolute top-4 right-4">
             <Button size="sm" variant="secondary" className="bg-white/90 backdrop-blur-sm">
@@ -299,9 +313,9 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
               <div className="bg-gray-50 rounded-xl p-4">
                 <div className="flex items-start space-x-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                    <AvatarImage src={currentUser.avatar} alt={currentUser.firstName || currentUser.name} />
                     <AvatarFallback className="bg-green-100 text-green-700 text-sm">
-                      {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                      {(currentUser.firstName || currentUser.name || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <form onSubmit={handleSubmitComment} className="flex-1 space-y-3">

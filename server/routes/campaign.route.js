@@ -2,6 +2,8 @@ import express from 'express';
 import {
   createCampaign,
   getCampaigns,
+  getCampaignsByUser,
+  getMyCampaigns,
   getCampaignById,
   updateCampaign,
   deleteCampaign,
@@ -22,6 +24,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Accept up to 10 images uploaded from client
 router.post('/create', protect, upload.array('media', 10), createCampaign);
 router.get('/', getCampaigns); // Public route, but filtered by verification status
+router.get('/me', protect, getMyCampaigns);
+router.get('/by-user/:userId', getCampaignsByUser);
 router.get('/:id', getCampaignById); // Public route, but filtered by verification status
 router.put('/:id', protect, updateCampaign);
 router.delete('/:id', protect, deleteCampaign);

@@ -11,16 +11,31 @@ import Navbar from '../components/Navbar';
 import CampaignCard from '../components/CampaignCard';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
+import { getLikedCampaignIds, setLikedForCampaign } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import ImageCarousel from '../components/ImageCarousel';
 
 // Enhanced Instagram-style Campaign Card Component
 const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [isLiked, setIsLiked] = useState(campaign.likes?.some(like => like._id === currentUser?.id) || false);
-  const [likesCount, setLikesCount] = useState(campaign.likes?.length || 0);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  
+  // Helper: robustly compare user ids (supports id or _id)
+  const isSameUser = (a, b) => {
+    if (!a || !b) return false;
+    return String(a) === String(b);
+  };
+
+  const currentUserId = currentUser?._id || currentUser?.id;
+
+  // Use campaign data directly instead of local state to ensure persistence
+  // If logged out, fall back to localStorage-based memory of likes for icon state
+  const likedFromServer = (campaign.likes || []).some(like => isSameUser(like?._id || like?.id, currentUserId)) || false;
+  const likedFromStorage = !currentUserId && getLikedCampaignIds().includes(String(campaign._id));
+  const isLiked = likedFromServer || likedFromStorage;
+  const likesCount = campaign.likes?.length || 0;
   
   const handleShare = async () => {
     const url = `${window.location.origin}/campaigns/${campaign._id}`;
@@ -69,11 +84,22 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
       return;
     }
     try {
-      await axios.post(`/api/campaigns/${campaign._id}/like`, {}, {
+      const response = await axios.post(`/api/campaigns/${campaign._id}/like`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setIsLiked(!isLiked);
-      setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+      
+      if (response.data.success) {
+        // Update the campaign data through the parent component
+        const updatedLikes = response.data.isLiked
+          ? [
+              ...(campaign.likes || []),
+              { _id: currentUserId }
+            ]
+          : (campaign.likes || []).filter(like => !isSameUser(like?._id || like?.id, currentUserId));
+
+        onUpdate && onUpdate(campaign._id, { likes: updatedLikes });
+        setLikedForCampaign(campaign._id, response.data.isLiked);
+      }
     } catch (error) {
       toast.error('Failed to like campaign');
     }
@@ -84,12 +110,19 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
     if (!currentUser || !newComment.trim()) return;
     
     try {
-      await axios.post(`/api/campaigns/${campaign._id}/comment`, 
+      const response = await axios.post(`/api/campaigns/${campaign._id}/comment`, 
         { text: newComment.trim() }, 
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
-      setNewComment('');
-      toast.success('Comment added successfully');
+      
+      if (response.data.success) {
+        // Update the campaign data through the parent component
+        onUpdate && onUpdate(campaign._id, {
+          comments: [...(campaign.comments || []), response.data.comment]
+        });
+        setNewComment('');
+        toast.success('Comment added successfully');
+      }
     } catch (error) {
       toast.error('Failed to add comment');
     }
@@ -100,15 +133,19 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
       {/* Enhanced Header */}
       <div className="flex items-center justify-between p-6">
         <div className="flex items-center space-x-4">
-          <Avatar className="h-12 w-12 ring-2 ring-gray-100">
-            <AvatarImage src={campaign.createdBy?.avatar} alt={campaign.createdBy?.name} />
-            <AvatarFallback className="bg-gradient-to-br from-green-400 to-emerald-500 text-white font-semibold">
-              {(campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <Link to={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`}>
+            <Avatar className="h-12 w-12 ring-2 ring-gray-100 cursor-pointer">
+              <AvatarImage src={campaign.createdBy?.avatar} alt={campaign.createdBy?.name} />
+              <AvatarFallback className="bg-gradient-to-br from-green-400 to-emerald-500 text-white font-semibold">
+                {(campaign.createdBy?.firstName || campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
           <div className="flex-1">
             <div className="flex items-center space-x-2">
-              <p className="font-bold text-gray-900 text-base">{campaign.createdBy?.firstName ? `${campaign.createdBy.firstName}${campaign.createdBy.lastName ? ' ' + campaign.createdBy.lastName : ''}` : (campaign.createdBy?.name || 'User')}</p>
+              <Link to={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`} className="font-bold text-gray-900 text-base hover:underline">
+                {campaign.createdBy?.firstName ? `${campaign.createdBy.firstName}${campaign.createdBy.lastName ? ' ' + campaign.createdBy.lastName : ''}` : (campaign.createdBy?.name || 'User')}
+              </Link>
               {campaign.verified && (
                 <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs">✓</span>
@@ -157,13 +194,13 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
         )}
       </div>
 
-      {/* Campaign Image */}
-      {campaign.image && (
+      {/* Campaign Media */}
+      {(campaign.media?.length || campaign.image) && (
         <div className="relative">
-          <img
-            src={campaign.image}
-            alt={campaign.title}
-            className="w-full h-96 object-cover"
+          <ImageCarousel
+            images={(campaign.media && campaign.media.length ? campaign.media : [campaign.image]).slice(0, 10)}
+            className="w-full h-96"
+            imgClassName="h-96"
           />
           <div className="absolute top-4 right-4">
             <Badge className="bg-black/70 text-white backdrop-blur-sm">
@@ -285,9 +322,9 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
             {currentUser && (
               <form onSubmit={handleComment} className="flex items-center space-x-3 mt-4">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                  <AvatarImage src={currentUser.avatar} alt={currentUser.firstName || currentUser.name} />
                   <AvatarFallback className="bg-green-100 text-green-700 text-sm">
-                    {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                    {(currentUser.firstName || currentUser.name || 'U').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 flex space-x-2">
@@ -432,7 +469,7 @@ const Campaigns = () => {
       <Navbar />
 
       {/* Page-level Search (outside navbar) */}
-      <div className="sticky top-16 z-40 bg-white border-b border-gray-200">
+      <div className="sticky top-16 z-20 bg-white border-b border-gray-200 md:static md:top-auto md:z-auto">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -773,9 +810,9 @@ const Campaigns = () => {
           </button>
           {user && (
             <Avatar className="h-7 w-7 border border-gray-200">
-              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarImage src={user.avatar} alt={user.firstName || user.name} />
               <AvatarFallback className="bg-green-100 text-green-700 text-sm">
-                {user.name?.charAt(0).toUpperCase()}
+                {(user.firstName || user.name)?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           )}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, MapPin, Calendar, Clock, User, Target, CheckCircle, MoreHorizontal, Verified, Eye, Trash } from 'lucide-react';
 import { Button } from './ui/button';
+import ImageCarousel from './ImageCarousel';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -12,7 +13,9 @@ import axios from 'axios';
 
 const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
   const [showParticipants, setShowParticipants] = useState(false);
-  const canDelete = currentUser && (currentUser.role === 'admin' || campaign.createdBy?._id === currentUser.id);
+  const isSameUser = (a, b) => String(a) === String(b);
+  const currentUserId = currentUser?._id || currentUser?.id;
+  const canDelete = currentUser && (currentUser.role === 'admin' || (campaign.createdBy && isSameUser(campaign.createdBy?._id || campaign.createdBy?.id, currentUserId)));
 
   const handleDeleteCampaign = async () => {
     if (!canDelete) return;
@@ -82,21 +85,23 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12 ring-2 ring-purple-100">
-              <AvatarImage 
-                src={campaign.createdBy?.avatar} 
-                alt={campaign.createdBy?.name}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-gradient-to-br from-purple-400 to-purple-500 text-white font-semibold">
-                {(campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <a href={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`}>
+              <Avatar className="h-12 w-12 ring-2 ring-purple-100 cursor-pointer">
+                <AvatarImage 
+                  src={campaign.createdBy?.avatar} 
+                  alt={campaign.createdBy?.firstName || campaign.createdBy?.name}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-purple-500 text-white font-semibold">
+                  {(campaign.createdBy?.firstName || campaign.createdBy?.name || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </a>
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-gray-900 text-base">
+                <a href={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`} className="font-semibold text-gray-900 text-base hover:underline">
                   {campaign.createdBy?.firstName ? `${campaign.createdBy.firstName}${campaign.createdBy.lastName ? ' ' + campaign.createdBy.lastName : ''}` : (campaign.createdBy?.name || 'User')}
-                </h3>
+                </a>
                 {campaign.createdBy?.isVerified && (
                   <Verified className="h-4 w-4 text-blue-500" />
                 )}
@@ -140,13 +145,13 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
         </div>
       </CardHeader>
 
-      {/* Campaign Image */}
-      {campaign.image && (
+      {/* Campaign Media */}
+      {(campaign.media?.length || campaign.image) && (
         <div className="relative">
-          <img
-            src={campaign.image}
-            alt={campaign.title}
-            className="w-full h-80 object-cover"
+          <ImageCarousel
+            images={(campaign.media && campaign.media.length ? campaign.media : [campaign.image]).slice(0, 10)}
+            className="w-full h-80"
+            imgClassName="h-80"
           />
           <div className="absolute top-4 right-4">
             <Badge className="bg-purple-600 text-white">
@@ -158,6 +163,17 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
       )}
 
       <CardContent className="space-y-6">
+        {/* Objectives */}
+        {Array.isArray(campaign.objectives) && campaign.objectives.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-gray-900">Objectives</h3>
+            <ul className="list-decimal list-inside space-y-1 text-gray-700">
+              {campaign.objectives.map((obj, idx) => (
+                <li key={idx}>{obj}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         {/* Event Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {campaign.startDate && (
@@ -274,11 +290,13 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
                   >
                     <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
                       <span className="text-xs font-medium text-white">
-                        {participant.name?.charAt(0).toUpperCase()}
+                        {(participant.firstName || participant.name || 'U')?.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <span className="text-sm font-medium text-green-900">
-                      {participant.name}
+                      {participant.firstName && participant.lastName 
+                        ? `${participant.firstName} ${participant.lastName}`
+                        : participant.name || 'User'}
                     </span>
                   </div>
                 ))}

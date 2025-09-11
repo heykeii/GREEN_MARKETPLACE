@@ -5,7 +5,7 @@ import cloudinary from "../utils/cloudinary.js";
 // Create campaign (pending admin verification)
 const createCampaign = async (req, res) => {
   try {
-    const { title, description, type, startDate, endDate, image, featuredBusinesses, goal } = req.body;
+    const { title, description, type, startDate, endDate, image, featuredBusinesses, goal, objectives } = req.body;
     // Normalize fields that may arrive as strings when using multipart/form-data
     let parsedFeaturedBusinesses = [];
     if (featuredBusinesses) {
@@ -61,7 +61,6 @@ const createCampaign = async (req, res) => {
         message: "Image is required for creating a campaign"
       });
     }
-    
     const campaign = new Campaign({
       title,
       description,
@@ -73,6 +72,11 @@ const createCampaign = async (req, res) => {
       createdBy: req.user.id,
       featuredBusinesses: parsedFeaturedBusinesses,
       goal: parsedGoal || 0,
+      objectives: Array.isArray(objectives)
+        ? objectives.filter(o => typeof o === 'string' && o.trim().length).slice(0, 20)
+        : typeof objectives === 'string'
+          ? objectives.split('\n').map(s=>s.trim()).filter(Boolean).slice(0, 20)
+          : undefined,
       verified: false // Requires admin verification
     });
 
@@ -125,6 +129,56 @@ const getCampaigns = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching campaigns",
+      error: error.message
+    });
+  }
+};
+
+// Get campaigns by user (public: shows verified only unless admin)
+const getCampaignsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const filter = { createdBy: userId };
+    if (req.user?.role !== 'admin') {
+      filter.verified = true;
+    }
+
+    const campaigns = await Campaign.find(filter)
+      .populate('createdBy', 'firstName lastName email avatar')
+      .populate('featuredBusinesses', 'name email businessName')
+      .populate('participants', 'firstName lastName email avatar')
+      .populate('likes', 'firstName lastName email avatar')
+      .populate('comments.user', 'firstName lastName email avatar')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, campaigns });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user campaigns',
+      error: error.message
+    });
+  }
+};
+
+// Get campaigns created by current user (includes unverified)
+const getMyCampaigns = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const campaigns = await Campaign.find({ createdBy: userId })
+      .populate('createdBy', 'firstName lastName email avatar')
+      .populate('featuredBusinesses', 'name email businessName')
+      .populate('participants', 'firstName lastName email avatar')
+      .populate('likes', 'firstName lastName email avatar')
+      .populate('comments.user', 'firstName lastName email avatar')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, campaigns });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching your campaigns',
       error: error.message
     });
   }
@@ -433,11 +487,12 @@ const joinCampaign = async (req, res) => {
     
     if (isParticipant) {
       campaign.participants.pull(userId);
-      campaign.progress = Math.max(0, campaign.progress - 1);
     } else {
       campaign.participants.push(userId);
-      campaign.progress += 1;
     }
+    
+    // Update progress to match participants count
+    campaign.progress = campaign.participants.length;
 
     await campaign.save();
 
@@ -460,6 +515,8 @@ const joinCampaign = async (req, res) => {
 export {
   createCampaign,
   getCampaigns,
+  getCampaignsByUser,
+  getMyCampaigns,
   getCampaignById,
   updateCampaign,
   deleteCampaign,

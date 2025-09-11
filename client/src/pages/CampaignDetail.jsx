@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 import CampaignCard from '../components/CampaignCard';
+import ImageCarousel from '../components/ImageCarousel';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -71,9 +72,11 @@ const CampaignDetail = () => {
     }
   };
 
+  const isSameUser = (a, b) => String(a) === String(b);
+  const currentUserId = user?._id || user?.id;
   const canEditOrDelete = user && (
     user.role === 'admin' || 
-    campaign?.createdBy?._id === user.id
+    (campaign?.createdBy && isSameUser(campaign.createdBy?._id || campaign.createdBy?.id, currentUserId))
   );
 
   if (loading) {
@@ -274,7 +277,14 @@ const CampaignDetail = () => {
 
         {/* Main Campaign Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {(campaign.media?.length || campaign.image) && (
+              <ImageCarousel
+                images={(campaign.media && campaign.media.length ? campaign.media : [campaign.image]).slice(0, 10)}
+                className="w-full h-[28rem]"
+                imgClassName="h-[28rem]"
+              />
+            )}
             <CampaignCard
               campaign={campaign}
               currentUser={user}
@@ -341,11 +351,15 @@ const CampaignDetail = () => {
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold">
-                        {(campaign.createdBy.name || 'U').charAt(0).toUpperCase()}
+                        {(campaign.createdBy.firstName || campaign.createdBy.name || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{campaign.createdBy.name}</p>
+                      <p className="font-semibold text-gray-900">
+                        {campaign.createdBy.firstName && campaign.createdBy.lastName 
+                          ? `${campaign.createdBy.firstName} ${campaign.createdBy.lastName}`
+                          : campaign.createdBy.name || 'User'}
+                      </p>
                       <p className="text-sm text-gray-600">{campaign.createdBy.email}</p>
                     </div>
                   </div>

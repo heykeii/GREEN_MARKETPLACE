@@ -89,6 +89,21 @@ const ChatView = () => {
 
   const me = useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), []);
 
+  // Determine the other user in the conversation robustly
+  const otherUser = useMemo(() => {
+    const myId = me?._id;
+    let list = [];
+    if (Array.isArray(conversation?.participants)) list = conversation.participants;
+    else if (Array.isArray(conversation?.users)) list = conversation.users;
+    else if (Array.isArray(conversation?.members)) list = conversation.members;
+
+    let candidate = list.find((p) => (p?._id || p?.id) && (p._id || p.id) !== myId);
+    if (!candidate && Array.isArray(messages)) {
+      candidate = messages.find((m) => (m?.sender?._id || m?.sender?.id) && (m.sender._id || m.sender.id) !== myId)?.sender;
+    }
+    return candidate || null;
+  }, [conversation, messages, me]);
+
   const sendMessage = async (e) => {
     e.preventDefault();
     const content = text.trim();
@@ -280,8 +295,28 @@ const ChatView = () => {
       <div className="min-h-screen pt-24 px-4 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50">
         <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur rounded-xl shadow-md overflow-hidden border border-emerald-100">
           {/* Header */}
-          <div className="px-4 py-3 border-b bg-gradient-to-r from-white to-emerald-50">
-            <h2 className="text-sm font-semibold text-emerald-700">Conversation</h2>
+          <div className="px-4 py-3 border-b bg-gradient-to-r from-white to-emerald-50 flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <img
+                src={otherUser?.avatar || '/default-avatar.png'}
+                onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }}
+                alt="avatar"
+                className="w-9 h-9 rounded-full border"
+              />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-emerald-700 truncate">
+                {otherUser ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || otherUser.name || 'Conversation' : 'Conversation'}
+              </h2>
+              {conversation?.product && (
+                <div className="text-xs text-gray-500 truncate">Regarding: {conversation.product?.name}</div>
+              )}
+            </div>
+            {otherUser?._id && (
+              <div className="ml-auto">
+                <Button variant="outline" size="sm" onClick={()=>navigate(`/profile/${otherUser._id}`)}>View profile</Button>
+              </div>
+            )}
           </div>
           <div className="h-[70vh] flex flex-col">
             <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">

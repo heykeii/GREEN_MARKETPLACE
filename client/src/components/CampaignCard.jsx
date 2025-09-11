@@ -15,12 +15,15 @@ const CampaignCard = ({ campaign, currentUser, onUpdate }) => {
       });
       
       if (response.data.success) {
-        // Update the campaign in parent component
-        onUpdate && onUpdate(campaignId, {
-          likes: response.data.isLiked 
-            ? [...(campaign.likes || []), { _id: currentUser.id }]
-            : (campaign.likes || []).filter(like => like._id !== currentUser.id)
-        });
+        // Robust id handling for likes update
+        const currentUserId = currentUser?._id || currentUser?.id;
+        const isSameUser = (a, b) => String(a) === String(b);
+        const updatedLikes = response.data.isLiked
+          ? [ ...(campaign.likes || []), { _id: currentUserId } ]
+          : (campaign.likes || []).filter(like => !isSameUser(like?._id || like?.id, currentUserId));
+
+        onUpdate && onUpdate(campaignId, { likes: updatedLikes });
+        return response;
       }
     } catch (error) {
       console.error('Error liking campaign:', error);

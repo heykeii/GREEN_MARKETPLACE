@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import noProfile from '@/assets/no_profile.jpg';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 
@@ -28,10 +30,12 @@ const getSocialIcon = (platform) => {
 
 const PublicProfile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
   const isAdmin = typeof window !== 'undefined' && localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -45,6 +49,11 @@ const PublicProfile = () => {
         try {
           const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/by-seller/${userId}`);
           if (prodRes.data?.success) setProducts(prodRes.data.products || []);
+        } catch(e) {}
+        // fetch user's campaigns (public: verified only)
+        try {
+          const campRes = await axios.get(`/api/campaigns/by-user/${userId}`);
+          if (campRes.data?.success) setCampaigns(campRes.data.campaigns || []);
         } catch(e) {}
       } catch (e) {
         setError('Failed to load profile.');
@@ -107,6 +116,36 @@ const PublicProfile = () => {
                 </h1>
                 <div className="px-4 py-2 bg-green-50 rounded-full">
                   <span className="text-green-700 text-sm font-medium">{profile.email}</span>
+                </div>
+                <div className="mt-2">
+                  <Button
+                    onClick={() => {
+                      const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+                      if (!token) {
+                        toast.error('Please login to send a message');
+                        return;
+                      }
+                      // Create/find conversation then navigate
+                      fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/conversations`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ recipientId: userId })
+                      })
+                        .then(async (r) => {
+                          const data = await r.json();
+                          const cid = data?.conversation?._id;
+                          if (cid) navigate(`/messages/${cid}`);
+                          else toast.error('Unable to open conversation');
+                        })
+                        .catch(() => toast.error('Unable to open conversation'));
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Message
+                  </Button>
                 </div>
                 {/* Seller Badge */}
                 {profile.sellerStatus === 'verified' && (
@@ -190,6 +229,30 @@ const PublicProfile = () => {
                     <div className="text-emerald-700 font-bold">₱{(p.price||0).toLocaleString()}</div>
                     <div className="text-xs text-gray-500">{p.category}</div>
                     <Button onClick={()=>window.location.href=`/product/${p._id}`} variant="outline" className="mt-2 w-full">View</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* User's Campaigns */}
+        <div className="max-w-5xl mx-auto mt-10">
+          <h2 className="text-xl font-bold text-green-800 mb-4">Campaigns by {profile.firstName}</h2>
+          {campaigns.length === 0 ? (
+            <div className="text-center text-green-700">No campaigns yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {campaigns.map((c) => (
+                <div key={c._id} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition overflow-hidden">
+                  {c.image && (
+                    <img src={c.image} alt={c.title} className="w-full h-40 object-cover" />
+                  )}
+                  <div className="p-3">
+                    <div className="font-semibold text-gray-900 truncate">{c.title}</div>
+                    <div className="text-xs text-gray-500 capitalize">{c.type}</div>
+                    <div className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleDateString()}</div>
+                    <Button onClick={()=>window.location.href=`/campaigns/${c._id}`} variant="outline" className="mt-2 w-full">View</Button>
                   </div>
                 </div>
               ))}

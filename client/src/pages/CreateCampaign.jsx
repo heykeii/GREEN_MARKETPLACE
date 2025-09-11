@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Plus, X } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -23,13 +23,21 @@ const CreateCampaign = () => {
     endDate: '',
     image: '',
     goal: '',
-    featuredBusinesses: []
+    featuredBusinesses: [],
+    objectives: []
   });
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
   const [businessSearch, setBusinessSearch] = useState('');
   const [availableBusinesses, setAvailableBusinesses] = useState([]);
   const [searchingBusinesses, setSearchingBusinesses] = useState(false);
+
+  // Ensure at least one objective field for community campaigns
+  useEffect(() => {
+    if (formData.type === 'community' && (!formData.objectives || formData.objectives.length === 0)) {
+      setFormData(prev => ({ ...prev, objectives: [''] }));
+    }
+  }, [formData.type]);
 
   // Redirect if not authenticated
   if (!user) {
@@ -79,6 +87,35 @@ const CreateCampaign = () => {
     setAvailableBusinesses([]);
   };
 
+  const handleObjectiveChange = (index, value) => {
+    setFormData(prev => {
+      const next = [...(prev.objectives || [])];
+      next[index] = value;
+      // Auto-add next empty field when last is filled
+      if (index === next.length - 1 && value.trim() !== '' && next.length < 20) {
+        next.push('');
+      }
+      // Collapse excess trailing empties (keep single at end)
+      while (next.length > 1 && next[next.length - 1] === '' && next[next.length - 2] === '') {
+        next.pop();
+      }
+      return { ...prev, objectives: next };
+    });
+  };
+
+  const addObjectiveField = () => {
+    setFormData(prev => ({ ...prev, objectives: [ ...(prev.objectives || []), '' ] }));
+  };
+
+  const removeObjectiveField = (index) => {
+    setFormData(prev => {
+      const next = [...(prev.objectives || [])];
+      next.splice(index, 1);
+      if (next.length === 0) next.push('');
+      return { ...prev, objectives: next };
+    });
+  };
+
   const removeBusiness = (businessId) => {
     setFormData(prev => ({
       ...prev,
@@ -106,6 +143,13 @@ const CreateCampaign = () => {
         if (formData.endDate) form.append('endDate', formData.endDate);
         if (formData.goal) form.append('goal', String(parseInt(formData.goal)));
         form.append('featuredBusinesses', JSON.stringify(formData.featuredBusinesses.map(b => b._id)));
+        if (formData.type === 'community' && formData.objectives?.length) {
+          formData.objectives
+            .map(o => (o || '').trim())
+            .filter(Boolean)
+            .slice(0,20)
+            .forEach((obj) => form.append('objectives', obj));
+        }
         mediaFiles.slice(0,10).forEach((file) => form.append('media', file));
 
         response = await axios.post('/api/campaigns/create', form, {
@@ -120,7 +164,10 @@ const CreateCampaign = () => {
           goal: formData.goal ? parseInt(formData.goal) : undefined,
           featuredBusinesses: formData.featuredBusinesses.map(b => b._id),
           startDate: formData.startDate || undefined,
-          endDate: formData.endDate || undefined
+          endDate: formData.endDate || undefined,
+          objectives: formData.type === 'community' 
+            ? formData.objectives?.map(o => (o || '').trim()).filter(Boolean)
+            : undefined
         };
         response = await axios.post('/api/campaigns/create', submitData, {
           headers: {
@@ -273,6 +320,33 @@ const CreateCampaign = () => {
                   <p className="text-sm text-gray-500 mt-1">
                     Target number of participants for this community campaign
                   </p>
+                  <div className="mt-4 space-y-2">
+                    <Label>Objectives</Label>
+                    {(formData.objectives && formData.objectives.length > 0 ? formData.objectives : ['']).map((obj, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          value={obj}
+                          onChange={(e) => handleObjectiveChange(idx, e.target.value)}
+                          placeholder={`Objective #${idx + 1}`}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeObjectiveField(idx)}
+                          disabled={formData.objectives && formData.objectives.length <= 1}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="flex justify-end">
+                      <Button type="button" variant="outline" size="sm" onClick={addObjectiveField} disabled={(formData.objectives?.length || 0) >= 20}>
+                        + Add objective
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">Only for community campaigns. Up to 20 objectives. A new field appears automatically as you fill the last one.</p>
+                  </div>
                 </div>
               )}
 

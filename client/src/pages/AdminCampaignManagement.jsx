@@ -30,6 +30,7 @@ const AdminCampaignManagement = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
+      const adminToken = localStorage.getItem('admin_token') || localStorage.getItem('token');
       const params = new URLSearchParams();
       if (filters.type) params.append('type', filters.type);
       if (filters.status) params.append('status', filters.status);
@@ -37,7 +38,7 @@ const AdminCampaignManagement = () => {
 
       const response = await axios.get(`/api/v1/admin/campaigns?${params.toString()}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          Authorization: `Bearer ${adminToken}`
         }
       });
 
@@ -55,12 +56,13 @@ const AdminCampaignManagement = () => {
   const handleVerifyCampaign = async (campaignId, verified, message = '') => {
     try {
       setActionLoading(true);
+      const adminToken = localStorage.getItem('admin_token') || localStorage.getItem('token');
       const response = await axios.patch(
         `/api/v1/admin/campaigns/verify/${campaignId}`,
         { verified, rejectionMessage: message },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+            Authorization: `Bearer ${adminToken}`
           }
         }
       );
@@ -86,9 +88,10 @@ const AdminCampaignManagement = () => {
 
     try {
       setActionLoading(true);
+      const adminToken = localStorage.getItem('admin_token') || localStorage.getItem('token');
       await axios.delete(`/api/v1/admin/campaigns/${campaignId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          Authorization: `Bearer ${adminToken}`
         }
       });
       toast.success('Campaign deleted successfully');
