@@ -9,7 +9,7 @@ import Footer from '@/components/Footer';
 import { FaShoppingCart, FaCreditCard, FaMapMarkerAlt, FaMoneyBillWave, FaPhone } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CheckoutPage = () => {
   const [cart, setCart] = useState([]);
@@ -30,6 +30,8 @@ const CheckoutPage = () => {
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDirect = new URLSearchParams(location.search).get('mode') === 'direct';
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -42,10 +44,27 @@ const CheckoutPage = () => {
 
     const fetchCart = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setCart(res.data.cart || []);
+        if (isDirect) {
+          // Use locally stashed direct checkout items
+          const direct = JSON.parse(localStorage.getItem('directCheckout') || 'null');
+          if (!direct || !Array.isArray(direct.items) || direct.items.length === 0) {
+            toast.error('No item to checkout');
+            navigate('/cart');
+            return;
+          }
+          // For UI purposes, fetch product details
+          const items = await Promise.all(direct.items.map(async (i) => {
+            const pr = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/view/${i.productId}`);
+            const p = pr.data?.product;
+            return p ? { _id: p._id, name: p.name, price: p.price, quantity: i.quantity, images: p.images || [], image: p.image } : null;
+          }));
+          setCart(items.filter(Boolean));
+        } else {
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setCart(res.data.cart || []);
+        }
       } catch (err) {
         console.error('Failed to fetch cart:', err);
         toast.error('Failed to load cart');
@@ -54,7 +73,7 @@ const CheckoutPage = () => {
     };
 
     fetchCart();
-  }, [navigate]);
+  }, [navigate, isDirect]);
 
   useEffect(() => {
     setTotal(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
@@ -119,13 +138,23 @@ const CheckoutPage = () => {
     setLoading(true);
 
     try {
+      const endpoint = isDirect ? 'create-direct' : 'create';
+      const payload = isDirect
+        ? {
+            paymentMethod,
+            notes,
+            shippingAddress: address,
+            items: JSON.parse(localStorage.getItem('directCheckout') || '{"items":[]}').items || []
+          }
+        : {
+            paymentMethod,
+            notes,
+            shippingAddress: address
+          };
+
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/v1/orders/create`,
-        {
-          paymentMethod,
-          notes,
-          shippingAddress: address
-        },
+        `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
+        payload,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -135,8 +164,12 @@ const CheckoutPage = () => {
         setOrderPlaced(true);
         toast.success('Order placed successfully!');
         
-        // Clear local cart
-        localStorage.removeItem('cart');
+        // Clear local cart or direct payload
+        if (isDirect) {
+          localStorage.removeItem('directCheckout');
+        } else {
+          localStorage.removeItem('cart');
+        }
         localStorage.setItem('lastCartUpdate', Date.now().toString());
         window.dispatchEvent(new Event('cartUpdated'));
         
@@ -215,8 +248,9 @@ const CheckoutPage = () => {
                   {cart.map((item, idx) => (
                     <div key={item._id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                       <img
-                        src={item.images?.[0]}
+                        src={(item.images && item.images[0]) || item.image || '/placeholder-product.jpg'}
                         alt={item.name}
+                        onError={(e)=>{ e.currentTarget.src='/placeholder-product.jpg'; }}
                         className="w-16 h-16 object-cover rounded-lg border"
                       />
                       <div className="flex-1">

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { joinConversation, onMessage, emitTyping } from '@/lib/socket';
 import { FaShoppingCart, FaTimes, FaQuestion } from 'react-icons/fa';
 
@@ -18,6 +18,7 @@ const ChatView = () => {
   const listRef = useRef(null);
   const seenIdsRef = useRef(new Set());
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+  const location = useLocation();
 
   const fetchMessages = async () => {
     setLoading(true);
@@ -86,6 +87,14 @@ const ChatView = () => {
       headers: { Authorization: `Bearer ${token}` }
     }).catch(()=>{});
   }, [conversationId]);
+
+  // Hide product prompts if directed by query param (e.g., seller contacting customer)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('hideProductPrompts') === '1') {
+      setShowProductCard(false);
+    }
+  }, [location.search]);
 
   const me = useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), []);
 
@@ -320,8 +329,8 @@ const ChatView = () => {
           </div>
           <div className="h-[70vh] flex flex-col">
             <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-              <ProductCard />
-              <AskProductButton />
+              {showProductCard && <ProductCard />}
+              {showProductCard && <AskProductButton />}
               {loading ? (
                 <div className="text-center text-gray-500">Loading...</div>
               ) : messages.length === 0 ? (

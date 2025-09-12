@@ -385,7 +385,28 @@ const SellerOrderManagement = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(`mailto:${order.customer?.email}`, '_blank')}
+                            onClick={() => {
+                              const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+                              if (!token) {
+                                toast.error('Please login to send a message');
+                                navigate('/login');
+                                return;
+                              }
+                              const recipientId = order.customer?._id || order.customer?.id;
+                              if (!recipientId) {
+                                toast.error('Unable to identify customer');
+                                return;
+                              }
+                              axios.post(`${import.meta.env.VITE_API_URL}/api/v1/chat/conversations`, {
+                                recipientId
+                              }, {
+                                headers: { Authorization: `Bearer ${token}` }
+                              }).then((res) => {
+                                const cid = res.data?.conversation?._id;
+                                if (cid) navigate(`/messages/${cid}?hideProductPrompts=1`);
+                                else toast.error('Unable to open conversation');
+                              }).catch(() => toast.error('Unable to open conversation'));
+                            }}
                           >
                             <FaEnvelope className="mr-1" />
                             Contact Customer

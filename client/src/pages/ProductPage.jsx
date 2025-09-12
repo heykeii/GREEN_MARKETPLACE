@@ -185,6 +185,28 @@ const ProductPage = () => {
     });
   };
 
+  const handleBuyNow = async () => {
+    const currUser = JSON.parse(localStorage.getItem('user') || 'null');
+    const authToken = localStorage.getItem('token');
+    if (!currUser || !authToken) {
+      toast.error('Please login to continue');
+      navigate('/login');
+      return;
+    }
+    if (!product) return;
+    if (product.quantity === 0) {
+      toast.error('Out of stock');
+      return;
+    }
+    // Stash direct checkout payload and go to checkout page
+    const direct = {
+      items: [{ productId: product._id, quantity: Math.max(1, quantity) }],
+      createdAt: Date.now()
+    };
+    localStorage.setItem('directCheckout', JSON.stringify(direct));
+    navigate('/checkout?mode=direct');
+  };
+
   const handleEditProduct = () => {
     // Populate the edit form with current product data
     setEditForm({
@@ -711,6 +733,7 @@ const ProductPage = () => {
                       variant="outline"
                       size="lg"
                       className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={handleBuyNow}
                     >
                       Buy Now
                     </Button>

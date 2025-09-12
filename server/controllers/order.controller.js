@@ -124,6 +124,83 @@ export const createOrder = async (req, res) => {
     }
 };
 
+// Direct checkout: create order from explicit items (bypass cart)
+export const createDirectOrder = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { paymentMethod, notes, shippingAddress, items } = req.body;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ success: false, message: 'Items are required' });
+        }
+
+        if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || 
+            !shippingAddress.address || !shippingAddress.city || !shippingAddress.province || 
+            !shippingAddress.zipCode) {
+            return res.status(400).json({ success: false, message: 'Complete shipping address is required' });
+        }
+
+        // Load products and validate stock
+        const productIds = items.map(i => i.productId);
+        const products = await Product.find({ _id: { $in: productIds } });
+        const idToProduct = new Map(products.map(p => [p._id.toString(), p]));
+
+        const orderItems = [];
+        for (const i of items) {
+            const p = idToProduct.get(String(i.productId));
+            if (!p || !p.isAvailable) {
+                return res.status(400).json({ success: false, message: 'Invalid or unavailable product in items' });
+            }
+            const qty = Math.max(1, parseInt(i.quantity || 1, 10));
+            if (p.quantity < qty) {
+                return res.status(400).json({ success: false, message: `Insufficient stock for ${p.name}` });
+            }
+            orderItems.push({ product: p._id, quantity: qty, price: p.price });
+        }
+
+        const subtotal = orderItems.reduce((sum, it) => sum + it.price * it.quantity, 0);
+        const totalAmount = subtotal;
+
+        const order = new Order({
+            customer: userId,
+            items: orderItems,
+            paymentMethod,
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
+            subtotal,
+            totalAmount,
+            shippingAddress,
+            notes: notes || ''
+        });
+
+        await order.save();
+
+        // Decrement stock
+        for (const it of orderItems) {
+            await Product.findByIdAndUpdate(it.product, { $inc: { quantity: -it.quantity } });
+        }
+
+        await order.populate('items.product');
+        await order.populate('customer', 'firstName lastName email');
+
+        // Notify involved sellers
+        try {
+            const sellerIds = new Set();
+            for (const it of orderItems) {
+                const p = idToProduct.get(String(it.product));
+                if (p?.seller) sellerIds.add(p.seller.toString());
+            }
+            for (const sellerId of sellerIds) {
+                await NotificationService.notifyNewOrder(sellerId, order);
+            }
+        } catch (e) {}
+
+        return res.status(201).json({ success: true, message: 'Order created successfully', order });
+    } catch (error) {
+        console.error('Create direct order error:', error);
+        return res.status(500).json({ success: false, message: 'Failed to create order', error: error.message });
+    }
+};
+
 // Get user's orders
 export const getUserOrders = async (req, res) => {
     try {

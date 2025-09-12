@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
+  const [socialCounts, setSocialCounts] = useState({ followers: 0, following: 0 });
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
     firstName: "",
@@ -55,6 +56,7 @@ const Profile = () => {
           const latestUser = response.data.user;
           localStorage.setItem("user", JSON.stringify(latestUser));
           setUser(latestUser);
+          setSocialCounts({ followers: latestUser.followerCount || 0, following: latestUser.followingCount || 0 });
           
           // Update form with latest data
           const formObj = {
@@ -429,6 +431,13 @@ const Profile = () => {
                         </div>
                       </div>
                     )}
+
+                    {/* Social counts */}
+                    <div className="flex items-center justify-center gap-4 mt-2 text-sm text-green-700">
+                      <a href="/profile/followers" className="hover:underline"><span className="font-semibold">{socialCounts.followers}</span> Followers</a>
+                      <span>•</span>
+                      <a href="/profile/following" className="hover:underline"><span className="font-semibold">{socialCounts.following}</span> Following</a>
+                    </div>
 
                     {/* Profile Completion */}
                     {typeof user.profileCompletion === "number" && (

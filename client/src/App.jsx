@@ -35,6 +35,8 @@ import Messages from './pages/Messages';
 import ChatView from './pages/ChatView';
 import Campaigns from './pages/Campaigns';
 import CampaignDetail from './pages/CampaignDetail';
+import FollowersPage from './pages/FollowersPage';
+import FollowingPage from './pages/FollowingPage';
 import CreateCampaign from './pages/CreateCampaign';
 import AdminCampaignManagement from './pages/AdminCampaignManagement';
 
@@ -70,6 +72,8 @@ const App = () => {
         <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/campaigns/:id" element={<CampaignDetail />} />
         <Route path="/create-campaign" element={<CreateCampaign />} />
+        <Route path="/profile/followers" element={<FollowersPage />} />
+        <Route path="/profile/following" element={<FollowingPage />} />
         <Route 
           path="/admin" 
           element={

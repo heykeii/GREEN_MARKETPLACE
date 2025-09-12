@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile, searchSellers } from "../controllers/user.controller.js";
+import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile, searchSellers, followUser, unfollowUser, getFollowers, getFollowing } from "../controllers/user.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import multer from 'multer';
 
@@ -24,5 +24,11 @@ router.get("/sellers", protect, searchSellers);
 router.get("/me", protect, getUser);
 router.put("/update-profile", protect, upload.fields([{ name: 'avatar', maxCount: 1 }]), updateProfile);
 router.post("/deactivate-account", protect, deactivateAccount);
+
+// Social graph routes
+router.post('/follow', protect, followUser);
+router.post('/unfollow', protect, unfollowUser);
+router.get('/:userId/followers', protect, getFollowers);
+router.get('/:userId/following', protect, getFollowing);
 
 export default router;

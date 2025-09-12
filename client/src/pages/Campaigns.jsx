@@ -16,6 +16,85 @@ import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import ImageCarousel from '../components/ImageCarousel';
 
+// Suggested friends component
+const SuggestedFriends = () => {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        let myId = null;
+        let followingSet = new Set();
+        if (token) {
+          try {
+            const meRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/me`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const me = meRes.data?.user || {};
+            myId = me._id || me.id || null;
+            followingSet = new Set((me.following || []).map((x) => String(x)));
+            if (myId) followingSet.add(String(myId)); // exclude self too
+          } catch (_) {}
+        }
+
+        // Fetch a list of verified sellers and users to follow (reusing sellers search as a simple suggestion source)
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/sellers?search=a`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        });
+        let sellers = Array.isArray(res.data?.sellers) ? res.data.sellers : [];
+
+        // Exclude already-followed users and self
+        sellers = sellers.filter((u) => {
+          const id = String(u._id || u.id);
+          return !followingSet.has(id);
+        }).slice(0, 6);
+
+        setSuggestions(sellers);
+      } catch (_) {
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSuggestions();
+  }, []);
+
+  const handleFollow = async (userId, idx) => {
+    try {
+      if (!token) return;
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/users/follow`, { targetUserId: userId }, { headers: { Authorization: `Bearer ${token}` } });
+      // Remove from list after following
+      setSuggestions(prev => prev.filter((_, i) => i !== idx));
+    } catch (_) {}
+  };
+
+  if (loading) return <div className="text-sm text-gray-500">Loading...</div>;
+  if (suggestions.length === 0) return <div className="text-sm text-gray-500">No suggestions right now.</div>;
+
+  return (
+    <div className="space-y-4">
+      {suggestions.map((u, idx) => (
+        <div key={u._id} className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden border">
+              <img src={u.avatar || '/default-avatar.png'} onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-900 text-sm truncate">{`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}</p>
+              <p className="text-gray-500 text-xs truncate">{u.businessName || 'Eco enthusiast'}</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-600 hover:bg-emerald-50" onClick={()=>handleFollow(u._id, idx)} disabled={u.__isFollowing}>
+            {u.__isFollowing ? 'Following' : 'Follow'}
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Enhanced Instagram-style Campaign Card Component
 const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
   const [showComments, setShowComments] = useState(false);
@@ -726,40 +805,10 @@ const Campaigns = () => {
             </div>
           </div>
 
-          {/* Suggested for You */}
+          {/* Suggested Friends (users to follow) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Suggested for You</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                    <Lightbulb className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">Eco Awareness</p>
-                    <p className="text-gray-500 text-xs">Join the movement</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50">
-                  Follow
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center">
-                    <Store className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">Green Business</p>
-                    <p className="text-gray-500 text-xs">Sustainable products</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                  Follow
-                </Button>
-              </div>
-            </div>
+            <h3 className="font-semibold text-gray-900 mb-4">Suggested Friends</h3>
+            <SuggestedFriends />
           </div>
 
           {/* How It Works */}

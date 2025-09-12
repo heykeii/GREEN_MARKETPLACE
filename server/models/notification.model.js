@@ -26,7 +26,14 @@ const notificationSchema = new mongoose.Schema({
       
       // General notifications
       'system_message',
-      'report_status_updated'
+      'report_status_updated',
+      
+      // Social graph & campaigns
+      'user_followed_you',
+      'campaign_liked',
+      'campaign_commented',
+      'campaign_joined',
+      'review_reply'
     ],
     required: true
   },
@@ -62,6 +69,14 @@ const notificationSchema = new mongoose.Schema({
     reportId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Report'
+    },
+    campaignId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Campaign'
+    },
+    actorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     }
   },
 

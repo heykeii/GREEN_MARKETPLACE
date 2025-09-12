@@ -21,12 +21,39 @@ export const findOrCreateConversation = async (req, res) => {
     let conversation = await Conversation.findOne({ uniqueKey }).populate('participants', 'firstName lastName avatar');
 
     if (!conversation) {
-      conversation = await Conversation.create({
-        participants: [userId, recipientId],
-        product: productId || undefined, // Store the most recent product context
-        uniqueKey
-      });
-      conversation = await conversation.populate('participants', 'firstName lastName avatar');
+      // Fallback: find any existing 1:1 conversation by participants (older conversations may not have uniqueKey)
+      const candidateConversations = await Conversation.find({
+        participants: { $all: [userId, recipientId] }
+      })
+        .sort({ lastMessageAt: -1, updatedAt: -1 })
+        .populate('participants', 'firstName lastName avatar');
+
+      const existing = candidateConversations.find(c => Boolean(c.uniqueKey)) || candidateConversations[0];
+
+      if (existing) {
+        // Ensure uniqueKey is set for future fast lookups
+        if (!existing.uniqueKey) {
+          existing.uniqueKey = uniqueKey;
+        }
+        if (productId) {
+          existing.product = productId;
+        }
+        try {
+          await existing.save();
+        } catch (e) {
+          // Ignore duplicate key errors if another conversation already claimed the key
+          // This preserves navigation to the existing conversation without breaking the request
+        }
+        conversation = existing;
+      } else {
+        // None found, create a new one
+        conversation = await Conversation.create({
+          participants: [userId, recipientId],
+          product: productId || undefined, // Store the most recent product context
+          uniqueKey
+        });
+        conversation = await conversation.populate('participants', 'firstName lastName avatar');
+      }
     } else if (productId) {
       // Update the conversation's product context to the most recent product being discussed
       conversation.product = productId;

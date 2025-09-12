@@ -36,20 +36,31 @@ const PublicProfile = () => {
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
+  const [followLoading, setFollowLoading] = useState(false);
   const isAdmin = typeof window !== 'undefined' && localStorage.getItem('admin_token');
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/profile/${userId}`);
-        setProfile(res.data.profile);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/profile/${userId}`, {
+          headers: (() => {
+            const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+            return token ? { Authorization: `Bearer ${token}` } : undefined;
+          })()
+        });
+        const fetchedProfile = res.data.profile;
+        setProfile(fetchedProfile);
         setError(null);
-        // fetch seller products
-        try {
-          const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/by-seller/${userId}`);
-          if (prodRes.data?.success) setProducts(prodRes.data.products || []);
-        } catch(e) {}
+        // fetch seller products (only if user is a seller)
+        if (fetchedProfile?.isSeller) {
+          try {
+            const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/by-seller/${userId}`);
+            if (prodRes.data?.success) setProducts(prodRes.data.products || []);
+          } catch(e) {}
+        } else {
+          setProducts([]);
+        }
         // fetch user's campaigns (public: verified only)
         try {
           const campRes = await axios.get(`/api/campaigns/by-user/${userId}`);
@@ -147,6 +158,37 @@ const PublicProfile = () => {
                     Message
                   </Button>
                 </div>
+                {/* Follow/Unfollow and counts */}
+                <div className="mt-2 flex items-center justify-center gap-3">
+                  <Button
+                    variant="outline"
+                    disabled={followLoading}
+                    onClick={async () => {
+                      const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+                      if (!token) { toast.error('Please login to follow users'); return; }
+                      if (!profile) return;
+                      try {
+                        setFollowLoading(true);
+                        if (profile.isFollowing) {
+                          await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/users/unfollow`, { targetUserId: userId }, { headers: { Authorization: `Bearer ${token}` } });
+                          setProfile({ ...profile, isFollowing: false, followerCount: Math.max(0, (profile.followerCount||0) - 1) });
+                        } else {
+                          await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/users/follow`, { targetUserId: userId }, { headers: { Authorization: `Bearer ${token}` } });
+                          setProfile({ ...profile, isFollowing: true, followerCount: (profile.followerCount||0) + 1 });
+                        }
+                      } catch (e) {
+                        toast.error('Action failed');
+                      } finally {
+                        setFollowLoading(false);
+                      }
+                    }}
+                  >
+                    {profile.isFollowing ? 'Unfollow' : 'Follow'}
+                  </Button>
+                  <div className="text-xs text-green-700 bg-green-50 rounded-full px-3 py-1">
+                    <span className="font-semibold">{profile.followerCount || 0}</span> followers · <span className="font-semibold">{profile.followingCount || 0}</span> following
+                  </div>
+                </div>
                 {/* Seller Badge */}
                 {profile.sellerStatus === 'verified' && (
                   <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-md">
@@ -215,26 +257,28 @@ const PublicProfile = () => {
         </div>
 
         {/* Seller Products */}
-        <div className="max-w-5xl mx-auto mt-8">
-          <h2 className="text-xl font-bold text-green-800 mb-4">Products by {profile.firstName}</h2>
-          {products.length === 0 ? (
-            <div className="text-center text-green-700">No products listed yet.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {products.map((p) => (
-                <div key={p._id} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition p-3">
-                  <img src={(p.images && p.images[0]) || '/placeholder-product.jpg'} alt={p.name} className="w-full h-40 object-cover rounded" />
-                  <div className="mt-3">
-                    <div className="font-semibold text-gray-900 truncate">{p.name}</div>
-                    <div className="text-emerald-700 font-bold">₱{(p.price||0).toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">{p.category}</div>
-                    <Button onClick={()=>window.location.href=`/product/${p._id}`} variant="outline" className="mt-2 w-full">View</Button>
+        {profile.isSeller && (
+          <div className="max-w-5xl mx-auto mt-8">
+            <h2 className="text-xl font-bold text-green-800 mb-4">Products by {profile.firstName}</h2>
+            {products.length === 0 ? (
+              <div className="text-center text-green-700">No products listed yet.</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {products.map((p) => (
+                  <div key={p._id} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition p-3">
+                    <img src={(p.images && p.images[0]) || '/placeholder-product.jpg'} alt={p.name} className="w-full h-40 object-cover rounded" />
+                    <div className="mt-3">
+                      <div className="font-semibold text-gray-900 truncate">{p.name}</div>
+                      <div className="text-emerald-700 font-bold">₱{(p.price||0).toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">{p.category}</div>
+                      <Button onClick={()=>window.location.href=`/product/${p._id}`} variant="outline" className="mt-2 w-full">View</Button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* User's Campaigns */}
         <div className="max-w-5xl mx-auto mt-10">

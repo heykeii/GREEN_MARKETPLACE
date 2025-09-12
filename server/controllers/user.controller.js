@@ -5,6 +5,102 @@ import { Resend } from "resend";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import cloudinary from "../utils/cloudinary.js";
+import { NotificationService } from "../utils/notificationService.js";
+
+// Follow a user
+export const followUser = async (req, res) => {
+  try {
+    const followerId = req.user._id;
+    const { targetUserId } = req.body;
+    if (!targetUserId) {
+      return res.status(400).json({ success: false, message: 'targetUserId is required' });
+    }
+    if (targetUserId.toString() === followerId.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot follow yourself' });
+    }
+
+    const [follower, target] = await Promise.all([
+      User.findById(followerId),
+      User.findById(targetUserId)
+    ]);
+    if (!target) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Add if not exists
+    const updatedFollower = await User.findByIdAndUpdate(
+      followerId,
+      { $addToSet: { following: target._id } },
+      { new: true }
+    ).select('-password');
+    await User.findByIdAndUpdate(target._id, { $addToSet: { followers: followerId } });
+
+    try {
+      // Notify the target user that someone followed them
+      await NotificationService.notifyUserFollowed(target._id, follower);
+    } catch (e) {
+      // non-fatal
+    }
+
+    return res.json({ success: true, user: updatedFollower });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to follow user', error: error.message });
+  }
+};
+
+// Unfollow a user
+export const unfollowUser = async (req, res) => {
+  try {
+    const followerId = req.user._id;
+    const { targetUserId } = req.body;
+    if (!targetUserId) {
+      return res.status(400).json({ success: false, message: 'targetUserId is required' });
+    }
+    if (targetUserId.toString() === followerId.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot unfollow yourself' });
+    }
+
+    const target = await User.findById(targetUserId);
+    if (!target) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const updatedFollower = await User.findByIdAndUpdate(
+      followerId,
+      { $pull: { following: target._id } },
+      { new: true }
+    ).select('-password');
+    await User.findByIdAndUpdate(target._id, { $pull: { followers: followerId } });
+
+    return res.json({ success: true, user: updatedFollower });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to unfollow user', error: error.message });
+  }
+};
+
+// Get followers list for a user
+export const getFollowers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate('followers', 'firstName lastName avatar email');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    return res.json({ success: true, followers: user.followers || [] });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch followers', error: error.message });
+  }
+};
+
+// Get following list for a user
+export const getFollowing = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate('following', 'firstName lastName avatar email');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    return res.json({ success: true, following: user.following || [] });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch following', error: error.message });
+  }
+};
 
 // Set default environment variables if not provided
 
@@ -466,7 +562,15 @@ export const getUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ user });
+    const followerCount = user.followers?.length || 0;
+    const followingCount = user.following?.length || 0;
+    res.status(200).json({ 
+      user: {
+        ...user.toObject(),
+        followerCount,
+        followingCount
+      }
+    });
   } catch (error) {
     console.error("Get user error:", error);
     res.status(500).json({ message: "Failed to get user information" });
@@ -479,12 +583,29 @@ export const getProfile = async (req, res) => {
     const { userId } = req.params;
     // Only select public fields (do not select virtuals like fullName)
     const user = await User.findById(userId).select(
-      'firstName lastName email avatar bio location contactNumber socialLinks isSeller sellerStatus role createdAt updatedAt'
+      'firstName lastName email avatar bio location contactNumber socialLinks isSeller sellerStatus role createdAt updatedAt followers following'
     );
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json({ profile: user });
+    // Optional auth: parse bearer token if present to compute isFollowing
+    let authUserId = undefined;
+    try {
+      const header = req.headers?.authorization || '';
+      if (header.startsWith('Bearer ')) {
+        const token = header.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        authUserId = decoded?.userId?.toString();
+      }
+    } catch (e) {
+      // ignore token errors for public profile
+    }
+    const followerCount = user.followers?.length || 0;
+    const followingCount = user.following?.length || 0;
+    const isFollowing = authUserId ? (user.followers || []).map(String).includes(authUserId) : false;
+    const profile = user.toObject();
+    delete profile.password;
+    res.status(200).json({ profile: { ...profile, followerCount, followingCount, isFollowing } });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Failed to get user profile' });

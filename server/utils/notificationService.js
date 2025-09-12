@@ -114,4 +114,69 @@ export class NotificationService {
       priority
     );
   }
+
+  // Social graph: someone followed you
+  static async notifyUserFollowed(recipientUserId, actorUser) {
+    await createNotification(
+      recipientUserId,
+      'user_followed_you',
+      `${actorUser.firstName || 'Someone'} followed you`,
+      `${actorUser.firstName || 'Someone'} ${actorUser.lastName || ''} started following you`,
+      { actorId: actorUser._id },
+      `/profile/${actorUser._id}`,
+      'low'
+    );
+  }
+
+  // Campaign: liked
+  static async notifyCampaignLiked(creatorUserId, campaign, actorUser) {
+    await createNotification(
+      creatorUserId,
+      'campaign_liked',
+      `${actorUser.firstName || 'Someone'} liked your campaign`,
+      `${actorUser.firstName || 'Someone'} liked "${campaign.title}"`,
+      { campaignId: campaign._id, actorId: actorUser._id },
+      `/campaigns/${campaign._id}`,
+      'low'
+    );
+  }
+
+  // Campaign: commented
+  static async notifyCampaignCommented(creatorUserId, campaign, actorUser, commentText) {
+    await createNotification(
+      creatorUserId,
+      'campaign_commented',
+      `${actorUser.firstName || 'Someone'} commented on your campaign`,
+      `${actorUser.firstName || 'Someone'}: "${String(commentText || '').slice(0, 80)}${String(commentText || '').length > 80 ? '...' : ''}"`,
+      { campaignId: campaign._id, actorId: actorUser._id },
+      `/campaigns/${campaign._id}`,
+      'medium'
+    );
+  }
+
+  // Campaign: joined
+  static async notifyCampaignJoined(creatorUserId, campaign, actorUser) {
+    await createNotification(
+      creatorUserId,
+      'campaign_joined',
+      `${actorUser.firstName || 'Someone'} joined your campaign`,
+      `${actorUser.firstName || 'Someone'} joined "${campaign.title}"`,
+      { campaignId: campaign._id, actorId: actorUser._id },
+      `/campaigns/${campaign._id}`,
+      'medium'
+    );
+  }
+
+  // Review: seller replied to your review
+  static async notifyReviewReply(reviewerUserId, product, sellerUser) {
+    await createNotification(
+      reviewerUserId,
+      'review_reply',
+      `${sellerUser.firstName || 'Seller'} replied to your review`,
+      `You have a new reply regarding ${product.name}`,
+      { productId: product._id, actorId: sellerUser._id },
+      `/product/${product._id}`,
+      'medium'
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import Campaign from "../models/campaign.model.js";
 import User from "../models/user.model.js";
 import cloudinary from "../utils/cloudinary.js";
+import { NotificationService } from "../utils/notificationService.js";
 
 // Create campaign (pending admin verification)
 const createCampaign = async (req, res) => {
@@ -389,6 +390,14 @@ const toggleLikeCampaign = async (req, res) => {
 
     await campaign.save();
 
+    // Notify creator when newly liked (avoid self notification)
+    try {
+      if (!isLiked && campaign.createdBy && campaign.createdBy.toString() !== userId.toString()) {
+        const actor = await User.findById(userId).select('firstName lastName');
+        await NotificationService.notifyCampaignLiked(campaign.createdBy, campaign, actor || { _id: userId });
+      }
+    } catch (_) {}
+
     res.json({
       success: true,
       message: isLiked ? "Campaign unliked" : "Campaign liked",
@@ -448,6 +457,14 @@ const addComment = async (req, res) => {
 
     const newComment = updatedCampaign.comments[updatedCampaign.comments.length - 1];
 
+    // Notify creator on comment (avoid self notification)
+    try {
+      if (campaign.createdBy && campaign.createdBy.toString() !== userId.toString()) {
+        const actor = await User.findById(userId).select('firstName lastName');
+        await NotificationService.notifyCampaignCommented(campaign.createdBy, campaign, actor || { _id: userId }, text);
+      }
+    } catch (_) {}
+
     res.status(201).json({
       success: true,
       message: "Comment added successfully",
@@ -503,6 +520,14 @@ const joinCampaign = async (req, res) => {
       progress: campaign.progress,
       isParticipant: !isParticipant
     });
+    
+    // Notify creator when newly joined (avoid self)
+    try {
+      if (!isParticipant && campaign.createdBy && campaign.createdBy.toString() !== userId.toString()) {
+        const actor = await User.findById(userId).select('firstName lastName');
+        await NotificationService.notifyCampaignJoined(campaign.createdBy, campaign, actor || { _id: userId });
+      }
+    } catch (_) {}
   } catch (error) {
     res.status(500).json({
       success: false,

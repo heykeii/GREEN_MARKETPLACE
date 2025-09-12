@@ -288,15 +288,16 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
                     key={participant._id}
                     className="flex items-center space-x-2 bg-green-50 rounded-full px-3 py-1"
                   >
-                    <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={participant.avatar} alt={(participant.firstName || participant.name || 'User')} />
+                      <AvatarFallback className="text-xs bg-emerald-200 text-emerald-800">
                         {(participant.firstName || participant.name || 'U')?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="text-sm font-medium text-green-900">
-                      {participant.firstName && participant.lastName 
+                      {participant.firstName && participant.lastName
                         ? `${participant.firstName} ${participant.lastName}`
-                        : participant.name || 'User'}
+                        : participant.firstName || participant.name || 'User'}
                     </span>
                   </div>
                 ))}

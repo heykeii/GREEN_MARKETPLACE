@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     createOrder,
+    createDirectOrder,
     getUserOrders,
     getOrderById,
     updateOrderStatus,
@@ -15,6 +16,7 @@ const router = express.Router();
 
 // Customer routes
 router.post('/create', protect, createOrder);
+router.post('/create-direct', protect, createDirectOrder);
 router.get('/my-orders', protect, getUserOrders);
 router.get('/:orderId', protect, getOrderById);
 router.put('/:orderId/cancel', protect, cancelOrder);

@@ -150,6 +150,16 @@ const NotificationsPage = () => {
         return '🛒';
       case 'new_review':
         return '⭐';
+      case 'user_followed_you':
+        return '👥';
+      case 'campaign_liked':
+        return '❤️';
+      case 'campaign_commented':
+        return '💬';
+      case 'campaign_joined':
+        return '🤝';
+      case 'review_reply':
+        return '↩️';
       case 'order_status_updated':
       case 'order_confirmed':
       case 'order_ready':
@@ -172,6 +182,14 @@ const NotificationsPage = () => {
       case 'new_order':
       case 'order_completed':
         return 'text-green-600';
+      case 'user_followed_you':
+      case 'campaign_joined':
+        return 'text-emerald-600';
+      case 'campaign_liked':
+        return 'text-red-600';
+      case 'campaign_commented':
+      case 'review_reply':
+        return 'text-blue-600';
       case 'order_cancelled':
       case 'order_cancelled_by_customer':
         return 'text-red-600';
@@ -188,6 +206,11 @@ const NotificationsPage = () => {
     const typeMap = {
       'new_order': 'New Order',
       'new_review': 'New Review',
+      'user_followed_you': 'New Follower',
+      'campaign_liked': 'Campaign Liked',
+      'campaign_commented': 'Campaign Comment',
+      'campaign_joined': 'Campaign Joined',
+      'review_reply': 'Review Reply',
       'order_status_updated': 'Order Status Update',
       'order_confirmed': 'Order Confirmed',
       'order_ready': 'Order Ready',

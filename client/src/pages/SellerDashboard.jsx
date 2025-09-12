@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+// Charts
+import { Line, Bar } from 'react-chartjs-2';
+import 'chart.js/auto';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -871,6 +874,156 @@ const SellerDashboard = () => {
     </div>
   );
 
+  // Charts helpers
+  const SalesLineChart = () => {
+    const labels = (analyticsData.salesData?.daily || []).map(d => d.date?.slice(5));
+    const revenue = (analyticsData.salesData?.daily || []).map(d => d.revenue || 0);
+    const orders = (analyticsData.salesData?.daily || []).map(d => d.orders || 0);
+    const data = {
+      labels,
+      datasets: [
+        { label: 'Revenue', data: revenue, borderColor: 'rgba(16, 185, 129, 1)', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.3 },
+        { label: 'Orders', data: orders, borderColor: 'rgba(59, 130, 246, 1)', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3 }
+      ]
+    };
+    const options = { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } };
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg">Sales Trend (Daily)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Line data={data} options={options} height={80} />
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const CategoryBarChart = () => {
+    const categories = (analyticsData.categoryPerformance || []).map(c => c.category);
+    const products = (analyticsData.categoryPerformance || []).map(c => c.products || 0);
+    const data = { labels: categories, datasets: [ { label: 'Products', data: products, backgroundColor: 'rgba(16, 185, 129, 0.6)' } ] };
+    const options = { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg">Products by Category</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Bar data={data} options={options} height={80} />
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const MonthlySalesChart = () => {
+    const labels = (analyticsData.salesData?.monthly || []).map((d, i) => `M${i + 1}`);
+    const revenue = (analyticsData.salesData?.monthly || []).map(d => d.revenue || 0);
+    const orders = (analyticsData.salesData?.monthly || []).map(d => d.orders || 0);
+    const data = {
+      labels,
+      datasets: [
+        { label: 'Revenue', data: revenue, backgroundColor: 'rgba(16,185,129,0.6)' },
+        { label: 'Orders', data: orders, backgroundColor: 'rgba(59,130,246,0.6)' }
+      ]
+    };
+    const options = { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } };
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg">Monthly Sales</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Bar data={data} options={options} height={80} />
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const TopProductsChart = () => {
+    const top = (analyticsData.topProducts || []).slice(0, 5);
+    if (top.length === 0) return null;
+    const labels = top.map(p => p.name);
+    const orders = top.map(p => Number(p.orders || 0));
+    const data = { labels, datasets: [ { label: 'Orders', data: orders, backgroundColor: 'rgba(99,102,241,0.7)' } ] };
+    const options = { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } };
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg">Top Products (by orders)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Bar data={data} options={options} height={100} />
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const ConversionFunnelChart = () => {
+    const convRate = Math.max(0, Number(analyticsData.overview?.conversionRate || 0));
+    const totalOrders = Math.max(0, Number(analyticsData.overview?.totalOrders || 0));
+    // Derive an estimated number of visits from orders and conversion rate if available; otherwise default to 1000
+    const visits = convRate > 0 && totalOrders > 0 ? Math.max(totalOrders, Math.round(totalOrders / (convRate / 100))) : 1000;
+    const orderRate = convRate / 100; // 0-1
+    // Provide easy-to-understand intermediate stage estimates (adjusted to always be > orders)
+    let viewsRate = 0.65;
+    let cartsRate = 0.40;
+    if (orderRate >= cartsRate) cartsRate = Math.min(0.9, orderRate + 0.05);
+    if (cartsRate >= viewsRate) viewsRate = Math.min(0.95, cartsRate + 0.10);
+
+    const views = Math.round(visits * viewsRate);
+    const carts = Math.round(visits * cartsRate);
+    const orders = Math.round(visits * orderRate);
+
+    const data = {
+      labels: ['Site Visits', 'Product Views', 'Added to Cart', 'Orders (Actual)'],
+      datasets: [
+        {
+          label: 'Users',
+          data: [visits, views, carts, orders],
+          backgroundColor: ['#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8']
+        }
+      ]
+    };
+    const options = {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const value = Number(ctx.raw || 0);
+              const pct = visits > 0 ? ((value / visits) * 100).toFixed(1) : '0.0';
+              return `${value.toLocaleString()} users (${pct}%)`;
+            }
+          }
+        }
+      },
+      scales: { x: { beginAtZero: true, max: visits } }
+    };
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg">Conversion Funnel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Bar data={data} options={options} height={100} />
+          <div className="text-xs text-gray-600 mt-3 space-y-1">
+            <div><strong>How to read:</strong> Each bar shows how many users reached the step, relative to total site visits.</div>
+            <div>Orders are computed from your actual conversion rate ({convRate}%). Product Views and Add to Cart are estimated placeholders you can refine later.</div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-gray-700">
+              <div>Site Visits: <strong>{visits.toLocaleString()}</strong> (100%)</div>
+              <div>Product Views: <strong>{views.toLocaleString()}</strong> ({Math.round(viewsRate * 100)}%)</div>
+              <div>Added to Cart: <strong>{carts.toLocaleString()}</strong> ({Math.round(cartsRate * 100)}%)</div>
+              <div>Orders: <strong>{orders.toLocaleString()}</strong> ({convRate}%)</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const TopProductsSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
       <CardHeader>
@@ -1281,6 +1434,19 @@ const SellerDashboard = () => {
 
                   {/* Analytics Overview */}
                   <AnalyticsOverview />
+
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <SalesLineChart />
+                    <CategoryBarChart />
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <MonthlySalesChart />
+                    <TopProductsChart />
+                  </div>
+
+                  <ConversionFunnelChart />
 
                   {/* Top Products */}
                   <TopProductsSection />

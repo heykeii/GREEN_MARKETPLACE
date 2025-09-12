@@ -82,6 +82,9 @@ const userSchema = new mongoose.Schema({
         match: [/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"],
         default: ""
     },
+    // Social graph
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true }],
     socialLinks: [{
         platform: {
             type: String,

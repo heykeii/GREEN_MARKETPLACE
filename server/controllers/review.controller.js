@@ -642,6 +642,13 @@ export const replyToReview = async (req, res) => {
       { new: true }
     ).populate('reviewer', 'firstName lastName profilePicture');
 
+    // Notify reviewer that seller replied
+    try {
+      const product = await Product.findById(review.product).select('name');
+      const sellerUser = await User.findById(sellerId).select('firstName lastName');
+      await NotificationService.notifyReviewReply(review.reviewer, product || { _id: review.product, name: 'your product' }, sellerUser || { _id: sellerId });
+    } catch (e) { /* non-fatal */ }
+
     return res.json({ success: true, message: 'Reply saved', review: updated });
   } catch (error) {
     console.error('Reply to review error:', error);
