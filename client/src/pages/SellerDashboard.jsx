@@ -75,6 +75,19 @@ const SellerDashboard = () => {
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
+  const [gcashDetails, setGcashDetails] = useState(null);
+  const [showGcashModal, setShowGcashModal] = useState(false);
+  const [gcashNumberInput, setGcashNumberInput] = useState('');
+  const formatGcash = (val) => {
+    let digits = String(val || '').replace(/\D/g, '');
+    if (digits.startsWith('63')) digits = digits.slice(2);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    const i = digits.indexOf('9');
+    if (i !== -1) digits = digits.slice(i + 1); else digits = '';
+    digits = digits.slice(0, 9);
+    return '+639' + digits;
+  };
+  const [gcashQRFile, setGcashQRFile] = useState(null);
 
   const navigate = useNavigate();
 
@@ -119,7 +132,51 @@ const SellerDashboard = () => {
     setUser(storedUser);
     fetchProducts();
     fetchAnalytics();
+    fetchGcashDetails();
   }, []);
+
+  const fetchGcashDetails = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/gcash/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        setGcashDetails(res.data.gcash);
+      }
+    } catch (err) {
+      // silent
+    }
+  }, []);
+
+  const openGcashModal = () => {
+    setGcashNumberInput(gcashDetails?.number || '');
+    setGcashQRFile(null);
+    setShowGcashModal(true);
+  };
+
+  const handleUpdateGcash = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      if (gcashNumberInput) formData.append('gcashNumber', gcashNumberInput);
+      if (gcashQRFile) formData.append('gcashQR', gcashQRFile);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/seller/gcash`, formData, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data?.success) {
+        setGcashDetails(res.data.gcash);
+        toast.success('GCash details updated');
+        setShowGcashModal(false);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update GCash details');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   // Update analytics data when products are fetched
   useEffect(() => {
@@ -1278,6 +1335,100 @@ const SellerDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* GCash Information */}
+          <Card className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <img 
+                      src="https://assets-global.website-files.com/60f008ba9757da0940af288e/6374c97f7f9ca43ebec47c7e_gcash.png" 
+                      alt="GCash Logo" 
+                      className="w-8 h-8 object-contain"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">GCash Payment Details</h3>
+                    <p className="text-sm text-gray-600">Your customers can pay using these details</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                  onClick={openGcashModal}
+                >
+                  Update GCash Details
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-4 rounded-xl shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-medium text-gray-700">GCash Number</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={() => {
+                        if (gcashDetails?.number) {
+                          navigator.clipboard.writeText(gcashDetails.number);
+                          toast.success('GCash number copied to clipboard!');
+                        }
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="text-lg font-semibold text-gray-900">{gcashDetails?.number || 'Not set'}</p>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl shadow-sm">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">GCash QR Code</Label>
+                  {gcashDetails?.qrCode ? (
+                    <div className="relative aspect-square w-full max-w-[200px] mx-auto">
+                      <img
+                        src={gcashDetails.qrCode}
+                        alt="GCash QR Code"
+                        className="w-full h-full object-contain border border-gray-200 rounded-lg"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-2 right-2 bg-white/90 hover:bg-white"
+                        onClick={() => window.open(gcashDetails.qrCode, '_blank')}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No QR code uploaded
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {/* GCash Update Modal */}
+          <Modal isOpen={showGcashModal} onClose={() => setShowGcashModal(false)} title="Update GCash Details" size="small">
+            <form onSubmit={handleUpdateGcash} className="w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-2 w-full">
+                <Label htmlFor="gcashNumberInput">GCash Number</Label>
+                <Input id="gcashNumberInput" value={gcashNumberInput} onChange={(e) => setGcashNumberInput(formatGcash(e.target.value))} placeholder="+639XXXXXXXXX" inputMode="tel" />
+                <p className="text-xs text-gray-500">Format: +639XXXXXXXXX (e.g., +639123456789)</p>
+              </div>
+              <div className="space-y-2 w-full">
+                <Label htmlFor="gcashQRFile">GCash QR Code</Label>
+                <Input id="gcashQRFile" type="file" accept="image/*" onChange={(e) => setGcashQRFile(e.target.files?.[0] || null)} />
+                <p className="text-xs text-gray-500">Upload to replace your existing QR (optional)</p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowGcashModal(false)} disabled={processing} className="flex-1">Cancel</Button>
+                <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700" disabled={processing}>{processing ? 'Saving...' : 'Save Changes'}</Button>
+              </div>
+            </form>
+          </Modal>
 
           {/* Quick Navigation */}
           <div className="flex items-center justify-between mb-6">

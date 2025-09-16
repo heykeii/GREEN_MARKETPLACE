@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { FaShoppingCart, FaCreditCard, FaMapMarkerAlt, FaMoneyBillWave, FaPhone } from 'react-icons/fa';
+import { FaShoppingCart, FaCreditCard, FaMapMarkerAlt, FaMoneyBillWave, FaPhone, FaSpinner } from 'react-icons/fa';
 import { toast } from '@/utils/toast';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -18,6 +18,8 @@ const CheckoutPage = () => {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [gcashReceipt, setGcashReceipt] = useState(null);
+  const [sellerGcashDetails, setSellerGcashDetails] = useState(null);
   
   // Address state
   const [address, setAddress] = useState({
@@ -79,6 +81,28 @@ const CheckoutPage = () => {
     setTotal(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
   }, [cart]);
 
+  // Fetch seller's GCash details when GCash is selected
+  useEffect(() => {
+    const fetchSellerGcashDetails = async () => {
+      if (paymentMethod === 'gcash' && cart.length > 0) {
+        try {
+          const token = localStorage.getItem('token');
+          const sellerId = cart[0].seller; // Assuming all items are from the same seller
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_URL}/api/v1/seller/${sellerId}/gcash`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setSellerGcashDetails(response.data.gcash);
+        } catch (error) {
+          console.error('Failed to fetch seller GCash details:', error);
+          toast.error('Failed to load seller GCash details');
+        }
+      }
+    };
+
+    fetchSellerGcashDetails();
+  }, [paymentMethod, cart]);
+
   // Initialize address with user data
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -129,6 +153,11 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (paymentMethod === 'gcash' && !gcashReceipt) {
+      toast.error('Please upload your GCash payment receipt');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
@@ -139,26 +168,48 @@ const CheckoutPage = () => {
 
     try {
       const endpoint = isDirect ? 'create-direct' : 'create';
-      const payload = isDirect
-        ? {
-            paymentMethod,
-            notes,
-            shippingAddress: address,
-            items: JSON.parse(localStorage.getItem('directCheckout') || '{"items":[]}').items || []
-          }
-        : {
-            paymentMethod,
-            notes,
-            shippingAddress: address
-          };
 
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` }
+      let res;
+      if (paymentMethod === 'gcash') {
+        // multipart only when uploading a receipt
+        const formData = new FormData();
+        formData.append('paymentMethod', paymentMethod);
+        formData.append('notes', notes);
+        formData.append('shippingAddress', JSON.stringify(address));
+        if (isDirect) {
+          formData.append('items', JSON.stringify(JSON.parse(localStorage.getItem('directCheckout') || '{"items":[]}').items || []));
         }
-      );
+        if (gcashReceipt) {
+          formData.append('gcashReceipt', gcashReceipt);
+        }
+        res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+      } else {
+        // JSON payload for COD and other non-upload flows
+        const payload = isDirect ? {
+          paymentMethod,
+          notes,
+          shippingAddress: address,
+          items: JSON.parse(localStorage.getItem('directCheckout') || '{"items":[]}').items || []
+        } : {
+          paymentMethod,
+          notes,
+          shippingAddress: address
+        };
+        res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
+          payload,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      }
 
       if (res.data.success) {
         setOrderPlaced(true);
@@ -444,6 +495,74 @@ const CheckoutPage = () => {
                         GCash
                       </label>
                     </div>
+
+                    {/* GCash Details */}
+                    {paymentMethod === 'gcash' && (
+                      <div className="mt-4 space-y-4">
+                        {sellerGcashDetails ? (
+                          <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Label className="text-sm font-medium text-gray-700">GCash Number</Label>
+                                <p className="text-lg font-semibold text-blue-700">{sellerGcashDetails.number}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(sellerGcashDetails.number);
+                                  toast.success('GCash number copied to clipboard!');
+                                }}
+                              >
+                                Copy
+                              </Button>
+                            </div>
+
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700 mb-2 block">GCash QR Code</Label>
+                              <div className="relative aspect-square w-full max-w-[200px] mx-auto">
+                                <img
+                                  src={sellerGcashDetails.qrCode}
+                                  alt="GCash QR Code"
+                                  className="w-full h-full object-contain border border-gray-200 rounded-lg"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="absolute top-2 right-2 bg-white/90 hover:bg-white"
+                                  onClick={() => window.open(sellerGcashDetails.qrCode, '_blank')}
+                                >
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="gcashReceipt" className="text-sm font-medium text-gray-700">
+                                Upload Payment Receipt *
+                              </Label>
+                              <Input
+                                id="gcashReceipt"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setGcashReceipt(e.target.files[0])}
+                                className="mt-1"
+                                required
+                              />
+                              <p className="text-sm text-gray-500 mt-1">
+                                Please upload a screenshot of your GCash payment receipt
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-4">
+                            <FaSpinner className="animate-spin h-8 w-8 text-blue-600 mx-auto" />
+                            <p className="text-gray-600 mt-2">Loading GCash details...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

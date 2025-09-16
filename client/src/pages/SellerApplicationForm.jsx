@@ -19,9 +19,22 @@ const SellerApplicationForm = () => {
   const [dtiRegistration, setDtiRegistration] = useState(null);
   const [businessPermit, setBusinessPermit] = useState(null);
   const [birRegistration, setBirRegistration] = useState(null);
+  const [gcashNumber, setGcashNumber] = useState('');
+  const [gcashQR, setGcashQR] = useState(null);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('loading'); // loading, verified, pending, rejected, none
+
+  const formatGcash = (val) => {
+    let digits = String(val || '').replace(/\D/g, '');
+    if (digits.startsWith('63')) digits = digits.slice(2);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    const i = digits.indexOf('9');
+    if (i !== -1) digits = digits.slice(i + 1);
+    else digits = '';
+    digits = digits.slice(0, 9);
+    return '+639' + digits;
+  };
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -62,6 +75,8 @@ const SellerApplicationForm = () => {
     formData.append('govIDs', govID2);
     if (proofOfAddress) formData.append('proofOfAddress', proofOfAddress);
     if (bankProof) formData.append('bankProof', bankProof);
+    formData.append('gcashNumber', gcashNumber);
+    if (gcashQR) formData.append('gcashQR', gcashQR);
     if (sellerType === 'business') {
       if (dtiRegistration) formData.append('dtiRegistration', dtiRegistration);
       if (businessPermit) formData.append('businessPermit', businessPermit);
@@ -298,6 +313,34 @@ const SellerApplicationForm = () => {
                   required
                 />
               </div>
+              {/* GCash Information */}
+              <div>
+                <Label htmlFor="gcashNumber">GCash Number</Label>
+                <Input
+                  id="gcashNumber"
+                  name="gcashNumber"
+                  value={gcashNumber}
+                  onChange={e => setGcashNumber(formatGcash(e.target.value))}
+                  placeholder="+639XXXXXXXXX"
+                  inputMode="tel"
+                  pattern="^\+639\d{9}$"
+                  title="Use +639XXXXXXXXX (e.g., +639123456789)"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="gcashQR">GCash QR Code</Label>
+                <Input
+                  id="gcashQR"
+                  name="gcashQR"
+                  type="file"
+                  accept="image/*"
+                  onChange={e => handleFileChange(e, setGcashQR)}
+                  required
+                />
+                <p className="text-sm text-gray-500 mt-1">Upload a screenshot of your GCash QR code</p>
+              </div>
+
               {sellerType === 'business' && (
                 <>
                   <div>

@@ -26,6 +26,11 @@ const sellerApplicationSchema = new mongoose.Schema({
     birRegistration: { type: String }
   },
 
+  gcash: {
+    number: { type: String, required: true },
+    qrCode: { type: String, required: true } // URL to GCash QR code image
+  },
+
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

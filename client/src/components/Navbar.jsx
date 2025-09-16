@@ -176,18 +176,15 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
-          <div className="flex-shrink-0 flex items-center gap-2 group cursor-pointer" onClick={() => navigate("/")}>
-            <div className="relative">
-              <FaLeaf className="text-2xl text-emerald-600 group-hover:text-emerald-700 transition-colors duration-200" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent group-hover:from-emerald-700 group-hover:to-teal-700 transition-all duration-200">
+          <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+            <FaLeaf className="text-2xl text-emerald-600" />
+            <span className="text-xl font-semibold text-emerald-600">
               Green Marketplace
             </span>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
               <button
                 key={item.label}
@@ -197,7 +194,6 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                     return;
                   }
                   if (item.label === 'About Us') {
-                    // Attempt to scroll to footer; if not on the same page, navigate home first then scroll
                     const didScroll = item.onClick && item.onClick();
                     if (!didScroll) {
                       navigate('/');
@@ -211,10 +207,12 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                     navigate(item.path);
                   }
                 }}
-                className="relative px-3 py-2 text-gray-700 font-medium transition-all duration-200 hover:text-emerald-600 group"
+                className="px-3 py-2 text-gray-600 hover:text-emerald-600 font-medium"
               >
-                {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-200 group-hover:w-full"></span>
+                <div className="flex items-center gap-2">
+                  {item.icon}
+                  {item.label}
+                </div>
               </button>
             ))}
           </div>
@@ -223,6 +221,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
           <div className="flex items-center gap-4">
             {/* Notification Icon */}
             {user && <NotificationIcon />}
+
             {/* Messages Icon */}
             {user && (
               <button
@@ -235,7 +234,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 <span id="chat-unread-badge" className="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold shadow"></span>
               </button>
             )}
-            
+
             {/* Cart Icon */}
             <button
               onClick={() => user ? navigate('/cart') : null}
@@ -251,17 +250,23 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 </span>
               )}
             </button>
+
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="hidden sm:block relative group">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm group-focus-within:text-emerald-500 transition-colors" />
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
               <Input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64 bg-gray-50 border-gray-200 rounded-full focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(e);
+                  }
+                }}
+                className="pl-10 pr-4 py-2 w-48 bg-gray-50 border-gray-200 rounded-lg focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200"
               />
-            </form>
+            </div>
 
             {/* User Section */}
             {user ? (
@@ -284,8 +289,16 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[240px] rounded-xl shadow-xl border-gray-100 bg-white/95 backdrop-blur-md p-2 mt-2">
                   <DropdownMenuLabel className="font-semibold text-gray-800 text-base pb-3 border-b border-gray-100 mb-2 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
-                      <FaUser className="text-white text-xs" />
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-emerald-200">
+                      <img
+                        src={user.avatar || noProfile}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = noProfile;
+                        }}
+                        alt="avatar"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div>
                       <div className="font-semibold">{user.firstName} {user.lastName}</div>
@@ -424,7 +437,10 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   }}
                   className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                 >
-                  {item.label}
+                  <div className="flex items-center gap-2">
+                    {item.icon}
+                    {item.label}
+                  </div>
                 </button>
               ))}
               

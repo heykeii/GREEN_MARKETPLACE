@@ -31,14 +31,21 @@ export const submitSellerVerification = async (req, res) => {
       files: req.files ? Object.keys(req.files) : 'No files'
     });
 
-    const { sellerType, tin } = req.body;
+    const { sellerType, tin, gcashNumber } = req.body;
     const userId = req.user._id;
     const files = req.files;
 
     // Validate required fields
-    if (!sellerType || !tin) {
+    if (!sellerType || !tin || !gcashNumber) {
       return res.status(400).json({ 
-        message: 'Seller type and TIN are required.' 
+        message: 'Seller type, TIN, and GCash number are required.' 
+      });
+    }
+
+    // Validate GCash number format (must be +639XXXXXXXXX)
+    if (!/^\+639\d{9}$/.test(gcashNumber)) {
+      return res.status(400).json({
+        message: 'Invalid GCash number format. Use +639XXXXXXXXX (e.g., +639123456789).'
       });
     }
 
@@ -55,9 +62,9 @@ export const submitSellerVerification = async (req, res) => {
       });
     }
 
-    if (!files.proofOfAddress || !files.bankProof) {
+    if (!files.proofOfAddress || !files.bankProof || !files.gcashQR) {
       return res.status(400).json({ 
-        message: 'Proof of address and bank proof are required.' 
+        message: 'Proof of address, bank proof, and GCash QR code are required.' 
       });
     }
 
@@ -93,6 +100,9 @@ export const submitSellerVerification = async (req, res) => {
     
     console.log('Uploading bank proof...');
     const bankProof = await uploadFile(files.bankProof[0]);
+
+    console.log('Uploading GCash QR...');
+    const gcashQR = await uploadFile(files.gcashQR[0]);
 
     // Business-specific documents
     let dtiRegistration, businessPermit, birRegistration;
@@ -131,6 +141,10 @@ export const submitSellerVerification = async (req, res) => {
         user: userId,
         sellerType,
         documents,
+        gcash: {
+          number: gcashNumber,
+          qrCode: gcashQR
+        },
         status: 'pending',
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -153,6 +167,72 @@ export const submitSellerVerification = async (req, res) => {
       message: 'Failed to submit seller verification.', 
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
+  }
+};
+
+// Get GCash details for the authenticated seller
+export const getMyGcashDetails = async (req, res) => {
+  try {
+    const application = await SellerApplication.findOne({ user: req.user._id });
+    return res.json({ success: true, gcash: application?.gcash || null });
+  } catch (error) {
+    console.error('getMyGcashDetails error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch GCash details' });
+  }
+};
+
+// Get GCash details by seller (user) id - for buyers viewing during checkout
+export const getSellerGcashDetails = async (req, res) => {
+  try {
+    const { sellerId } = req.params;
+    const application = await SellerApplication.findOne({ user: sellerId });
+    return res.json({ success: true, gcash: application?.gcash || null });
+  } catch (error) {
+    console.error('getSellerGcashDetails error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch GCash details' });
+  }
+};
+
+// Update GCash details for authenticated seller
+export const updateGcashDetails = async (req, res) => {
+  try {
+    const { gcashNumber } = req.body;
+
+    if (gcashNumber && !/^\+639\d{9}$/.test(gcashNumber)) {
+      return res.status(400).json({ success: false, message: 'Invalid GCash number format. Use +639XXXXXXXXX (e.g., +639123456789).' });
+    }
+
+    let qrUrl;
+    // Accept either upload.single('gcashQR') or upload.fields
+    const file = (req.file && req.file.fieldname === 'gcashQR') ? req.file : (req.files && (req.files.gcashQR?.[0]));
+    if (file) {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream({ folder: 'seller_verification', resource_type: 'image' }, (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }).end(file.buffer);
+      });
+      qrUrl = result.secure_url;
+    }
+
+    const update = {};
+    if (gcashNumber) update['gcash.number'] = gcashNumber;
+    if (qrUrl) update['gcash.qrCode'] = qrUrl;
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ success: false, message: 'Provide at least one of GCash number or QR image.' });
+    }
+
+    const application = await SellerApplication.findOneAndUpdate(
+      { user: req.user._id },
+      { $set: update },
+      { new: true, upsert: true }
+    );
+
+    return res.json({ success: true, gcash: application.gcash });
+  } catch (error) {
+    console.error('updateGcashDetails error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update GCash details' });
   }
 };
 
