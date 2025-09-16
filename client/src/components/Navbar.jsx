@@ -149,11 +149,22 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
     }
   };
 
+  const scrollToFooter = () => {
+    try {
+      const el = document.getElementById('site-footer');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        return true;
+      }
+    } catch {}
+    return false;
+  };
+
   const navItems = [
     { label: "Home", path: "/" },
     { label: "Products", path: "/products", onClick: onProductsClick },
     { label: "Campaigns", path: "/campaigns" },
-    { label: "About Us", path: "/about", onClick: onAboutClick },
+    { label: "About Us", path: "/about", onClick: onAboutClick || scrollToFooter },
   ];
 
   return (
@@ -183,6 +194,15 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 onClick={() => {
                   if (item.label === 'Products') {
                     navigate('/products');
+                    return;
+                  }
+                  if (item.label === 'About Us') {
+                    // Attempt to scroll to footer; if not on the same page, navigate home first then scroll
+                    const didScroll = item.onClick && item.onClick();
+                    if (!didScroll) {
+                      navigate('/');
+                      setTimeout(() => scrollToFooter(), 50);
+                    }
                     return;
                   }
                   if (item.onClick) {
@@ -389,6 +409,12 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   onClick={() => {
                     if (item.label === 'Products') {
                       navigate('/products');
+                    } else if (item.label === 'About Us') {
+                      const didScroll = item.onClick && item.onClick();
+                      if (!didScroll) {
+                        navigate('/');
+                        setTimeout(() => scrollToFooter(), 50);
+                      }
                     } else if (item.onClick) {
                       item.onClick();
                     } else {

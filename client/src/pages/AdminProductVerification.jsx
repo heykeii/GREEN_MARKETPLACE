@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Eye, Package, User, Calendar, MapPin, Palette, Tag, DollarSign, Hash, Wrench, Filter, Clock, Star, ArrowLeft, ArrowRight, MoreHorizontal } from 'lucide-react';
 import noProfile from '@/assets/no_profile.jpg';
-import { AdminNavbar } from '@/components/Navbar';
+import AdminLayout from '@/components/AdminLayout';
 
 const AdminProductVerification = () => {
   const [products, setProducts] = useState([]);
@@ -92,11 +92,10 @@ const AdminProductVerification = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <AdminNavbar/>
+    <AdminLayout>
       {/* Floating Header */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="mb-6 bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-sm rounded-2xl">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -136,8 +135,7 @@ const AdminProductVerification = () => {
       </div>
 
       {/* Main Content */}
-      <div className="pt-36 pb-12">
-        <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
           <div className="mb-6">
             <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100 w-fit">
               {[{key:'pending',label:'Pending'},{key:'approved',label:'Approved'},{key:'rejected',label:'Rejected'}].map(tab => (
@@ -487,7 +485,6 @@ const AdminProductVerification = () => {
             </div>
           )}
         </div>
-      </div>
 
       {/* Enhanced Rejection Modal */}
       {rejectionModal.open && (
@@ -544,7 +541,7 @@ const AdminProductVerification = () => {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 

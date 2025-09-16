@@ -34,4 +34,31 @@ export function emitTyping(conversationId, isTyping) {
   s.emit('typing', { conversationId, isTyping });
 }
 
+export function onMessagesSeen(handler) {
+  const s = getSocket();
+  s.off('messages_seen');
+  s.on('messages_seen', handler);
+}
+
+export function onMessageSeen(handler) {
+  const s = getSocket();
+  s.off('message_seen');
+  s.on('message_seen', handler);
+}
+
+export function markMessageAsSeen(messageId) {
+  const token = getAuthToken();
+  if (!token) return Promise.resolve();
+  
+  return fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/messages/${messageId}/seen`, {
+    method: 'PATCH',
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }).catch(error => {
+    console.warn('Failed to mark message as seen:', error);
+  });
+}
+
 

@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import noProfile from '@/assets/no_profile.jpg';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 
@@ -304,6 +305,7 @@ const PublicProfile = () => {
           )}
         </div>
       </div>
+      {!isAdmin && <Footer />}
     </>
   );
 };

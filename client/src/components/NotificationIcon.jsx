@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
 } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 
 const NotificationIcon = () => {

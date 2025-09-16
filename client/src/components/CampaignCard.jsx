@@ -102,6 +102,7 @@ const CampaignCard = ({ campaign, currentUser, onUpdate }) => {
           campaign={campaign}
           currentUser={currentUser}
           onJoin={handleJoin}
+          onComment={handleComment}
         />
       );
     default:

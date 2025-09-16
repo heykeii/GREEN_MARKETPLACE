@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/utils/toast';
+import AdminLayout from '../components/AdminLayout';
 
 const AdminCampaignManagement = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -337,6 +338,7 @@ const AdminCampaignManagement = () => {
   );
 
   return (
+    <AdminLayout>
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Campaign Management</h1>
@@ -496,6 +498,7 @@ const AdminCampaignManagement = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </AdminLayout>
   );
 };
 

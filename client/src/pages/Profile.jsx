@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import noProfile from "@/assets/no_profile.jpg";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import Navbar from "@/components/Navbar";
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 import Footer from '@/components/Footer';

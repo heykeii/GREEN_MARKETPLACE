@@ -1,0 +1,72 @@
+/* Modern Toast Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.toast-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.toast-exit {
+  animation: slideOutRight 0.3s ease-out;
+}
+
+.toast-progress {
+  animation: progress linear forwards;
+}
+
+.toast-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Glass morphism effect for toasts */
+.toast-glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .toast-glass {
+    background: rgba(17, 24, 39, 0.86);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+  }
+}

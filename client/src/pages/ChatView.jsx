@@ -3,7 +3,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { joinConversation, onMessage, emitTyping } from '@/lib/socket';
+import { joinConversation, onMessage, onMessagesSeen, onMessageSeen, emitTyping, markMessageAsSeen } from '@/lib/socket';
+import MessageStatus from '@/components/MessageStatus';
 import { FaShoppingCart, FaTimes, FaQuestion } from 'react-icons/fa';
 
 const ChatView = () => {
@@ -17,8 +18,10 @@ const ChatView = () => {
   const [attachProductNext, setAttachProductNext] = useState(false);
   const listRef = useRef(null);
   const seenIdsRef = useRef(new Set());
+  const messageRefs = useRef(new Map());
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
   const location = useLocation();
+  const me = useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), []);
 
   const fetchMessages = async () => {
     setLoading(true);
@@ -80,13 +83,67 @@ const ChatView = () => {
       }
     };
     onMessage(handler);
+    
+    // Handle messages seen event (when other user reads messages)
+    const seenHandler = (payload) => {
+      if (payload?.conversationId === conversationId) {
+        setMessages(prev => prev.map(msg => {
+          if (msg.sender?._id === me?._id && !msg.isRead) {
+            return { ...msg, isRead: true, readAt: payload.seenAt };
+          }
+          return msg;
+        }));
+      }
+    };
+    onMessagesSeen(seenHandler);
+    
+    // Handle individual message seen event
+    const messageSeenHandler = (payload) => {
+      if (payload?.conversationId === conversationId) {
+        setMessages(prev => prev.map(msg => {
+          if (msg._id === payload.messageId) {
+            return { ...msg, isRead: true, readAt: payload.seenAt };
+          }
+          return msg;
+        }));
+      }
+    };
+    onMessageSeen(messageSeenHandler);
+    
     // mark conversation as read when opening
     const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
     fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/conversations/${conversationId}/mark-read`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` }
     }).catch(()=>{});
-  }, [conversationId]);
+  }, [conversationId, me?._id]);
+
+  // Intersection observer to mark messages as seen when they come into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const messageId = entry.target.dataset.messageId;
+            const message = messages.find(m => m._id === messageId);
+            
+            // Mark as seen if it's a message sent to us and not already seen
+            if (message && message.recipient?._id === me?._id && !message.isRead && !message.isOptimistic) {
+              markMessageAsSeen(messageId);
+            }
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    // Observe all message elements
+    messageRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [messages, me?._id]);
 
   // Hide product prompts if directed by query param (e.g., seller contacting customer)
   useEffect(() => {
@@ -96,7 +153,21 @@ const ChatView = () => {
     }
   }, [location.search]);
 
-  const me = useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), []);
+  const lastReadOwnMessageId = useMemo(() => {
+    const myId = me?._id;
+    let lastId = null;
+    let lastTs = -1;
+    (messages || []).forEach((msg) => {
+      if (msg?.sender?._id === myId && msg?.isRead) {
+        const ts = new Date(msg.readAt || msg.createdAt || 0).getTime();
+        if (ts >= lastTs) {
+          lastTs = ts;
+          lastId = msg._id;
+        }
+      }
+    });
+    return lastId;
+  }, [messages, me?._id]);
 
   // Determine the other user in the conversation robustly
   const otherUser = useMemo(() => {
@@ -340,8 +411,23 @@ const ChatView = () => {
                   const isMe = m.sender?._id === me?._id;
                   const avatar = m.sender?.avatar || '/default-avatar.png';
                   const displayName = `${m.sender?.firstName || ''} ${m.sender?.lastName || ''}`.trim();
+                  
+                  // Create ref for intersection observer
+                  const messageRef = (el) => {
+                    if (el) {
+                      messageRefs.current.set(m._id, el);
+                    } else {
+                      messageRefs.current.delete(m._id);
+                    }
+                  };
+                  
                   return (
-                    <div key={m._id} className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div 
+                      key={m._id} 
+                      ref={messageRef}
+                      data-message-id={m._id}
+                      className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'}`}
+                    >
                       {!isMe && (
                         <button onClick={()=>navigate(`/profile/${m.sender?._id}`)} title={displayName} className="mr-2">
                           <img src={avatar} alt="avatar" onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }} className="w-8 h-8 rounded-full border" />
@@ -360,6 +446,12 @@ const ChatView = () => {
                               <span className="animate-pulse">•••</span>
                             )}
                           </div>
+                          <MessageStatus 
+                            message={m}
+                            isOwnMessage={isMe}
+                            isLastReadOwnMessage={m._id === lastReadOwnMessageId}
+                            recipientAvatar={otherUser?.avatar}
+                          />
                         </div>
                       </div>
                       {isMe && (

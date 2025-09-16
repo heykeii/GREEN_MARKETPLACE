@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { Toaster } from "react-hot-toast";
+// ToastProvider is mounted at root in main.jsx
+import "./styles/toast.css";
+import ErrorBoundary, { PageErrorBoundary } from "./components/ErrorBoundary";
+import { setupGlobalErrorHandling } from "./utils/errorHandling";
 import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -39,12 +40,16 @@ import FollowersPage from './pages/FollowersPage';
 import FollowingPage from './pages/FollowingPage';
 import CreateCampaign from './pages/CreateCampaign';
 import AdminCampaignManagement from './pages/AdminCampaignManagement';
+import Terms from './pages/Terms';
 
 const App = () => {
+  useEffect(() => {
+    // Setup global error handling
+    setupGlobalErrorHandling();
+  }, []);
+
   return (
-    <>
-      <ToastContainer position="top-right" autoClose={5000} />
-      <Toaster position="top-right" />
+    <ErrorBoundary>
       <Routes>
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/login" element={<Login />} />
@@ -74,6 +79,7 @@ const App = () => {
         <Route path="/create-campaign" element={<CreateCampaign />} />
         <Route path="/profile/followers" element={<FollowersPage />} />
         <Route path="/profile/following" element={<FollowingPage />} />
+        <Route path="/terms" element={<Terms />} />
         <Route 
           path="/admin" 
           element={
@@ -125,7 +131,7 @@ const App = () => {
         />
         <Route path="/" element={<Homepage />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 };
 

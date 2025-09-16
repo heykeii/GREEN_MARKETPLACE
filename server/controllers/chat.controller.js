@@ -166,13 +166,73 @@ export const markConversationRead = async (req, res) => {
   try {
     const userId = req.user._id;
     const { conversationId } = req.params;
-    await Message.updateMany(
+    
+    // Mark messages as read
+    const result = await Message.updateMany(
       { conversation: conversationId, recipient: userId, isRead: false },
       { $set: { isRead: true, readAt: new Date() } }
     );
-    return res.json({ success: true });
+    
+    // Emit seen status to the sender
+    try {
+      const io = getIO();
+      if (io && conversationId) {
+        io.to(conversationId.toString()).emit('messages_seen', { 
+          conversationId, 
+          seenBy: userId,
+          seenAt: new Date()
+        });
+      }
+    } catch (e) {
+      // non-fatal
+    }
+    
+    return res.json({ success: true, modifiedCount: result.modifiedCount });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to mark as read', error: error.message });
+  }
+};
+
+export const markMessageSeen = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { messageId } = req.params;
+    
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+    
+    // Check if user is the recipient
+    if (message.recipient.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    
+    // Mark message as seen if not already seen
+    if (!message.isRead) {
+      message.isRead = true;
+      message.readAt = new Date();
+      await message.save();
+      
+      // Emit seen status to the sender
+      try {
+        const io = getIO();
+        if (io && message.conversation) {
+          io.to(message.conversation.toString()).emit('message_seen', { 
+            messageId: message._id,
+            conversationId: message.conversation,
+            seenBy: userId,
+            seenAt: message.readAt
+          });
+        }
+      } catch (e) {
+        // non-fatal
+      }
+    }
+    
+    return res.json({ success: true, message });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to mark message as seen', error: error.message });
   }
 };
 

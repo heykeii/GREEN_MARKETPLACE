@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import ReportButton from '../components/ReportButton';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const MyReports = () => {
   const [reports, setReports] = useState([]);
@@ -362,6 +363,7 @@ const MyReports = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      <Footer />
     </div>
   );
 };

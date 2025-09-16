@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaThumbsUp, FaFlag, FaEdit, FaTrash, FaUser, FaReply } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import axios from 'axios';
 import StarRating from './StarRating';
 

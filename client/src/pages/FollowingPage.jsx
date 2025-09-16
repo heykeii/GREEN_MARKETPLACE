@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import noProfile from '@/assets/no_profile.jpg';
 
 const FollowingPage = () => {
@@ -63,6 +64,7 @@ const FollowingPage = () => {
           )}
         </div>
       </div>
+      <Footer />
     </>
   );
 };

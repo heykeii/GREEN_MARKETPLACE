@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';

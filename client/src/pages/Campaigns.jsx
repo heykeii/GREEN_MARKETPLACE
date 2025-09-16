@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import CampaignCard from '../components/CampaignCard';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { getLikedCampaignIds, setLikedForCampaign } from '../lib/utils';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 import ImageCarousel from '../components/ImageCarousel';
 
@@ -543,6 +544,7 @@ const Campaigns = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       {/* Global Navbar */}
       <Navbar />
@@ -870,7 +872,9 @@ const Campaigns = () => {
 
       {/* Bottom padding for mobile navigation */}
       <div className="md:hidden h-16"></div>
+      <Footer />
     </div>
+    </>
   );
 };
 

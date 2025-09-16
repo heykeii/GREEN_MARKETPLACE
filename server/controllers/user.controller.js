@@ -6,47 +6,56 @@ import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import cloudinary from "../utils/cloudinary.js";
 import { NotificationService } from "../utils/notificationService.js";
+import { 
+  ValidationError, 
+  NotFoundError, 
+  AuthenticationError,
+  ConflictError,
+  validateRequired,
+  validateEmail 
+} from "../utils/errorClasses.js";
+import { asyncHandler } from "../middleware/error.middleware.js";
 
 // Follow a user
-export const followUser = async (req, res) => {
-  try {
-    const followerId = req.user._id;
-    const { targetUserId } = req.body;
-    if (!targetUserId) {
-      return res.status(400).json({ success: false, message: 'targetUserId is required' });
-    }
-    if (targetUserId.toString() === followerId.toString()) {
-      return res.status(400).json({ success: false, message: 'You cannot follow yourself' });
-    }
-
-    const [follower, target] = await Promise.all([
-      User.findById(followerId),
-      User.findById(targetUserId)
-    ]);
-    if (!target) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    // Add if not exists
-    const updatedFollower = await User.findByIdAndUpdate(
-      followerId,
-      { $addToSet: { following: target._id } },
-      { new: true }
-    ).select('-password');
-    await User.findByIdAndUpdate(target._id, { $addToSet: { followers: followerId } });
-
-    try {
-      // Notify the target user that someone followed them
-      await NotificationService.notifyUserFollowed(target._id, follower);
-    } catch (e) {
-      // non-fatal
-    }
-
-    return res.json({ success: true, user: updatedFollower });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to follow user', error: error.message });
+export const followUser = asyncHandler(async (req, res) => {
+  const followerId = req.user._id;
+  const { targetUserId } = req.body;
+  
+  // Validation
+  validateRequired(['targetUserId'], req.body);
+  
+  if (targetUserId.toString() === followerId.toString()) {
+    throw new ValidationError('You cannot follow yourself');
   }
-};
+
+  const [follower, target] = await Promise.all([
+    User.findById(followerId),
+    User.findById(targetUserId)
+  ]);
+  
+  if (!target) {
+    throw new NotFoundError('User not found');
+  }
+
+  // Add if not exists
+  const updatedFollower = await User.findByIdAndUpdate(
+    followerId,
+    { $addToSet: { following: target._id } },
+    { new: true }
+  ).select('-password');
+  
+  await User.findByIdAndUpdate(target._id, { $addToSet: { followers: followerId } });
+
+  try {
+    // Notify the target user that someone followed them
+    await NotificationService.notifyUserFollowed(target._id, follower);
+  } catch (e) {
+    // non-fatal notification error, continue
+    console.warn('Failed to send follow notification:', e.message);
+  }
+
+  res.json({ success: true, user: updatedFollower });
+});
 
 // Unfollow a user
 export const unfollowUser = async (req, res) => {

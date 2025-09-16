@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import GoogleLogin from '../components/GoogleLogin';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const Login = () => {
@@ -58,7 +59,9 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
+        <>
+        <Navbar />
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 pt-24">
             {/* Animated Background Elements */}
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-200/30 to-teal-200/30 rounded-full blur-3xl animate-pulse"></div>
@@ -241,8 +244,10 @@ const Login = () => {
                 </div>
             </div>
 
-          
+            
         </div>
+        <Footer />
+        </>
     );
 };
 

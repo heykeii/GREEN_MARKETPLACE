@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -8,6 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Separator } from '../components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import AdminLayout from '../components/AdminLayout';
 
 const AdminReportManagement = () => {
   const [reports, setReports] = useState([]);
@@ -199,7 +200,8 @@ const AdminReportManagement = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <AdminLayout>
+    <div className="container mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Report Management</h1>
         <p className="text-gray-600">Manage and resolve user reports</p>
@@ -476,6 +478,7 @@ const AdminReportManagement = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

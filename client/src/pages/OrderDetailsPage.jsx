@@ -20,7 +20,7 @@ import {
   FaMapMarkerAlt,
   FaExclamationTriangle
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import axios from 'axios';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 

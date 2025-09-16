@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { toast } from '@/utils/toast';
 
 const CreateCampaign = () => {
   const { user } = useContext(AuthContext);
@@ -189,7 +191,9 @@ const CreateCampaign = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <>
+    <Navbar />
+    <div className="min-h-screen bg-gray-50 py-8 pt-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -448,6 +452,8 @@ const CreateCampaign = () => {
         </Card>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

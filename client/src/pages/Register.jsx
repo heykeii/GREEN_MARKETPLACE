@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import GoogleLogin from '../components/GoogleLogin';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import Footer from '@/components/Footer';
 
 const Register = () => {
@@ -16,6 +17,8 @@ const Register = () => {
         confirmPassword: ''
     });
     const [loading, setLoading] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [agreeChecked, setAgreeChecked] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -44,6 +47,11 @@ const Register = () => {
         }
 
         try {
+            if (!agreeChecked) {
+                setShowTermsModal(true);
+                return;
+            }
+
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/v1/users/register`,
                 {
@@ -55,8 +63,6 @@ const Register = () => {
             );
 
             toast.success(response.data.message);
-            
-            // Navigate to email verification page
             navigate('/email-verification', { 
                 state: { 
                     email: formData.email,
@@ -255,7 +261,8 @@ const Register = () => {
                                         id="terms"
                                         name="terms"
                                         type="checkbox"
-                                        required
+                                        checked={agreeChecked}
+                                        onChange={(e) => setAgreeChecked(e.target.checked)}
                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500/50 border-emerald-300 rounded 
                                                  transition-all duration-200 shadow-sm"
                                     />
@@ -265,6 +272,7 @@ const Register = () => {
                                             type="button"
                                             className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors duration-200 
                                                      hover:underline decoration-2 underline-offset-2"
+                                            onClick={() => setShowTermsModal(true)}
                                         >
                                             Terms of Service
                                         </button>
@@ -273,6 +281,7 @@ const Register = () => {
                                             type="button"
                                             className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors duration-200 
                                                      hover:underline decoration-2 underline-offset-2"
+                                            onClick={() => window.open('/terms', '_blank')}
                                         >
                                             Privacy Policy
                                         </button>
@@ -306,6 +315,88 @@ const Register = () => {
                                     </div>
                                 </Button>
                             </form>
+
+                            {/* Terms Modal */}
+                            <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
+                              <DialogContent className="max-w-3xl">
+                                <DialogHeader>
+                                  <DialogTitle>Terms and Conditions</DialogTitle>
+                                </DialogHeader>
+                                <div className="max-h-[50vh] overflow-y-auto space-y-3 text-sm text-slate-700">
+                                  <p><strong>GREEN Marketplace – Terms and Conditions</strong></p>
+                                  <p>Last Updated: {new Date().toLocaleDateString()}</p>
+                                  <p>Welcome to GREEN (Goal Reaching Eco-friendly Exchange for our Nature), a web-based marketplace connecting eco-conscious consumers, upcyclers, and sustainable crafters. By accessing or using GREEN, you agree to be bound by these Terms and Conditions (“Terms”). Please read them carefully before proceeding.</p>
+                                  <p><strong>1. General Provisions</strong></p>
+                                  <p>1.1. GREEN serves as a digital platform facilitating the exchange of sustainable products between sellers (upcyclers and sustainable crafters) and buyers (eco-conscious consumers).</p>
+                                  <p>1.2. GREEN does not manufacture, own, or directly sell the listed products unless explicitly stated.</p>
+                                  <p>1.3. By using this platform, you confirm that you are at least 18 years old or accessing the site under the supervision of a parent or legal guardian.</p>
+                                  <p>1.4. GREEN reserves the right to amend these Terms at any time. Continued use of the platform constitutes acceptance of the revised Terms.</p>
+                                  <p><strong>2. Roles and Responsibilities</strong></p>
+                                  <p><strong>A. Admin</strong></p>
+                                  <p>Content & Platform Management: Admin may update, edit, or remove product listings, sustainability resources, or user-generated content. Admin reserves the right to suspend or terminate any account that violates these Terms.</p>
+                                  <p>Seller Verification: Admin reviews and validates seller-submitted documents, including sustainability certifications. Admin may reject applications that do not meet platform standards.</p>
+                                  <p>Community Engagement: Admin may post announcements, organize sustainability projects, and facilitate community events.</p>
+                                  <p>Data & Security: Admin ensures user privacy and data protection in accordance with the Data Privacy Act of 2012 (RA 10173).</p>
+                                  <p><strong>B. Sellers (Upcyclers & Sustainable Crafters)</strong></p>
+                                  <p>Registration & Verification: Sellers must provide accurate business details, valid IDs, and sustainability certifications (if applicable). Misrepresentation, falsification of documents, or greenwashing is strictly prohibited.</p>
+                                  <p>Product Listings: Sellers must provide truthful descriptions of their products, including sourcing, eco-impact, and certifications. Sellers are responsible for updating product availability, pricing, and promotions.</p>
+                                  <p>Transactions & Fulfillment: Sellers must honor all confirmed orders and deliver products in accordance with agreed timelines. Failure to fulfill orders or repeated cancellations may result in penalties or account suspension.</p>
+                                  <p>Customer Relations: Sellers must respond promptly to customer inquiries, complaints, and feedback. Sellers agree not to engage in abusive, fraudulent, or misleading conduct.</p>
+                                  <p><strong>C. Buyers (Eco-Conscious Consumers)</strong></p>
+                                  <p>Account & Profile: Buyers must provide accurate information upon registration and are responsible for maintaining account confidentiality. Buyers are accountable for all activities under their account.</p>
+                                  <p>Purchasing: Buyers agree to review product details carefully before making a purchase. Orders confirmed through the system or external links (provided by sellers) constitute binding agreements.</p>
+                                  <p>Feedback & Reviews: Buyers may post ratings and reviews based on actual product experience. Offensive, false, or misleading reviews may be removed by Admin.</p>
+                                  <p>Community Conduct: Buyers are expected to participate respectfully in community discussions, events, and initiatives.</p>
+                                  <p><strong>3. Prohibited Activities</strong></p>
+                                  <ul className="list-disc pl-5">
+                                    <li>Posting false, misleading, or defamatory content.</li>
+                                    <li>Misrepresentation of sustainability claims or certifications.</li>
+                                    <li>Using GREEN for illegal, fraudulent, or harmful purposes.</li>
+                                    <li>Attempting to hack, disrupt, or exploit system vulnerabilities.</li>
+                                  </ul>
+                                  <p><strong>4. Payments and External Links</strong></p>
+                                  <p>4.1. GREEN may provide internal checkout options or external links to third-party seller platforms.</p>
+                                  <p>4.2. Buyers acknowledge that GREEN is not responsible for the policies, delivery, or refund practices of third-party platforms.</p>
+                                  <p><strong>5. Intellectual Property</strong></p>
+                                  <p>5.1. All content on GREEN, including logos, branding, and educational materials, is owned by the developers unless otherwise stated.</p>
+                                  <p>5.2. Users may not reproduce, distribute, or use platform content without prior written permission.</p>
+                                  <p><strong>6. Limitation of Liability</strong></p>
+                                  <p>6.1. GREEN provides the marketplace “as is” and does not guarantee uninterrupted or error-free services.</p>
+                                  <p>6.2. GREEN is not liable for damages arising from user misconduct, third-party transactions, or sustainability misrepresentation by sellers.</p>
+                                  <p><strong>7. Account Suspension and Termination</strong></p>
+                                  <p>7.1. GREEN reserves the right to suspend or terminate accounts for violations of these Terms.</p>
+                                  <p>7.2. Repeated violations may result in permanent banning.</p>
+                                  <p><strong>8. Governing Law</strong></p>
+                                  <p>These Terms shall be governed by and construed in accordance with the laws of the Republic of the Philippines.</p>
+                                </div>
+                                <DialogFooter>
+                                  <div className="flex items-center justify-between w-full">
+                                    <label className="flex items-center text-sm text-slate-700">
+                                      <input type="checkbox" className="mr-2" checked={agreeChecked} onChange={(e) => setAgreeChecked(e.target.checked)} />
+                                      I have read and agree to the Terms and Conditions
+                                    </label>
+                                    <div className="space-x-2">
+                                      <Button variant="outline" type="button" onClick={() => setShowTermsModal(false)}>Close</Button>
+                                      <Button
+                                        type="button"
+                                        onClick={() => {
+                                          if (!agreeChecked) return;
+                                          setShowTermsModal(false);
+                                          // Programmatically submit registration after agreeing if form is valid
+                                          const form = document.querySelector('form');
+                                          if (form) {
+                                            form.requestSubmit();
+                                          }
+                                        }}
+                                        disabled={!agreeChecked}
+                                      >
+                                        Agree & Continue
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
 
                             {/* Divider */}
                             <div className="mt-8">

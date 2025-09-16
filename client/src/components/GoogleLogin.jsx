@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { api } from '@/utils/apiClient';
+import { showErrorToast, parseApiError } from '@/utils/errorHandling';
+import { toast } from '@/utils/toast';
 
 const GoogleLogin = ({ onSuccess, onError }) => {
     const navigate = useNavigate();
@@ -48,44 +49,47 @@ const GoogleLogin = ({ onSuccess, onError }) => {
         try {
             console.log('Google login response:', response);
             
-            // Send the token to your backend
-            const result = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/v1/users/google-login`,
-                {
-                    token: response.credential
-                }
-            );
+            // Send the token to backend using enhanced API client
+            const result = await api.post('/api/v1/users/google-login', {
+                token: response.credential
+            });
 
-            console.log('Backend response:', result.data);
+            console.log('Backend response:', result);
 
             // Store the JWT token
-            localStorage.setItem('token', result.data.token);
-            localStorage.setItem('user', JSON.stringify(result.data.user));
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
 
             // Show success message
-            toast.success(result.data.message || 'Google login successful!');
+            toast.success(result.message || 'Google login successful!');
 
             // Call the success callback
             if (onSuccess) {
-                onSuccess(result.data);
+                onSuccess(result);
             }
 
         } catch (error) {
+            console.error('Google login error:', error);
+            
+            // Parse the error using enhanced error handling
+            const appError = parseApiError(error);
+            
             // Check for email verification required
-            if (error.response?.data?.isVerificationRequired) {
+            if (appError.statusCode === 400 && appError.details?.isVerificationRequired) {
                 navigate('/email-verification', {
                     state: {
-                        email: error.response.data.email || '',
-                        firstName: error.response.data.firstName || '',
+                        email: appError.details.email || '',
+                        firstName: appError.details.firstName || '',
                     }
                 });
                 return;
             }
-            // Other errors
-            const errorMessage = error.response?.data?.message || 'Google login failed. Please try again.';
-            toast.error(errorMessage);
+            
+            // Show error toast with enhanced error handling
+            showErrorToast(appError, 'Google login failed. Please try again.');
+            
             if (onError) {
-                onError(error);
+                onError(appError);
             }
         }
     };

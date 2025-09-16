@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { FaBox, FaEye, FaTimes, FaCalendar, FaMoneyBillWave, FaExclamationTriangle, FaShoppingBag, FaClock, FaCheckCircle, FaTruck, FaGift, FaBan } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import ReportButton from '@/components/ReportButton';

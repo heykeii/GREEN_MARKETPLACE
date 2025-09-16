@@ -413,12 +413,12 @@ const toggleLikeCampaign = async (req, res) => {
   }
 };
 
-// Add comment to campaign (Awareness campaigns)
+// Add comment to campaign (Awareness and Community campaigns)
 const addComment = async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id; // Fixed: use _id instead of id
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({
@@ -435,10 +435,10 @@ const addComment = async (req, res) => {
       });
     }
 
-    if (campaign.type !== 'awareness') {
+    if (campaign.type !== 'awareness' && campaign.type !== 'community') {
       return res.status(400).json({
         success: false,
-        message: "Only awareness campaigns can have comments"
+        message: "Only awareness and community campaigns can have comments"
       });
     }
 

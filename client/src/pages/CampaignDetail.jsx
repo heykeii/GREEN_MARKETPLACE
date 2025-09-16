@@ -9,7 +9,9 @@ import CampaignCard from '../components/CampaignCard';
 import ImageCarousel from '../components/ImageCarousel';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/utils/toast';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const CampaignDetail = () => {
   const { id } = useParams();
@@ -156,7 +158,9 @@ const CampaignDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+    <Navbar />
+    <div className="min-h-screen bg-gray-50 pt-24">
       {/* Enhanced Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -417,6 +421,8 @@ const CampaignDetail = () => {
         )}
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

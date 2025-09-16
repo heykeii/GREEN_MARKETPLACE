@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 
 const Footer = forwardRef((props, ref) => (
-  <footer ref={ref} className="relative bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-600 text-white overflow-hidden">
+  <footer id="site-footer" ref={ref} className="relative bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-600 text-white overflow-hidden">
     {/* Decorative background elements */}
     <div className="absolute inset-0 opacity-10">
       <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
@@ -98,9 +98,14 @@ const Footer = forwardRef((props, ref) => (
      
       {/* Copyright */}
       <div className="border-t border-emerald-600/50 pt-8 text-center">
-        <p className="text-emerald-200 text-sm">
-          &copy; {new Date().getFullYear()} Green Marketplace. All rights reserved. Made with 💚 for a sustainable future.
-        </p>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
+          <p className="text-emerald-200 text-sm">
+            &copy; {new Date().getFullYear()} Green Marketplace. All rights reserved. Made with 💚 for a sustainable future.
+          </p>
+          <a href="/terms" className="text-emerald-100 hover:text-white text-sm underline underline-offset-4 decoration-emerald-300/70">
+            Terms and Conditions
+          </a>
+        </div>
       </div>
     </div>
   </footer>

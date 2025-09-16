@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Navbar from '@/components/Navbar';
 import { FaTrash, FaShoppingCart } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Footer from '@/components/Footer';

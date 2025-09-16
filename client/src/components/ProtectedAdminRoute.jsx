@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import axios from 'axios';
 
 const ProtectedAdminRoute = ({ children }) => {

@@ -65,7 +65,12 @@ const Messages = () => {
                       <img src={other.avatar || '/default-avatar.png'} alt="avatar" className="w-10 h-10 rounded-full border" onError={(e)=>{ e.currentTarget.src='/default-avatar.png';}} />
                       <div>
                         <div className="font-semibold">{other.firstName} {other.lastName}</div>
-                        <div className="text-sm text-gray-600 line-clamp-1">{conv.lastMessage?.content || 'No messages yet'}</div>
+                        <div className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
+                          <span>{conv.lastMessage?.content || 'No messages yet'}</span>
+                          {conv.lastMessage?.isRead && conv.lastMessage?.sender?._id === me?._id && (
+                            <span className="text-xs text-emerald-600">Seen</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, MapPin, Calendar, Clock, User, Target, CheckCircle, MoreHorizontal, Verified, Eye, Trash } from 'lucide-react';
+import { Users, MapPin, Calendar, Clock, User, Target, CheckCircle, MoreHorizontal, Verified, Eye, Trash, MessageCircle, Send } from 'lucide-react';
 import { Button } from './ui/button';
 import ImageCarousel from './ImageCarousel';
 import { Card, CardContent, CardHeader } from './ui/card';
@@ -11,8 +11,10 @@ import { toast } from 'react-hot-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import axios from 'axios';
 
-const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
+const CommunityCampaign = ({ campaign, onJoin, onComment, currentUser }) => {
   const [showParticipants, setShowParticipants] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const isSameUser = (a, b) => String(a) === String(b);
   const currentUserId = currentUser?._id || currentUser?.id;
   const canDelete = currentUser && (currentUser.role === 'admin' || (campaign.createdBy && isSameUser(campaign.createdBy?._id || campaign.createdBy?.id, currentUserId)));
@@ -45,6 +47,29 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
       toast.success(isParticipant ? 'Left campaign successfully' : 'Joined campaign successfully');
     } catch (error) {
       toast.error('Failed to join campaign');
+    }
+  };
+
+  const handleComment = async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      toast.error('Please login to comment');
+      return;
+    }
+    if (!newComment.trim()) {
+      toast.error('Please enter a comment');
+      return;
+    }
+    
+    setIsSubmittingComment(true);
+    try {
+      await onComment(campaign._id, newComment.trim());
+      setNewComment('');
+      toast.success('Comment added successfully');
+    } catch (error) {
+      toast.error('Failed to add comment');
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -312,6 +337,69 @@ const CommunityCampaign = ({ campaign, onJoin, currentUser }) => {
           ) : (
             <p className="text-gray-500 text-center py-4">
               No participants yet. Be the first to join!
+            </p>
+          )}
+        </div>
+
+        {/* Comments Section */}
+        <Separator className="my-6" />
+        <div className="space-y-4">
+          <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+            <MessageCircle className="h-4 w-4" />
+            <span>Comments ({campaign.comments?.length || 0})</span>
+          </h4>
+          
+          {/* Comment Form */}
+          {currentUser && (
+            <form onSubmit={handleComment} className="flex space-x-3">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={isSubmittingComment}
+              />
+              <Button
+                type="submit"
+                disabled={!newComment.trim() || isSubmittingComment}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          )}
+          
+          {/* Comments List */}
+          {campaign.comments && campaign.comments.length > 0 ? (
+            <div className="space-y-3">
+              {campaign.comments.map((comment, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage src={comment.user?.avatar} alt={comment.user?.firstName || comment.user?.name} />
+                    <AvatarFallback className="bg-purple-200 text-purple-800 text-xs">
+                      {(comment.user?.firstName || comment.user?.name || 'U')?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-sm font-medium text-gray-900">
+                        {comment.user?.firstName && comment.user?.lastName
+                          ? `${comment.user.firstName} ${comment.user.lastName}`
+                          : comment.user?.firstName || comment.user?.name || 'User'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">{comment.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No comments yet. Be the first to comment!
             </p>
           )}
         </div>

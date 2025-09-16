@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, FileText, Clock, Users, Mail, User, Star, Filter, Search, ExternalLink, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import noProfile from '@/assets/no_profile.jpg';
-import { AdminNavbar } from '@/components/Navbar';
+import AdminLayout from '@/components/AdminLayout';
 
 const AdminSellerVerification = () => {
   const [sellerApplications, setSellerApplications] = useState([]);
@@ -335,10 +335,8 @@ const AdminSellerVerification = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      <AdminNavbar/>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -562,7 +560,7 @@ const AdminSellerVerification = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
