@@ -13,7 +13,8 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Megaphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,12 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
       label: 'Campaign Management',
       path: '/admin/campaign-management',
       color: 'text-pink-500'
+    },
+    {
+      icon: Megaphone,
+      label: 'Announcements',
+      path: '/admin/announcements',
+      color: 'text-indigo-500'
     },
     {
       icon: AlertTriangle,

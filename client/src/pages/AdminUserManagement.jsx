@@ -77,8 +77,8 @@ const AdminUserManagement = () => {
   };
 
   const handleViewProfile = (userId) => {
-    // Navigate to user profile page or open modal
-    window.open(`/profile/${userId}`, '_blank');
+    // Open public profile in a new tab, mark source for smarter back navigation
+    window.open(`/profile/${userId}?from=admin`, '_blank');
   };
 
   const handleDeleteUser = async (userId, userEmail) => {

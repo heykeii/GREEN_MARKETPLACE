@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share, Copy, ExternalLink, Calendar, User, Eye, ThumbsUp, Send, Bookmark, MoreHorizontal, Check, Verified, Trash } from 'lucide-react';
+import { Heart, MessageCircle, Copy, ExternalLink, Calendar, User, Eye, ThumbsUp, MoreHorizontal, Check, Verified, Trash } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import { Textarea } from './ui/textarea';
@@ -16,7 +16,7 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [showShareMenu, setShowShareMenu] = useState(false);
+  
   const canDelete = currentUser && (currentUser.role === 'admin' || campaign.createdBy?._id === currentUser.id);
 
   const handleDeleteCampaign = async () => {
@@ -79,48 +79,7 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
     }
   };
 
-  const handleShare = async (platform) => {
-    const url = `${window.location.origin}/campaigns/${campaign._id}`;
-    const text = `Check out this campaign: ${campaign.title}`;
-
-    if (!platform && navigator.share) {
-      try {
-        await navigator.share({ title: 'GreenCampaigns', text, url });
-        setShowShareMenu(false);
-        return;
-      } catch (_) {}
-    }
-
-    switch (platform) {
-      case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-        break;
-      case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-        break;
-      case 'linkedin':
-        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
-        break;
-      case 'copy':
-        try {
-          await navigator.clipboard.writeText(url);
-          toast.success('Link copied to clipboard');
-        } catch (e) {
-          // fallback open new tab
-          window.open(url, '_blank');
-        }
-        break;
-      default:
-        try {
-          await navigator.clipboard.writeText(url);
-          toast.success('Link copied to clipboard');
-        } catch (e) {
-          window.open(url, '_blank');
-        }
-        break;
-    }
-    setShowShareMenu(false);
-  };
+  
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -201,11 +160,7 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
             className="w-full h-80"
             imgClassName="h-80"
           />
-          <div className="absolute top-4 right-4">
-            <Button size="sm" variant="secondary" className="bg-white/90 backdrop-blur-sm">
-              <Bookmark className="h-4 w-4" />
-            </Button>
-          </div>
+          
         </div>
       )}
 
@@ -237,53 +192,10 @@ const AwarenessCampaign = ({ campaign, onLike, onComment, currentUser }) => {
               <span className="font-medium">{commentsCount}</span>
             </Button>
 
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowShareMenu(!showShareMenu)}
-                className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-all duration-200 hover:scale-105"
-              >
-                <Send className="h-6 w-6" />
-                <span className="font-medium">Share</span>
-              </Button>
-
-              {showShareMenu && (
-                <div className="absolute top-full mt-2 right-0 bg-white border rounded-xl shadow-xl p-2 z-10 min-w-[180px] border-gray-200">
-                  <button
-                    onClick={() => handleShare('facebook')}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    📘 Facebook
-                  </button>
-                  <button
-                    onClick={() => handleShare('twitter')}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    🐦 Twitter
-                  </button>
-                  <button
-                    onClick={() => handleShare('linkedin')}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    💼 LinkedIn
-                  </button>
-                  <Separator className="my-1" />
-                  <button
-                    onClick={() => handleShare('copy')}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span>Copy Link</span>
-                  </button>
-                </div>
-              )}
-            </div>
+          
           </div>
           
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-green-600 transition-colors">
-            <Bookmark className="h-5 w-5" />
-          </Button>
+          
         </div>
 
         <Separator className="my-3" />

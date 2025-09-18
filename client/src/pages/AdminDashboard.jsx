@@ -29,7 +29,9 @@ const AdminDashboard = () => {
     pendingApplications: 0,
     verifiedSellers: 0,
     totalReports: 0,
-    pendingReports: 0
+    pendingReports: 0,
+    platformGrowth: [],
+    recentActivities: []
   });
 
   useEffect(() => {
@@ -49,23 +51,12 @@ const AdminDashboard = () => {
     }
   };
 
-  // Mock chart data for demonstration
-  const chartData = [
-    { month: 'Jan', users: 400, sellers: 240, revenue: 2400 },
-    { month: 'Feb', users: 300, sellers: 139, revenue: 2210 },
-    { month: 'Mar', users: 500, sellers: 380, revenue: 2290 },
-    { month: 'Apr', users: 650, sellers: 308, revenue: 2000 },
-    { month: 'May', users: 590, sellers: 480, revenue: 2181 },
-    { month: 'Jun', users: 800, sellers: 380, revenue: 2500 }
-  ];
+  // Use dynamic chart data from API; fallback to empty months if none
+  const chartData = Array.isArray(stats.platformGrowth) && stats.platformGrowth.length > 0
+    ? stats.platformGrowth
+    : [];
 
-  const recentActivities = [
-    { user: 'Airi Satou', action: 'Account Verified', time: '2 hours ago', type: 'success' },
-    { user: 'Angelica Ramos', action: 'Product Submitted', time: '4 hours ago', type: 'info' },
-    { user: 'Ashton Cox', action: 'Report Filed', time: '6 hours ago', type: 'warning' },
-    { user: 'Bradley Greer', action: 'New Registration', time: '1 day ago', type: 'info' },
-    { user: 'Brenden Wagner', action: 'Payment Processed', time: '2 days ago', type: 'success' }
-  ];
+  const recentActivities = stats.recentActivities || [];
 
   return (
     <AdminLayout>
@@ -227,13 +218,13 @@ const AdminDashboard = () => {
                   <div className="flex-1 flex gap-1">
                     <div 
                       className="bg-blue-500 rounded-sm h-6 flex items-center justify-end pr-2 text-white text-xs font-medium"
-                      style={{ width: `${(item.users / 800) * 100}%`, minWidth: '40px' }}
+                      style={{ width: `${(item.users / Math.max(1, Math.max(...chartData.map(d => d.users)))) * 100}%`, minWidth: '40px' }}
                     >
                       {item.users}
                     </div>
                     <div 
                       className="bg-emerald-500 rounded-sm h-6 flex items-center justify-end pr-2 text-white text-xs font-medium"
-                      style={{ width: `${(item.sellers / 500) * 100}%`, minWidth: '30px' }}
+                      style={{ width: `${(item.sellers / Math.max(1, Math.max(...chartData.map(d => d.sellers)))) * 100}%`, minWidth: '30px' }}
                     >
                       {item.sellers}
                     </div>

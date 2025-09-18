@@ -88,11 +88,12 @@ const ReportForm = ({
     setIsSubmitting(true);
 
     try {
+      const authToken = localStorage.getItem('token') || localStorage.getItem('admin_token');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/reports/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           reportedItemType,

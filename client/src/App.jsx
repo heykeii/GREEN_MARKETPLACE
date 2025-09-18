@@ -40,6 +40,7 @@ import FollowersPage from './pages/FollowersPage';
 import FollowingPage from './pages/FollowingPage';
 import CreateCampaign from './pages/CreateCampaign';
 import AdminCampaignManagement from './pages/AdminCampaignManagement';
+import AdminAnnouncementManagement from './pages/AdminAnnouncementManagement';
 import Terms from './pages/Terms';
 
 const App = () => {
@@ -126,6 +127,14 @@ const App = () => {
           element={
             <ProtectedAdminRoute>
               <AdminCampaignManagement />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/announcements" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminAnnouncementManagement />
             </ProtectedAdminRoute>
           }
         />

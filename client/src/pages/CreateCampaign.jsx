@@ -133,6 +133,16 @@ const CreateCampaign = () => {
       return;
     }
 
+    // Frontend date validation for community campaigns
+    if (formData.type === 'community' && formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (start.getTime() > end.getTime()) {
+        toast.error('Start date cannot be after end date');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       let response;
@@ -294,7 +304,8 @@ const CreateCampaign = () => {
                       id="startDate"
                       type="datetime-local"
                       value={formData.startDate}
-                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  max={formData.endDate || undefined}
                     />
                   </div>
                   <div>
@@ -303,7 +314,8 @@ const CreateCampaign = () => {
                       id="endDate"
                       type="datetime-local"
                       value={formData.endDate}
-                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  min={formData.startDate || undefined}
                     />
                   </div>
                 </div>

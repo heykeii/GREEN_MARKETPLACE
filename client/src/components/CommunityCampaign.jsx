@@ -135,10 +135,15 @@ const CommunityCampaign = ({ campaign, onJoin, onComment, currentUser }) => {
                 <Calendar className="h-3 w-3" />
                 <span>{formatDate(campaign.createdAt)}</span>
                 <span>•</span>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs">
-                  <Users className="h-3 w-3 mr-1" />
-                  Community
-                </Badge>
+                <div className="flex flex-col">
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs">
+                    <Users className="h-3 w-3 mr-1" />
+                    Community
+                  </Badge>
+                  {isEventEnded && (
+                    <Badge className="mt-1 bg-gray-100 text-gray-800 text-[10px]">Event Ended</Badge>
+                  )}
+                </div>
                 <Badge className={getStatusColor(campaign.status) + " text-xs"}>
                   {campaign.status?.charAt(0).toUpperCase() + campaign.status?.slice(1)}
                 </Badge>

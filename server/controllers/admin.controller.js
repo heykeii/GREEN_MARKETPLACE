@@ -2,6 +2,8 @@ import User from '../models/user.model.js';
 import SellerApplication from '../models/seller.model.js';
 import Product from '../models/products.model.js';
 import Campaign from '../models/campaign.model.js';
+import Report from '../models/reports.model.js';
+import Order from '../models/orders.model.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null, details = null) => {
@@ -17,27 +19,95 @@ const errorResponse = (res, status, message, error = null, details = null) => {
 export const getAdminStats = async (req, res) => {
   try {
     console.log('Fetching admin statistics...');
-    
-    const [totalUsers, totalSellers, pendingApplications, verifiedSellers] = await Promise.all([
-      User.countDocuments({ isActive: true }),
-      User.countDocuments({ isSeller: true, sellerStatus: 'verified' }),
-      SellerApplication.countDocuments({ status: 'pending' }),
-      User.countDocuments({ sellerStatus: 'verified' })
-    ]);
 
-    console.log('Admin stats fetched successfully:', {
+    const start = new Date();
+    // cover the last 6 full calendar months including current month
+    start.setMonth(start.getMonth() - 5, 1);
+    start.setHours(0, 0, 0, 0);
+
+    const [
       totalUsers,
       totalSellers,
       pendingApplications,
-      verifiedSellers
-    });
+      verifiedSellers,
+      totalReports,
+      pendingReports,
+      usersByMonthAgg,
+      sellersByMonthAgg
+    ] = await Promise.all([
+      User.countDocuments({ isActive: true }),
+      User.countDocuments({ isSeller: true, sellerStatus: 'verified' }),
+      SellerApplication.countDocuments({ status: 'pending' }),
+      User.countDocuments({ sellerStatus: 'verified' }),
+      Report.countDocuments({}),
+      Report.countDocuments({ status: 'pending' }),
+      // Users created per month
+      User.aggregate([
+        { $match: { createdAt: { $gte: start } } },
+        { $group: { _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } }, count: { $sum: 1 } } }
+      ]),
+      // Sellers approved per month based on SellerApplication.reviewedAt
+      SellerApplication.aggregate([
+        { $match: { status: 'approved', reviewedAt: { $ne: null, $gte: start } } },
+        { $group: { _id: { y: { $year: '$reviewedAt' }, m: { $month: '$reviewedAt' } }, count: { $sum: 1 } } }
+      ])
+    ]);
+
+    // Build last 6 months labels
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ y: d.getFullYear(), m: d.getMonth() + 1, label: d.toLocaleString('en-US', { month: 'short' }) });
+    }
+
+    const usersMap = new Map(usersByMonthAgg.map(x => [`${x._id.y}-${x._id.m}`, x.count]));
+    const sellersMap = new Map(sellersByMonthAgg.map(x => [`${x._id.y}-${x._id.m}`, x.count]));
+
+    const platformGrowth = months.map(({ y, m, label }) => ({
+      month: label,
+      users: usersMap.get(`${y}-${m}`) || 0,
+      sellers: sellersMap.get(`${y}-${m}`) || 0
+    }));
+
+    // Build recent admin activity (lightweight, last 5 by recency across key collections)
+    const [latestUsers, latestApprovedProducts, latestReports, latestOrders] = await Promise.all([
+      User.find({}).sort({ createdAt: -1 }).limit(5).select('firstName lastName createdAt').lean(),
+      Product.find({ status: 'approved' }).sort({ createdAt: -1 }).limit(5).select('name createdAt').lean(),
+      Report.find({}).sort({ createdAt: -1 }).limit(5).select('status createdAt').lean(),
+      Order.find({}).sort({ createdAt: -1 }).limit(5).select('status createdAt').lean()
+    ]);
+
+    const formatTimeAgo = (d) => {
+      const diffMs = Date.now() - new Date(d).getTime();
+      const hours = Math.floor(diffMs / 36e5);
+      if (hours < 1) return 'Just now';
+      if (hours < 24) return `${hours} hours ago`;
+      const days = Math.floor(hours / 24);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    };
+
+    const recentActivities = [
+      ...latestUsers.map(u => ({ user: `${u.firstName || 'User'}${u.lastName ? ' ' + u.lastName : ''}`.trim(), action: 'New Registration', time: formatTimeAgo(u.createdAt), type: 'info' })),
+      ...latestApprovedProducts.map(p => ({ user: p.name || 'Product', action: 'Product Submitted', time: formatTimeAgo(p.createdAt), type: 'info' })),
+      ...latestReports.map(r => ({ user: 'Report', action: 'Report Filed', time: formatTimeAgo(r.createdAt), type: r.status === 'pending' ? 'warning' : 'success' })),
+      ...latestOrders.map(o => ({ user: 'Payment', action: 'Payment Processed', time: formatTimeAgo(o.createdAt), type: o.paymentStatus === 'paid' ? 'success' : 'info' }))
+    ]
+      .sort((a, b) => (a.timeStamp || 0) < (b.timeStamp || 0))
+      .slice(0, 5);
+
+    console.log('Admin stats fetched successfully');
 
     res.status(200).json({
       success: true,
       totalUsers,
       totalSellers,
       pendingApplications,
-      verifiedSellers
+      verifiedSellers,
+      totalReports,
+      pendingReports,
+      platformGrowth,
+      recentActivities
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);

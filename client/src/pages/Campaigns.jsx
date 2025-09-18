@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Plus, Filter, Search, Calendar, Tag, TrendingUp, Users, Heart, MessageCircle, Share2, Target, Store, Lightbulb, MoreHorizontal, Bookmark, Send, Home, Compass, PlusSquare } from 'lucide-react';
+import { Plus, Filter, Search, Calendar, Tag, TrendingUp, Users, Heart, MessageCircle, Share2, Target, Store, Lightbulb, MoreHorizontal, Send, Home, Compass, PlusSquare } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CampaignCard from '../components/CampaignCard';
+import AnnouncementCard from '../components/AnnouncementCard';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { getLikedCampaignIds, setLikedForCampaign } from '../lib/utils';
@@ -315,14 +316,8 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
               <span className="font-semibold">{campaign.comments?.length || 0}</span>
             </button>
             
-            <button onClick={handleShare} className="text-gray-600 hover:text-green-600 transition-all duration-200 hover:scale-105">
-              <Send className="h-7 w-7" />
-            </button>
           </div>
           
-          <button className="text-gray-600 hover:text-green-600 transition-colors">
-            <Bookmark className="h-6 w-6" />
-          </button>
         </div>
 
         {/* Engagement Summary */}
@@ -435,6 +430,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
 const Campaigns = () => {
   const { user } = useContext(AuthContext);
   const [campaigns, setCampaigns] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalCampaigns: 0,
@@ -452,6 +448,7 @@ const Campaigns = () => {
 
   useEffect(() => {
     fetchCampaigns();
+    fetchAnnouncements();
   }, [filters]);
 
   const fetchCampaigns = async () => {
@@ -494,6 +491,30 @@ const Campaigns = () => {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+      if (!token) return; // Only fetch if user is logged in
+      
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/announcements/my-announcements`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params: {
+          page: 1,
+          limit: 5 // Only show latest 5 announcements
+        }
+      });
+      
+      if (response.data.success) {
+        setAnnouncements(response.data.announcements);
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      // Don't show error toast - announcements are optional
+    }
+  };
+
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
       ...prev,
@@ -507,6 +528,19 @@ const Campaigns = () => {
         ? { ...campaign, ...updates }
         : campaign
     ));
+  };
+
+  const handleAnnouncementMarkedAsRead = (announcementId, userId) => {
+    setAnnouncements(prev => prev.map(a => {
+      if (a._id !== announcementId) return a;
+      const alreadyViewed = Array.isArray(a.viewedBy) && a.viewedBy.some(v => String(v.user || v._id || v) === String(userId));
+      if (alreadyViewed) return a;
+      return {
+        ...a,
+        views: (a.views || 0) + 1,
+        viewedBy: [...(a.viewedBy || []), { user: userId, viewedAt: new Date().toISOString() }]
+      };
+    }));
   };
 
   const clearFilters = () => {
@@ -723,8 +757,19 @@ const Campaigns = () => {
                 </div>
               ))}
             </div>
-          ) : campaigns.length > 0 ? (
+          ) : (announcements.length > 0 || campaigns.length > 0) ? (
             <div className="space-y-8">
+              {/* Announcements */}
+              {announcements.map((announcement) => (
+                <AnnouncementCard
+                  key={announcement._id}
+                  announcement={announcement}
+                  currentUser={user}
+                  onMarkedAsRead={handleAnnouncementMarkedAsRead}
+                />
+              ))}
+              
+              {/* Campaigns */}
               {campaigns.map((campaign) => (
                 <InstagramStyleCampaignCard
                   key={campaign._id}

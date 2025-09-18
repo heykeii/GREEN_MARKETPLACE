@@ -19,6 +19,7 @@ import reportRoutes from './routes/report.route.js'
 import notificationRoutes from './routes/notification.route.js'
 import chatRoutes from './routes/chat.route.js'
 import campaignRoutes from './routes/campaign.route.js'
+import announcementRoutes from './routes/announcement.route.js'
 import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import jwt from 'jsonwebtoken'
@@ -59,6 +60,7 @@ app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/campaigns", campaignRoutes);
+app.use("/api/v1/announcements", announcementRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

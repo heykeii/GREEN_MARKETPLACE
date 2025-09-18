@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
+import ReportButton from '@/components/ReportButton';
 
 const getSocialIcon = (platform) => {
   const iconMap = {
@@ -32,6 +33,7 @@ const getSocialIcon = (platform) => {
 const PublicProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const fromAdmin = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'admin';
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -108,6 +110,23 @@ const PublicProfile = () => {
       {!isAdmin && <Navbar />}
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (fromAdmin) {
+                  navigate('/admin/user-management');
+                } else if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/');
+                }
+              }}
+              className="text-green-700 border-green-200 hover:bg-green-50"
+            >
+              ← Back
+            </Button>
+          </div>
           <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm">
             <CardContent className="p-8 flex flex-col items-center space-y-6">
               {/* Avatar */}
@@ -158,6 +177,15 @@ const PublicProfile = () => {
                   >
                     Message
                   </Button>
+                  <ReportButton
+                    reportedItemType="user"
+                    reportedItemId={userId}
+                    reportedItemName={`${profile.firstName} ${profile.lastName}`.trim()}
+                    variant="outline"
+                    className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border-red-200"
+                  >
+                    Report User
+                  </ReportButton>
                 </div>
                 {/* Follow/Unfollow and counts */}
                 <div className="mt-2 flex items-center justify-center gap-3">

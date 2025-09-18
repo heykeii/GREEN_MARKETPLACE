@@ -55,6 +55,16 @@ const createCampaign = async (req, res) => {
       }
     }
 
+    // Validate dates (only if both provided)
+    const startAt = startDate ? new Date(startDate) : null;
+    const endAt = endDate ? new Date(endDate) : null;
+    if (startAt && endAt && startAt.getTime() > endAt.getTime()) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date cannot be after end date"
+      });
+    }
+
     // Enforce required image/media
     if (!mediaUrl) {
       return res.status(400).json({
@@ -66,8 +76,8 @@ const createCampaign = async (req, res) => {
       title,
       description,
       type,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: startAt || undefined,
+      endDate: endAt || undefined,
       image: mediaUrl,
       media: mediaUrls.length ? mediaUrls : undefined,
       createdBy: req.user.id,
@@ -247,6 +257,16 @@ const updateCampaign = async (req, res) => {
     }
 
     const updates = req.body;
+
+    // Date validation if either date is being updated
+    const nextStart = updates.startDate ? new Date(updates.startDate) : (campaign.startDate || null);
+    const nextEnd = updates.endDate ? new Date(updates.endDate) : (campaign.endDate || null);
+    if (nextStart && nextEnd && nextStart.getTime() > nextEnd.getTime()) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date cannot be after end date"
+      });
+    }
     // Remove fields that shouldn't be updated directly
     delete updates.verified;
     delete updates.createdBy;

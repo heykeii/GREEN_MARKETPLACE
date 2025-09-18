@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, AlertTriangle, Share2, Bookmark, MoreHorizontal, Calendar, Clock, Eye, TrendingUp, Users, Heart, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, AlertTriangle, MoreHorizontal, Calendar, Clock, Eye, TrendingUp, Users, Heart, MessageCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
@@ -188,13 +188,6 @@ const CampaignDetail = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                <Bookmark className="h-4 w-4" />
-              </Button>
               {canEditOrDelete && (
                 <>
                   <Separator orientation="vertical" className="h-6" />
