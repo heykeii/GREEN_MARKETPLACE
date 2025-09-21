@@ -23,6 +23,9 @@ const notificationSchema = new mongoose.Schema({
       'new_order',
       'new_review',
       'order_cancelled_by_customer',
+      'product_status_updated',
+      'product_approved',
+      'product_rejected',
       
       // General notifications
       'system_message',

@@ -1,6 +1,8 @@
 // controllers/productController.js
 import Product from '../models/products.model.js';
 import cloudinary from '../utils/cloudinary.js';
+import { getIO } from '../utils/socket.js';
+import { processSustainabilityScoring } from '../utils/sustainabilityScoring.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null, details = null) => {
@@ -23,6 +25,7 @@ export const createProduct = async (req, res) => {
       origin = '',
       productionMethod = '',
       materialsUsed,
+      materialsInput, // New field for sustainability scoring
       tags = [],
     } = req.body;
 
@@ -55,6 +58,50 @@ export const createProduct = async (req, res) => {
       }
     }
 
+    // Process sustainability scoring if materialsInput is provided OR if materialsUsed is available
+    let sustainabilityData = {
+      structuredMaterials: new Map(),
+      materialRecyclabilityScores: new Map(),
+      sustainabilityScore: 0,
+      sustainabilityCalculation: {}
+    };
+
+    // Use materialsInput if provided, otherwise convert materialsUsed array to string
+    let materialInputForScoring = materialsInput;
+    if (!materialInputForScoring && materialsUsed) {
+      const materialsArray = Array.isArray(materialsUsed) ? materialsUsed : [materialsUsed];
+      materialInputForScoring = materialsArray.join(', ');
+    }
+
+    if (materialInputForScoring && materialInputForScoring.trim()) {
+      try {
+        console.log('Processing sustainability scoring for materials:', materialInputForScoring);
+        const scoringResult = await processSustainabilityScoring(materialInputForScoring);
+        
+        sustainabilityData = {
+          structuredMaterials: new Map(Object.entries(scoringResult.structuredMaterials)),
+          materialRecyclabilityScores: new Map(Object.entries(scoringResult.recyclabilityScores)),
+          sustainabilityScore: scoringResult.sustainabilityScore,
+          sustainabilityCalculation: {
+            totalWeight: scoringResult.totalWeight,
+            weightedScore: scoringResult.weightedScore,
+            calculatedAt: scoringResult.calculatedAt,
+            details: JSON.stringify(scoringResult.calculationDetails)
+          },
+          validation: scoringResult.validation
+        };
+        
+        console.log('Sustainability scoring completed:', {
+          score: scoringResult.sustainabilityScore,
+          materials: Object.keys(scoringResult.structuredMaterials)
+        });
+      } catch (sustainabilityError) {
+        console.error('Sustainability scoring failed:', sustainabilityError.message);
+        // Continue with product creation but log the error
+        // Don't fail the entire product creation process
+      }
+    }
+
     const newProduct = new Product({
       name,
       description,
@@ -68,6 +115,11 @@ export const createProduct = async (req, res) => {
       tags: Array.isArray(tags) ? tags : [tags],
       seller: req.user._id,
       status: 'pending',
+      // Add sustainability fields
+      structuredMaterials: sustainabilityData.structuredMaterials,
+      materialRecyclabilityScores: sustainabilityData.materialRecyclabilityScores,
+      sustainabilityScore: sustainabilityData.sustainabilityScore,
+      sustainabilityCalculation: sustainabilityData.sustainabilityCalculation,
     });
 
     try {
@@ -76,10 +128,14 @@ export const createProduct = async (req, res) => {
       return errorResponse(res, 400, 'Failed to save product.', dbError.message, dbError.errors);
     }
 
+    // If validation exists and is invalid, include warning in response
+    const validation = sustainabilityData?.validation;
+
     res.status(201).json({
       success: true,
       message: 'Product submitted successfully with images for admin approval.',
       product: newProduct,
+      ...(validation && validation.valid === false ? { sustainabilityValidation: validation } : {})
     });
   } catch (error) {
     return errorResponse(res, 500, 'Failed to create product.', error.message);
@@ -152,6 +208,35 @@ export const updateProduct = async (req, res) => {
         product[field] = req.body[field];
       }
     });
+
+    // Recalculate sustainability score if materialsUsed has changed
+    if (req.body.materialsUsed !== undefined) {
+      try {
+        const materialsArray = Array.isArray(req.body.materialsUsed) ? req.body.materialsUsed : [req.body.materialsUsed];
+        const materialInputForScoring = materialsArray.join(', ');
+        
+        if (materialInputForScoring && materialInputForScoring.trim()) {
+          console.log('Recalculating sustainability score for updated materials:', materialInputForScoring);
+          const scoringResult = await processSustainabilityScoring(materialInputForScoring);
+          
+          product.structuredMaterials = new Map(Object.entries(scoringResult.structuredMaterials));
+          product.materialRecyclabilityScores = new Map(Object.entries(scoringResult.recyclabilityScores));
+          product.sustainabilityScore = scoringResult.sustainabilityScore;
+          product.sustainabilityCalculation = {
+            totalWeight: scoringResult.totalWeight,
+            weightedScore: scoringResult.weightedScore,
+            calculatedAt: scoringResult.calculatedAt,
+            details: JSON.stringify(scoringResult.calculationDetails)
+          };
+          
+          console.log('Sustainability score updated:', scoringResult.sustainabilityScore);
+        }
+      } catch (sustainabilityError) {
+        console.error('Sustainability scoring failed during update:', sustainabilityError.message);
+        // Continue with product update but log the error
+      }
+    }
+
     try {
       await product.save();
     } catch (dbError) {
@@ -175,6 +260,18 @@ export const deleteProduct = async (req, res) => {
       await product.deleteOne();
     } catch (dbError) {
       return errorResponse(res, 500, 'Failed to delete product.', dbError.message);
+    }
+    // Emit real-time analytics update to this seller's room
+    try {
+      const io = getIO();
+      if (io && req.user?._id) {
+        io.to(req.user._id.toString()).emit('seller_analytics_updated', {
+          reason: 'product_deleted',
+          productId
+        });
+      }
+    } catch (_) {
+      // best-effort; do not block deletion response
     }
     res.status(200).json({ success: true, message: 'Product deleted successfully.' });
   } catch (error) {
@@ -418,6 +515,140 @@ export const getProductsBySellers = async (req, res) => {
       message: 'Failed to fetch products from sellers', 
       error: error.message 
     });
+  }
+};
+
+// Sustainability Scoring Endpoints
+
+// Calculate sustainability score for materials (preview/test endpoint)
+export const calculateSustainabilityPreview = async (req, res) => {
+  try {
+    const { materialsInput } = req.body;
+
+    if (!materialsInput || !materialsInput.trim()) {
+      return errorResponse(res, 400, 'Materials input is required for sustainability calculation.');
+    }
+
+    console.log('Calculating sustainability preview for:', materialsInput);
+    const scoringResult = await processSustainabilityScoring(materialsInput);
+
+    res.status(200).json({
+      success: true,
+      message: 'Sustainability score calculated successfully.',
+      sustainabilityData: {
+        structuredMaterials: scoringResult.structuredMaterials,
+        recyclabilityScores: scoringResult.recyclabilityScores,
+        sustainabilityScore: scoringResult.sustainabilityScore,
+        calculationBreakdown: {
+          totalWeight: scoringResult.totalWeight,
+          weightedScore: scoringResult.weightedScore,
+          formula: scoringResult.formula,
+          details: scoringResult.calculationDetails
+        },
+        validation: scoringResult.validation
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating sustainability preview:', error);
+    return errorResponse(res, 500, 'Failed to calculate sustainability score.', error.message);
+  }
+};
+
+// Recalculate sustainability score for existing product
+export const recalculateSustainabilityScore = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { materialsInput } = req.body;
+
+    if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
+      return errorResponse(res, 400, 'Invalid product ID');
+    }
+
+    const product = await Product.findOne({ _id: productId, seller: req.user._id });
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found or not authorized.');
+    }
+
+    if (!materialsInput || !materialsInput.trim()) {
+      return errorResponse(res, 400, 'Materials input is required for sustainability recalculation.');
+    }
+
+    console.log('Recalculating sustainability score for product:', productId);
+    const scoringResult = await processSustainabilityScoring(materialsInput);
+
+    // Update product with new sustainability data
+    product.structuredMaterials = new Map(Object.entries(scoringResult.structuredMaterials));
+    product.materialRecyclabilityScores = new Map(Object.entries(scoringResult.recyclabilityScores));
+    product.sustainabilityScore = scoringResult.sustainabilityScore;
+    product.sustainabilityCalculation = {
+      totalWeight: scoringResult.totalWeight,
+      weightedScore: scoringResult.weightedScore,
+      calculatedAt: scoringResult.calculatedAt,
+      details: JSON.stringify(scoringResult.calculationDetails)
+    };
+
+    try {
+      await product.save();
+    } catch (dbError) {
+      return errorResponse(res, 500, 'Failed to update product sustainability data.', dbError.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Sustainability score recalculated successfully.',
+      product: {
+        _id: product._id,
+        name: product.name,
+        sustainabilityScore: product.sustainabilityScore,
+        sustainabilityCalculation: product.sustainabilityCalculation,
+        structuredMaterials: Object.fromEntries(product.structuredMaterials),
+        materialRecyclabilityScores: Object.fromEntries(product.materialRecyclabilityScores)
+      }
+      , validation: scoringResult.validation
+    });
+  } catch (error) {
+    console.error('Error recalculating sustainability score:', error);
+    return errorResponse(res, 500, 'Failed to recalculate sustainability score.', error.message);
+  }
+};
+
+// Get sustainability details for a product
+export const getProductSustainabilityDetails = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
+      return errorResponse(res, 400, 'Invalid product ID');
+    }
+
+    const product = await Product.findById(productId)
+      .select('name sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation')
+      .lean();
+
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found');
+    }
+
+    // Convert Maps to Objects for JSON response
+    const sustainabilityDetails = {
+      productId: product._id,
+      productName: product.name,
+      sustainabilityScore: product.sustainabilityScore,
+      structuredMaterials: product.structuredMaterials ? Object.fromEntries(product.structuredMaterials) : {},
+      materialRecyclabilityScores: product.materialRecyclabilityScores ? Object.fromEntries(product.materialRecyclabilityScores) : {},
+      calculation: product.sustainabilityCalculation ? {
+        ...product.sustainabilityCalculation,
+        details: product.sustainabilityCalculation.details ? JSON.parse(product.sustainabilityCalculation.details) : []
+      } : null
+    };
+
+    res.status(200).json({
+      success: true,
+      sustainabilityDetails
+    });
+  } catch (error) {
+    console.error('Error fetching sustainability details:', error);
+    return errorResponse(res, 500, 'Failed to fetch sustainability details.', error.message);
   }
 };
 

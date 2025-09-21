@@ -504,6 +504,37 @@ const ProductPage = () => {
                       <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
                         {product.category}
                       </Badge>
+                      {typeof product.sustainabilityScore === 'number' && product.sustainabilityScore > 0 && (
+                        <div className="group relative">
+                          <div className="flex items-center gap-3 bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 px-4 py-3 rounded-xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500 backdrop-blur-sm">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-green-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                              <FaLeaf className="relative text-emerald-600 text-base drop-shadow-sm" />
+                            </div>
+                            <div className="relative">
+                              <div
+                                className="w-10 h-10 rounded-full p-[2px] shadow-lg"
+                                style={{
+                                  background: `conic-gradient(from 0deg, #10b981 0deg, #34d399 ${Math.round(product.sustainabilityScore * 100) * 3.6}deg, #e5e7eb 0deg)`
+                                }}
+                              >
+                                <div className="w-full h-full rounded-full bg-gradient-to-br from-white via-emerald-50 to-green-100 flex items-center justify-center text-[11px] font-bold text-emerald-700 shadow-inner">
+                                  {Math.round(product.sustainabilityScore * 100)}
+                                </div>
+                              </div>
+                              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400/30 to-green-400/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-semibold text-emerald-800">Sustainability Score</span>
+                              <span className="text-xs text-emerald-600">
+                                {product.sustainabilityScore >= 0.8 ? 'Excellent' : 
+                                 product.sustainabilityScore >= 0.6 ? 'Good' : 
+                                 product.sustainabilityScore >= 0.4 ? 'Fair' : 'Poor'} Impact
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {/* Seller Avatar & Link */}
                       {seller && (
                         <div className="flex items-center gap-2">
@@ -649,21 +680,54 @@ const ProductPage = () => {
               )}
 
               {/* Sustainability Features */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Sustainability Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-lg">
-                    <FaLeaf className="text-emerald-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Eco-Friendly</p>
-                      <p className="text-sm text-gray-600">Made with sustainable materials</p>
-                    </div>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <FaLeaf className="text-white text-sm" />
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-lg">
-                    <FaRecycle className="text-emerald-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Recyclable</p>
-                      <p className="text-sm text-gray-600">100% recyclable packaging</p>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent">Sustainability Features</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {typeof product.sustainabilityScore === 'number' && product.sustainabilityScore > 0 && (
+                    <div className="group relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <FaLeaf className="relative text-emerald-600 text-2xl drop-shadow-sm" />
+                          <div
+                            className="absolute -top-2 -right-2 w-8 h-8 rounded-full p-[2px] shadow-lg"
+                            style={{
+                              background: `conic-gradient(from 0deg, #10b981 0deg, #34d399 ${Math.round(product.sustainabilityScore * 100) * 3.6}deg, #e5e7eb 0deg)`
+                            }}
+                          >
+                            <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-emerald-50 flex items-center justify-center text-[10px] font-bold text-emerald-700 shadow-inner">
+                              {Math.round(product.sustainabilityScore * 100)}
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 text-lg">Sustainability Score</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {product.sustainabilityScore >= 0.8 ? 'Excellent' : 
+                             product.sustainabilityScore >= 0.6 ? 'Good' : 
+                             product.sustainabilityScore >= 0.4 ? 'Fair' : 'Poor'} environmental impact
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <FaRecycle className="relative text-emerald-600 text-2xl drop-shadow-sm" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 text-lg">Recyclable</p>
+                        <p className="text-sm text-gray-600 mt-1">Made with recyclable materials</p>
+                      </div>
                     </div>
                   </div>
                 </div>

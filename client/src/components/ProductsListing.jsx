@@ -10,7 +10,8 @@ import {
   FaHeart, 
   FaShoppingCart,
   FaStar,
-  FaEye
+  FaEye,
+  FaLeaf
 } from 'react-icons/fa';
 
 const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'grid' }) => {
@@ -194,7 +195,7 @@ const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'g
               </div>
             </div>
 
-            {/* Product Info */}
+              {/* Product Info */}
             <div className={`p-6 flex-1 flex flex-col ${viewMode === 'list' ? '' : ''}`}>
               <div className="flex-1 mb-4">
                 <h2 className="font-bold text-lg text-emerald-800 mb-2 line-clamp-2 leading-tight">
@@ -204,15 +205,42 @@ const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'g
                   {product.description}
                 </p>
                 
-                {/* Rating */}
-                <div className="flex items-center gap-1 mb-3">
-                  <FaStar className="text-amber-500 text-sm" />
-                  <span className="text-sm text-gray-600">
-                    {reviewStats[product._id]?.averageRating > 0 
-                      ? `${reviewStats[product._id].averageRating.toFixed(1)} (${reviewStats[product._id].totalReviews} ${reviewStats[product._id].totalReviews === 1 ? 'review' : 'reviews'})`
-                      : 'No reviews yet'
-                    }
-                  </span>
+                {/* Rating and Sustainability Score */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-1">
+                    <FaStar className="text-amber-500 text-sm" />
+                    <span className="text-sm text-gray-600">
+                      {reviewStats[product._id]?.averageRating > 0 
+                        ? `${reviewStats[product._id].averageRating.toFixed(1)} (${reviewStats[product._id].totalReviews} ${reviewStats[product._id].totalReviews === 1 ? 'review' : 'reviews'})`
+                        : 'No reviews yet'
+                      }
+                    </span>
+                  </div>
+                  
+                  {/* Sustainability Score */}
+                  {typeof product.sustainabilityScore === 'number' && product.sustainabilityScore > 0 && (
+                    <div className="group relative">
+                      <div className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-green-50 px-3 py-1.5 rounded-full border border-emerald-200/50 shadow-sm hover:shadow-md transition-all duration-300">
+                        <div className="relative">
+                          <FaLeaf className="text-emerald-600 text-xs drop-shadow-sm" />
+                          <div className="absolute -inset-1 bg-emerald-200/30 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        <div className="relative">
+                          <div
+                            className="w-6 h-6 rounded-full p-[1px] shadow-inner"
+                            style={{
+                              background: `conic-gradient(from 0deg, #10b981 ${Math.round(product.sustainabilityScore * 100) * 3.6}deg, #e5e7eb 0deg)`
+                            }}
+                          >
+                            <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-emerald-50 flex items-center justify-center text-[8px] font-bold text-emerald-700 shadow-inner">
+                              {Math.round(product.sustainabilityScore * 100)}
+                            </div>
+                          </div>
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

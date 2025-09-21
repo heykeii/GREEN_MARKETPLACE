@@ -18,6 +18,14 @@ export function getSocket() {
   return socket;
 }
 
+// Listen for seller analytics updates
+export function onSellerAnalyticsUpdated(handler) {
+  const s = getSocket();
+  s.off('seller_analytics_updated');
+  s.on('seller_analytics_updated', handler);
+  return socket;
+}
+
 export function joinConversation(conversationId) {
   const s = getSocket();
   s.emit('join_conversation', { conversationId });

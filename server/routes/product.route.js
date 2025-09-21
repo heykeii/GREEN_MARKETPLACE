@@ -14,7 +14,10 @@ import {
   filterProducts,
   getRelatedProducts,
   getProductsBySellerPublic,
-  getProductsBySellers
+  getProductsBySellers,
+  calculateSustainabilityPreview,
+  recalculateSustainabilityScore,
+  getProductSustainabilityDetails
 } from '../controllers/product.controller.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -30,6 +33,10 @@ router.patch('/update/:productId', protect, sellerOnly, upload.array('images', 1
 router.delete('/delete/:productId', protect, sellerOnly, deleteProduct);
 router.patch('/toggle-availability/:productId', protect, sellerOnly, toggleProductAvailability);
 
+// Sustainability scoring routes
+router.post('/sustainability/preview', protect, sellerOnly, calculateSustainabilityPreview);
+router.patch('/sustainability/recalculate/:productId', protect, sellerOnly, recalculateSustainabilityScore);
+
 // Public marketplace routes
 router.get('/', getAllApprovedProducts);
 router.get('/view/:productId', getProductById);
@@ -40,5 +47,7 @@ router.get('/related/:productId', getRelatedProducts);
 router.get('/by-seller/:sellerId', getProductsBySellerPublic);
 // Public: products by multiple sellers (for campaigns)
 router.get('/by-sellers', getProductsBySellers);
+// Public: sustainability details
+router.get('/sustainability/:productId', getProductSustainabilityDetails);
 
 export default router;

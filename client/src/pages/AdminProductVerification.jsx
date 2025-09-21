@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Eye, Package, User, Calendar, MapPin, Palette, Tag, DollarSign, Hash, Wrench, Filter, Clock, Star, ArrowLeft, ArrowRight, MoreHorizontal } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Package, User, Calendar, MapPin, Palette, Tag, DollarSign, Hash, Wrench, Filter, Clock, Star, ArrowLeft, ArrowRight, MoreHorizontal, Leaf, Award, Info } from 'lucide-react';
 import noProfile from '@/assets/no_profile.jpg';
 import AdminLayout from '@/components/AdminLayout';
 
@@ -330,6 +330,125 @@ const AdminProductVerification = () => {
                                 </div>
                               </div>
                             </div>
+
+                            {/* Sustainability Score Section */}
+                            {product.sustainabilityData && (
+                              <div className="space-y-4 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-2xl border border-green-200/50 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                      <div className="absolute inset-0 bg-green-500 rounded-2xl blur opacity-20"></div>
+                                      <div className="relative p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg">
+                                        <Leaf className="w-6 h-6 text-white" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h3 className="text-lg font-bold text-green-900">Sustainability Analysis</h3>
+                                      <p className="text-sm text-green-700">AI-powered environmental impact assessment</p>
+                                    </div>
+                                  </div>
+                                  {product.sustainabilityData.score > 0 && (
+                                    <div className="text-right">
+                                      <div className="text-3xl font-bold text-green-600">
+                                        {Math.round(product.sustainabilityData.score * 100)}%
+                                      </div>
+                                      <div className="text-xs text-green-600 font-medium">Sustainability Score</div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {product.sustainabilityData.score > 0 ? (
+                                  <div className="space-y-4">
+                                    {/* Score Breakdown */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-green-200/50">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Award className="w-4 h-4 text-yellow-500" />
+                                          <span className="text-sm font-semibold text-gray-700">Overall Rating</span>
+                                        </div>
+                                        <div className="text-2xl font-bold text-green-600">
+                                          {product.sustainabilityData.score >= 0.8 ? 'Excellent' :
+                                           product.sustainabilityData.score >= 0.6 ? 'Good' :
+                                           product.sustainabilityData.score >= 0.4 ? 'Fair' : 'Needs Improvement'}
+                                        </div>
+                                      </div>
+                                      <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-green-200/50">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Info className="w-4 h-4 text-blue-500" />
+                                          <span className="text-sm font-semibold text-gray-700">Materials Count</span>
+                                        </div>
+                                        <div className="text-2xl font-bold text-gray-900">
+                                          {Object.keys(product.sustainabilityData.structuredMaterials || {}).length}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Materials Breakdown */}
+                                    {product.sustainabilityData.structuredMaterials && Object.keys(product.sustainabilityData.structuredMaterials).length > 0 && (
+                                      <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-green-200/30">
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                          <Palette className="w-4 h-4 text-green-600" />
+                                          Material Analysis
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                          {Object.entries(product.sustainabilityData.structuredMaterials).map(([material, weight]) => {
+                                            const recyclabilityScore = product.sustainabilityData.recyclabilityScores?.[material] || 0;
+                                            return (
+                                              <div key={material} className="flex items-center justify-between p-2 bg-white/60 rounded-lg">
+                                                <div className="flex items-center gap-3">
+                                                  <div className={`w-3 h-3 rounded-full ${
+                                                    recyclabilityScore >= 0.7 ? 'bg-green-500' :
+                                                    recyclabilityScore >= 0.4 ? 'bg-yellow-500' : 'bg-red-500'
+                                                  }`}></div>
+                                                  <span className="font-medium text-gray-900 capitalize">{material}</span>
+                                                  <span className="text-sm text-gray-600">{weight}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                  <div className="text-sm font-semibold text-gray-700">
+                                                    {Math.round(recyclabilityScore * 100)}%
+                                                  </div>
+                                                  <div className="text-xs text-gray-500">Recyclable</div>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Calculation Details */}
+                                    {product.sustainabilityData.calculation && (
+                                      <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-green-200/30">
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                          <Info className="w-4 h-4 text-blue-600" />
+                                          Calculation Method
+                                        </h4>
+                                        <p className="text-xs text-gray-600 mb-2">
+                                          Score = (Σ Material Weight × Recyclability Score) ÷ Total Weight
+                                        </p>
+                                        <div className="text-xs text-gray-500">
+                                          Calculated: {product.sustainabilityData.calculation.calculatedAt ? 
+                                            new Date(product.sustainabilityData.calculation.calculatedAt).toLocaleDateString() : 'N/A'}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-6">
+                                    <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                      <Info className="w-8 h-8 text-yellow-600" />
+                                    </div>
+                                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No Sustainability Data</h4>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                      This product hasn't been analyzed for sustainability yet.
+                                    </p>
+                                    <Badge variant="outline" className="border-yellow-300 text-yellow-700 bg-yellow-50">
+                                      Requires Material Input for Scoring
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* Additional Details */}
                             <div className="space-y-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">

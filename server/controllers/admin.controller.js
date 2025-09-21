@@ -4,6 +4,8 @@ import Product from '../models/products.model.js';
 import Campaign from '../models/campaign.model.js';
 import Report from '../models/reports.model.js';
 import Order from '../models/orders.model.js';
+import { processSustainabilityScoring } from '../utils/sustainabilityScoring.js';
+import { NotificationService } from '../utils/notificationService.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null, details = null) => {
@@ -281,16 +283,65 @@ export const getPendingProducts = async (req, res) => {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('seller', 'firstName lastName email')
+        .select('name description images price quantity category origin productionMethod materialsUsed sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .lean(),
       Product.countDocuments(filter)
     ]);
+
+    // Process sustainability data for admin display
+    const toPlainObject = (maybeMap) => {
+      if (!maybeMap) return {};
+      // If it's a real Map (when not lean)
+      if (typeof maybeMap.get === 'function' && typeof maybeMap.entries === 'function') {
+        try { return Object.fromEntries(Array.from(maybeMap.entries())); } catch { return {}; }
+      }
+      // If it's already a plain object (lean result)
+      if (typeof maybeMap === 'object' && !Array.isArray(maybeMap)) {
+        return maybeMap;
+      }
+      // If it's an array of [key,value]
+      if (Array.isArray(maybeMap)) {
+        try { return Object.fromEntries(maybeMap); } catch { return {}; }
+      }
+      return {};
+    };
+
+    const parseDetails = (details) => {
+      if (!details) return [];
+      if (Array.isArray(details)) return details;
+      if (typeof details === 'string') {
+        try { return JSON.parse(details); } catch { return []; }
+      }
+      return [];
+    };
+
+    const processedProducts = products.map(product => {
+      const structuredMaterialsObj = toPlainObject(product.structuredMaterials);
+      const recyclabilityScoresObj = toPlainObject(product.materialRecyclabilityScores);
+      const calculation = product.sustainabilityCalculation ? {
+        ...product.sustainabilityCalculation,
+        details: parseDetails(product.sustainabilityCalculation.details)
+      } : null;
+
+      return {
+        ...product,
+        sustainabilityData: {
+          score: product.sustainabilityScore || 0,
+          hasStructuredMaterials: Object.keys(structuredMaterialsObj).length > 0,
+          structuredMaterials: structuredMaterialsObj,
+          recyclabilityScores: recyclabilityScoresObj,
+          calculation
+        }
+      };
+    });
+
     const totalPages = Math.ceil(total / parseInt(limit));
     res.status(200).json({
       success: true,
-      products,
+      products: processedProducts,
       pagination: {
         currentPage: parseInt(page),
         totalPages,
@@ -383,6 +434,13 @@ export const approveProduct = async (req, res) => {
     product.status = 'approved';
     product.isAvailable = true; // Ensure product is available when approved
     await product.save();
+    // Notify seller about approval and status update
+    try {
+      await NotificationService.notifyProductApproved(product.seller, product);
+      await NotificationService.notifyProductStatusUpdated(product.seller, product, 'approved');
+    } catch (notifyErr) {
+      console.warn('Failed to send product approval notification:', notifyErr?.message || notifyErr);
+    }
     res.status(200).json({ 
       success: true,
       message: 'Product approved',
@@ -406,6 +464,13 @@ export const rejectProduct = async (req, res) => {
     product.status = 'rejected';
     if (message) product.rejectionMessage = message;
     await product.save();
+    // Notify seller about rejection and status update
+    try {
+      await NotificationService.notifyProductRejected(product.seller, product, message);
+      await NotificationService.notifyProductStatusUpdated(product.seller, product, 'rejected');
+    } catch (notifyErr) {
+      console.warn('Failed to send product rejection notification:', notifyErr?.message || notifyErr);
+    }
     res.status(200).json({ 
       success: true,
       message: 'Product rejected',
@@ -578,5 +643,135 @@ export const deleteCampaignByAdmin = async (req, res) => {
   } catch (error) {
     console.error('Error deleting campaign:', error);
     errorResponse(res, 500, 'Failed to delete campaign', error);
+  }
+};
+
+// Admin-only endpoint to manually trigger sustainability scoring for a product
+export const adminCalculateSustainabilityScore = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { materialsInput } = req.body;
+
+    if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
+      return errorResponse(res, 400, 'Invalid product ID');
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found');
+    }
+
+    if (!materialsInput || !materialsInput.trim()) {
+      return errorResponse(res, 400, 'Materials input is required for sustainability scoring');
+    }
+
+    console.log('Admin triggering sustainability scoring for product:', productId);
+    const scoringResult = await processSustainabilityScoring(materialsInput);
+
+    // Update product with new sustainability data
+    product.structuredMaterials = new Map(Object.entries(scoringResult.structuredMaterials));
+    product.materialRecyclabilityScores = new Map(Object.entries(scoringResult.recyclabilityScores));
+    product.sustainabilityScore = scoringResult.sustainabilityScore;
+    product.sustainabilityCalculation = {
+      totalWeight: scoringResult.totalWeight,
+      weightedScore: scoringResult.weightedScore,
+      calculatedAt: scoringResult.calculatedAt,
+      details: JSON.stringify(scoringResult.calculationDetails)
+    };
+
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Sustainability score calculated and saved successfully',
+      product: {
+        _id: product._id,
+        name: product.name,
+        sustainabilityScore: product.sustainabilityScore,
+        sustainabilityData: {
+          score: product.sustainabilityScore,
+          structuredMaterials: Object.fromEntries(product.structuredMaterials),
+          recyclabilityScores: Object.fromEntries(product.materialRecyclabilityScores),
+          calculation: {
+            ...product.sustainabilityCalculation,
+            details: JSON.parse(product.sustainabilityCalculation.details)
+          }
+        }
+      },
+      validation: scoringResult.validation
+    });
+  } catch (error) {
+    console.error('Error calculating sustainability score (admin):', error);
+    return errorResponse(res, 500, 'Failed to calculate sustainability score', error.message);
+  }
+};
+
+// Batch recalculate sustainability scores for products missing them
+export const batchRecalculateSustainabilityScores = async (req, res) => {
+  try {
+    console.log('Starting batch sustainability score recalculation...');
+
+    // Find products without sustainability scores but with materialsUsed
+    const productsToUpdate = await Product.find({
+      $or: [
+        { sustainabilityScore: { $exists: false } },
+        { sustainabilityScore: 0 },
+        { sustainabilityScore: null }
+      ],
+      materialsUsed: { $exists: true, $ne: [] }
+    }).select('_id name materialsUsed');
+
+    console.log(`Found ${productsToUpdate.length} products that need sustainability scoring`);
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    for (const product of productsToUpdate) {
+      try {
+        const materialsArray = Array.isArray(product.materialsUsed) ? product.materialsUsed : [product.materialsUsed];
+        const materialInputForScoring = materialsArray.join(', ');
+
+        if (materialInputForScoring && materialInputForScoring.trim()) {
+          console.log(`Processing sustainability for product: ${product.name}`);
+          const scoringResult = await processSustainabilityScoring(materialInputForScoring);
+
+          // Update the product
+          await Product.findByIdAndUpdate(product._id, {
+            structuredMaterials: new Map(Object.entries(scoringResult.structuredMaterials)),
+            materialRecyclabilityScores: new Map(Object.entries(scoringResult.recyclabilityScores)),
+            sustainabilityScore: scoringResult.sustainabilityScore,
+            sustainabilityCalculation: {
+              totalWeight: scoringResult.totalWeight,
+              weightedScore: scoringResult.weightedScore,
+              calculatedAt: scoringResult.calculatedAt,
+              details: JSON.stringify(scoringResult.calculationDetails)
+            }
+          });
+
+          successCount++;
+          console.log(`✅ Successfully calculated sustainability score for: ${product.name} (${scoringResult.sustainabilityScore})`);
+        }
+      } catch (error) {
+        errorCount++;
+        const errorMsg = `Failed to process ${product.name}: ${error.message}`;
+        console.error(`❌ ${errorMsg}`);
+        errors.push(errorMsg);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Batch sustainability score calculation completed.`,
+      stats: {
+        totalProducts: productsToUpdate.length,
+        successful: successCount,
+        failed: errorCount,
+        errors: errors.slice(0, 10) // Only show first 10 errors
+      }
+    });
+  } catch (error) {
+    console.error('Error in batch sustainability calculation:', error);
+    return errorResponse(res, 500, 'Failed to batch calculate sustainability scores', error.message);
   }
 };

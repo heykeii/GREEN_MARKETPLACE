@@ -61,9 +61,31 @@ const productSchema = new mongoose.Schema({
     required: true, // e.g., ["recycled wood", "organic cotton"]
   },
 
+  // New structured materials for sustainability scoring
+  structuredMaterials: {
+    type: Map,
+    of: String, // e.g., {"plastic": "500g", "aluminum": "200g"}
+    default: new Map()
+  },
+
+  // Individual material recyclability scores from OpenAI
+  materialRecyclabilityScores: {
+    type: Map,
+    of: Number, // e.g., {"plastic": 0.3, "aluminum": 0.9}
+    default: new Map()
+  },
+
   sustainabilityScore: {
     type: Number,
-    default: 0, // to be calculated based on materialsUsed
+    default: 0, // calculated based on materialsUsed and weights
+  },
+
+  // Store the calculation breakdown for transparency
+  sustainabilityCalculation: {
+    totalWeight: { type: Number, default: 0 },
+    weightedScore: { type: Number, default: 0 },
+    calculatedAt: { type: Date },
+    details: { type: String } // JSON string of the calculation breakdown
   },
 
   seller: {

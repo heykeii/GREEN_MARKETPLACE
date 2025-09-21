@@ -32,6 +32,43 @@ export class NotificationService {
     );
   }
 
+  // Product status notifications to seller
+  static async notifyProductApproved(sellerId, product) {
+    await createNotification(
+      sellerId,
+      'product_approved',
+      `Product Approved: ${product.name}`,
+      'Your product has been approved and is now ready for listing.',
+      { productId: product._id },
+      `/seller/products`,
+      'medium'
+    );
+  }
+
+  static async notifyProductRejected(sellerId, product, message) {
+    await createNotification(
+      sellerId,
+      'product_rejected',
+      `Product Rejected: ${product.name}`,
+      message || 'Your product has been rejected by the admin. Please review and resubmit.',
+      { productId: product._id },
+      `/seller/products`,
+      'high'
+    );
+  }
+
+  static async notifyProductStatusUpdated(sellerId, product, newStatus) {
+    await createNotification(
+      sellerId,
+      'product_status_updated',
+      `Product ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+      `Your product "${product.name}" status changed to ${newStatus}.`,
+      { productId: product._id },
+      `/seller/products`,
+      newStatus === 'rejected' ? 'high' : 'medium'
+    );
+  }
+
   static async notifyOrderCancelledBySeller(userId, order) {
     await createNotification(
       userId,

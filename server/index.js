@@ -24,6 +24,7 @@ import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import jwt from 'jsonwebtoken'
 import { setIO } from './utils/socket.js'
+import { verifyOpenAIConnection } from './utils/openai.js'
 
 dotenv.config();
 
@@ -94,6 +95,15 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
+  // Join a user-specific room for targeted real-time updates
+  if (socket?.user?._id) {
+    try {
+      socket.join(socket.user._id.toString());
+    } catch (e) {
+      // no-op if join fails
+    }
+  }
+
   // Join conversation room
   socket.on('join_conversation', ({ conversationId }) => {
     if (conversationId) socket.join(conversationId);
@@ -111,6 +121,8 @@ setIO(io);
 const startServer = async () => {
   try {
     await connectDB();
+    // Verify OpenAI connectivity (logs success/failure)
+    await verifyOpenAIConnection();
     server.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
