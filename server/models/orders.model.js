@@ -38,6 +38,15 @@ const orderSchema = new mongoose.Schema({
         default: 'pending'
     },
     
+    // GCash receipt tracking
+    gcashReceiptStatus: {
+        type: String,
+        enum: ['not_required', 'required', 'uploaded', 'verified', 'rejected'],
+        default: function() {
+            return this.paymentMethod === 'gcash' ? 'required' : 'not_required';
+        }
+    },
+    
     // Pricing
     subtotal: {
         type: Number,

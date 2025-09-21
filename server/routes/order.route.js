@@ -7,7 +7,8 @@ import {
     updateOrderStatus,
     getAllOrders,
     getSellerOrders,
-    cancelOrder
+    cancelOrder,
+    verifyReceiptBeforeOrder
 } from '../controllers/order.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
@@ -17,6 +18,7 @@ const router = express.Router();
 // Customer routes
 router.post('/create', protect, createOrder);
 router.post('/create-direct', protect, createDirectOrder);
+router.post('/verify-receipt', protect, verifyReceiptBeforeOrder);
 router.get('/my-orders', protect, getUserOrders);
 router.get('/:orderId', protect, getOrderById);
 router.put('/:orderId/cancel', protect, cancelOrder);

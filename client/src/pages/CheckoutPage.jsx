@@ -20,6 +20,8 @@ const CheckoutPage = () => {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [gcashReceipt, setGcashReceipt] = useState(null);
   const [sellerGcashDetails, setSellerGcashDetails] = useState(null);
+  const [receiptVerification, setReceiptVerification] = useState(null);
+  const [receiptExtracted, setReceiptExtracted] = useState(null);
   
   // Address state
   const [address, setAddress] = useState({
@@ -153,6 +155,7 @@ const CheckoutPage = () => {
       return;
     }
 
+    // Enforce receipt upload for GCash payments
     if (paymentMethod === 'gcash' && !gcashReceipt) {
       toast.error('Please upload your GCash payment receipt');
       return;
@@ -167,34 +170,13 @@ const CheckoutPage = () => {
     setLoading(true);
 
     try {
-      const endpoint = isDirect ? 'create-direct' : 'create';
-
-      let res;
-      if (paymentMethod === 'gcash') {
-        // multipart only when uploading a receipt
-        const formData = new FormData();
-        formData.append('paymentMethod', paymentMethod);
-        formData.append('notes', notes);
-        formData.append('shippingAddress', JSON.stringify(address));
-        if (isDirect) {
-          formData.append('items', JSON.stringify(JSON.parse(localStorage.getItem('directCheckout') || '{"items":[]}').items || []));
-        }
-        if (gcashReceipt) {
-          formData.append('gcashReceipt', gcashReceipt);
-        }
-        res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
-          formData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-      } else {
-        // JSON payload for COD and other non-upload flows
-        const payload = isDirect ? {
+      // For GCash payments, verify receipt BEFORE creating order
+    if (paymentMethod === 'gcash' && gcashReceipt) {
+      // reset previous verification details
+      setReceiptVerification(null);
+      setReceiptExtracted(null);
+        // First, create a temporary order to get seller details and validate against
+        const tempPayload = isDirect ? {
           paymentMethod,
           notes,
           shippingAddress: address,
@@ -204,16 +186,110 @@ const CheckoutPage = () => {
           notes,
           shippingAddress: address
         };
-        res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
-          payload,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
+
+        // Add a flag to indicate this is for receipt verification only
+        tempPayload.verifyReceiptOnly = true;
+
+        toast.info('Verifying payment receipt...');
+
+        try {
+          // Create order with verification flag
+          const tempOrderRes = await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/v1/orders/verify-receipt`,
+            tempPayload,
+            { headers: { 'Authorization': `Bearer ${token}` } }
+          );
+
+          if (!tempOrderRes.data.success) {
+            toast.error(tempOrderRes.data.message || 'Failed to validate order details');
+            return;
+          }
+
+          const { orderData, sellerGcashDetails } = tempOrderRes.data;
+
+          // Upload and verify receipt
+          const formData = new FormData();
+          formData.append('receipt', gcashReceipt);
+          formData.append('orderData', JSON.stringify(orderData));
+          formData.append('sellerGcashDetails', JSON.stringify(sellerGcashDetails));
+
+          const uploadRes = await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/v1/payment-receipts/verify-only`,
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          );
+
+          if (!uploadRes.data?.success) {
+            toast.error(uploadRes.data?.message || 'Receipt verification failed');
+            setReceiptVerification(uploadRes.data?.verification || null);
+            setReceiptExtracted(uploadRes.data?.extractedData || null);
+            return;
+          }
+
+          const verification = uploadRes.data.verification;
+          setReceiptVerification(verification);
+          setReceiptExtracted(uploadRes.data.extractedData);
+          if (verification.overallStatus !== 'verified') {
+            const reasons = [];
+            if (!verification.amountMatch) reasons.push('Amount mismatch');
+            if (!verification.receiverMatch) reasons.push('Receiver account mismatch');
+            if (!verification.referenceValid) reasons.push('Invalid reference number format');
+            if (verification.isDuplicate) reasons.push('Duplicate reference number');
+            
+            toast.error(`Receipt verification failed: ${reasons.join(', ')}`);
+            return;
+          }
+
+          toast.success('Receipt verified! Creating order...');
+          
+          // Store verification data for order creation
+          tempPayload.verifiedReceiptData = uploadRes.data.extractedData;
+          tempPayload.receiptImageUrl = uploadRes.data.receiptImageUrl;
+          
+        } catch (verifyError) {
+          console.error('Receipt verification error:', verifyError);
+          toast.error(verifyError.response?.data?.message || 'Receipt verification failed');
+          return;
+        }
       }
+
+      // Create the actual order
+      const endpoint = isDirect ? 'create-direct' : 'create';
+      const payload = isDirect ? {
+        paymentMethod,
+        notes,
+        shippingAddress: address,
+        items: JSON.parse(localStorage.getItem('directCheckout') || '{"items":[]}').items || []
+      } : {
+        paymentMethod,
+        notes,
+        shippingAddress: address
+      };
+
+      // Add verified receipt data if available
+      if (paymentMethod === 'gcash' && gcashReceipt) {
+        payload.verifiedReceiptData = tempPayload.verifiedReceiptData;
+        payload.receiptImageUrl = tempPayload.receiptImageUrl;
+      }
+      
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/v1/orders/${endpoint}`,
+        payload,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
 
       if (res.data.success) {
         setOrderPlaced(true);
-        toast.success('Order placed successfully!');
+        if (paymentMethod === 'gcash') {
+          toast.success('Order placed successfully! Payment verified.');
+        } else {
+          toast.success('Order placed successfully!');
+        }
         
         // Clear local cart or direct payload
         if (isDirect) {
@@ -546,13 +622,62 @@ const CheckoutPage = () => {
                                 id="gcashReceipt"
                                 type="file"
                                 accept="image/*"
-                                onChange={(e) => setGcashReceipt(e.target.files[0])}
+                                onChange={(e) => {
+                                  const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                                  setGcashReceipt(file);
+                                  setReceiptVerification(null);
+                                  setReceiptExtracted(null);
+                                }}
                                 className="mt-1"
                                 required
                               />
                               <p className="text-sm text-gray-500 mt-1">
-                                Please upload a screenshot of your GCash payment receipt
+                                Please upload a clear screenshot of your GCash payment receipt (max 10MB)
                               </p>
+
+                              {receiptVerification && receiptVerification.overallStatus !== 'verified' && (
+                                <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                                  <p className="text-sm font-medium text-red-800">Receipt Verification Failed</p>
+                                  <ul className="list-disc list-inside text-sm text-red-700 mt-2 space-y-1">
+                                    {!receiptVerification.amountMatch && (
+                                      <li>
+                                        Amount mismatch: expected ₱{total.toFixed(2)}{receiptExtracted?.amount ? `, found ₱${Number(receiptExtracted.amount).toFixed(2)}` : ''}
+                                      </li>
+                                    )}
+                                    {!receiptVerification.receiverMatch && (
+                                      <li>
+                                        Receiver mismatch: seller {sellerGcashDetails?.number || 'N/A'} vs receipt {(receiptExtracted?.receiver?.number || receiptExtracted?.sender?.number || 'N/A')}
+                                      </li>
+                                    )}
+                                    {!receiptVerification.referenceValid && (
+                                      <li>
+                                        Invalid reference number format{receiptExtracted?.referenceNumber ? `: ${receiptExtracted.referenceNumber}` : ''}
+                                      </li>
+                                    )}
+                                    {receiptVerification.isDuplicate && (
+                                      <li>
+                                        Duplicate reference number{receiptExtracted?.referenceNumber ? `: ${receiptExtracted.referenceNumber}` : ''}
+                                      </li>
+                                    )}
+                                  </ul>
+                                  {receiptExtracted && (
+                                    <div className="mt-3 text-xs text-gray-700 bg-white rounded p-2 border">
+                                      <div className="font-medium mb-1">Extracted Details</div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1 gap-x-4">
+                                        <div>
+                                          <span className="text-gray-600">Reference:</span> {receiptExtracted.referenceNumber || 'N/A'}
+                                        </div>
+                                        <div>
+                                          <span className="text-gray-600">Amount:</span> {receiptExtracted.amount != null ? `₱${Number(receiptExtracted.amount).toFixed(2)}` : 'N/A'}
+                                        </div>
+                                        <div>
+                                          <span className="text-gray-600">Receiver:</span> {(receiptExtracted.receiver?.name || 'N/A')} {(receiptExtracted.receiver?.number || receiptExtracted.sender?.number) ? `(${receiptExtracted.receiver?.number || receiptExtracted.sender?.number})` : ''}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -593,7 +718,7 @@ const CheckoutPage = () => {
               {/* Place Order Button */}
               <Button
                 onClick={handlePlaceOrder}
-                disabled={loading || cart.length === 0}
+                disabled={loading || cart.length === 0 || (paymentMethod === 'gcash' && !gcashReceipt)}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-bold py-4 rounded-xl shadow-lg transition-all duration-200"
               >
                 {loading ? 'Placing Order...' : `Place Order - ₱${total.toFixed(2)}`}

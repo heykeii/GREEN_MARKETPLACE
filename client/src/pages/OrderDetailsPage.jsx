@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ReviewForm from '@/components/ReviewForm';
 import ReportButton from '@/components/ReportButton';
+import GCashReceiptUpload from '@/components/GCashReceiptUpload';
 import { 
   FaBox, 
   FaCalendar, 
@@ -435,6 +436,22 @@ const OrderDetailsPage = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* GCash Receipt Upload */}
+              <GCashReceiptUpload 
+                orderId={orderId} 
+                order={order}
+                onReceiptUpdate={(receipt) => {
+                  // Update order payment status if receipt is verified
+                  if (receipt.verificationStatus === 'verified') {
+                    setOrder(prev => ({
+                      ...prev,
+                      paymentStatus: 'paid',
+                      gcashReceiptStatus: 'verified'
+                    }));
+                  }
+                }}
+              />
 
               {/* Order Total */}
               <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md">

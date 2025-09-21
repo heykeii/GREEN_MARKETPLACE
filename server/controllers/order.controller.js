@@ -1,6 +1,8 @@
 import Order from '../models/orders.model.js';
 import Cart from '../models/cart.model.js';
 import Product from '../models/products.model.js';
+import SellerApplication from '../models/seller.model.js';
+import PaymentReceipt from '../models/paymentReceipt.model.js';
 import { NotificationService } from '../utils/notificationService.js';
 
 // Create a new order from cart
@@ -64,7 +66,7 @@ export const createOrder = async (req, res) => {
             customer: userId,
             items: orderItems,
             paymentMethod,
-            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : (req.body.verifiedReceiptData ? 'paid' : 'pending'),
             subtotal,
             totalAmount,
             shippingAddress,
@@ -72,6 +74,47 @@ export const createOrder = async (req, res) => {
         });
 
         await order.save();
+
+        // Create PaymentReceipt record if verified receipt data is provided
+        if (paymentMethod === 'gcash' && req.body.verifiedReceiptData && req.body.receiptImageUrl) {
+            try {
+                const firstProductSellerId = validItems[0].product.seller;
+                
+                const paymentReceipt = new PaymentReceipt({
+                    order: order._id,
+                    customer: userId,
+                    seller: firstProductSellerId,
+                    originalReceiptImage: req.body.receiptImageUrl,
+                    extractedData: req.body.verifiedReceiptData,
+                    verificationStatus: 'verified',
+                    validation: {
+                        amountMatch: true,
+                        receiverMatch: true,
+                        referenceValid: true,
+                        isDuplicate: false,
+                        overallStatus: 'verified'
+                    }
+                });
+
+                await paymentReceipt.save();
+
+                // Send notifications
+                await NotificationService.notifyReceiptVerified(
+                    userId, 
+                    order, 
+                    req.body.verifiedReceiptData.referenceNumber
+                );
+                
+                await NotificationService.notifyPaymentReceived(
+                    firstProductSellerId, 
+                    order, 
+                    req.body.verifiedReceiptData.amount
+                );
+            } catch (receiptError) {
+                console.error('Failed to create payment receipt record:', receiptError);
+                // Don't fail the order creation if receipt record creation fails
+            }
+        }
 
         // Update product stock
         for (const item of validItems) {
@@ -165,7 +208,7 @@ export const createDirectOrder = async (req, res) => {
             customer: userId,
             items: orderItems,
             paymentMethod,
-            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : (req.body.verifiedReceiptData ? 'paid' : 'pending'),
             subtotal,
             totalAmount,
             shippingAddress,
@@ -173,6 +216,47 @@ export const createDirectOrder = async (req, res) => {
         });
 
         await order.save();
+
+        // Create PaymentReceipt record if verified receipt data is provided
+        if (paymentMethod === 'gcash' && req.body.verifiedReceiptData && req.body.receiptImageUrl) {
+            try {
+                const firstProductSellerId = products[0]?.seller;
+                
+                const paymentReceipt = new PaymentReceipt({
+                    order: order._id,
+                    customer: userId,
+                    seller: firstProductSellerId,
+                    originalReceiptImage: req.body.receiptImageUrl,
+                    extractedData: req.body.verifiedReceiptData,
+                    verificationStatus: 'verified',
+                    validation: {
+                        amountMatch: true,
+                        receiverMatch: true,
+                        referenceValid: true,
+                        isDuplicate: false,
+                        overallStatus: 'verified'
+                    }
+                });
+
+                await paymentReceipt.save();
+
+                // Send notifications
+                await NotificationService.notifyReceiptVerified(
+                    userId, 
+                    order, 
+                    req.body.verifiedReceiptData.referenceNumber
+                );
+                
+                await NotificationService.notifyPaymentReceived(
+                    firstProductSellerId, 
+                    order, 
+                    req.body.verifiedReceiptData.amount
+                );
+            } catch (receiptError) {
+                console.error('Failed to create payment receipt record:', receiptError);
+                // Don't fail the order creation if receipt record creation fails
+            }
+        }
 
         // Decrement stock
         for (const it of orderItems) {
@@ -537,6 +621,137 @@ export const cancelOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to cancel order',
+            error: error.message
+        });
+    }
+};
+
+// Verify receipt data before order creation (pre-order validation)
+export const verifyReceiptBeforeOrder = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { paymentMethod, notes, shippingAddress, items } = req.body;
+
+        // Only for GCash payments
+        if (paymentMethod !== 'gcash') {
+            return res.status(400).json({
+                success: false,
+                message: 'This endpoint is only for GCash payment verification'
+            });
+        }
+
+        // Validate shipping address
+        if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || 
+            !shippingAddress.address || !shippingAddress.city || !shippingAddress.province || 
+            !shippingAddress.zipCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Complete shipping address is required'
+            });
+        }
+
+        let validItems, orderItems, subtotal, totalAmount, firstProductSellerId;
+
+        if (items && Array.isArray(items)) {
+            // Direct checkout flow
+            if (items.length === 0) {
+                return res.status(400).json({ success: false, message: 'Items are required' });
+            }
+
+            // Load products and validate stock
+            const productIds = items.map(i => i.productId);
+            const products = await Product.find({ _id: { $in: productIds } });
+            const idToProduct = new Map(products.map(p => [p._id.toString(), p]));
+
+            orderItems = [];
+            for (const i of items) {
+                const p = idToProduct.get(String(i.productId));
+                if (!p || !p.isAvailable) {
+                    return res.status(400).json({ success: false, message: 'Invalid or unavailable product in items' });
+                }
+                const qty = Math.max(1, parseInt(i.quantity || 1, 10));
+                if (p.quantity < qty) {
+                    return res.status(400).json({ success: false, message: `Insufficient stock for ${p.name}` });
+                }
+                orderItems.push({ product: p._id, quantity: qty, price: p.price });
+            }
+
+            firstProductSellerId = products[0]?.seller;
+        } else {
+            // Cart checkout flow
+            const cart = await Cart.findOne({ user: userId }).populate('items.product');
+            
+            if (!cart || cart.items.length === 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Cart is empty' 
+                });
+            }
+
+            validItems = cart.items.filter(item => item.product && item.product.isAvailable);
+            
+            if (validItems.length === 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'No valid items in cart' 
+                });
+            }
+
+            // Check stock availability
+            for (const item of validItems) {
+                if (item.product.quantity < item.quantity) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Insufficient stock for ${item.product.name}. Available: ${item.product.quantity}, Requested: ${item.quantity}` 
+                    });
+                }
+            }
+
+            orderItems = validItems.map(item => ({
+                product: item.product._id,
+                quantity: item.quantity,
+                price: item.product.price
+            }));
+
+            firstProductSellerId = validItems[0].product.seller;
+        }
+
+        subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        totalAmount = subtotal;
+
+        // Get seller's GCash details
+        const sellerApplication = await SellerApplication.findOne({ user: firstProductSellerId });
+        
+        if (!sellerApplication || !sellerApplication.gcash) {
+            return res.status(400).json({
+                success: false,
+                message: 'Seller GCash details not found'
+            });
+        }
+
+        // Return order data and seller GCash details for verification
+        const orderData = {
+            customer: userId,
+            items: orderItems,
+            paymentMethod,
+            subtotal,
+            totalAmount,
+            shippingAddress,
+            notes: notes || ''
+        };
+
+        res.json({
+            success: true,
+            orderData,
+            sellerGcashDetails: sellerApplication.gcash,
+            message: 'Order validation successful'
+        });
+
+    } catch (error) {
+        console.error('Verify receipt before order error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to validate order for receipt verification',
             error: error.message
         });
     }

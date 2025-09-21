@@ -1,0 +1,221 @@
+import mongoose from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
+
+const paymentReceiptSchema = new mongoose.Schema({
+    // Order reference
+    order: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        required: true,
+        index: true
+    },
+    
+    // Customer who uploaded the receipt
+    customer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
+    
+    // Seller who should receive the payment
+    seller: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
+    
+    // Original uploaded receipt image
+    originalReceiptImage: {
+        type: String,
+        required: true // URL to stored image
+    },
+    
+    // OCR extracted data
+    extractedData: {
+        referenceNumber: {
+            type: String,
+            required: true,
+            unique: true // Prevent duplicate reference numbers
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        sender: {
+            name: String,
+            number: String
+        },
+        receiver: {
+            name: String,
+            number: String
+        },
+        date: {
+            type: Date,
+            required: true
+        },
+        rawText: {
+            type: String // Raw OCR text for debugging
+        }
+    },
+    
+    // Validation results
+    validation: {
+        amountMatch: {
+            type: Boolean,
+            required: true,
+            default: false
+        },
+        receiverMatch: {
+            type: Boolean,
+            required: true,
+            default: false
+        },
+        referenceValid: {
+            type: Boolean,
+            required: true,
+            default: false
+        },
+        isDuplicate: {
+            type: Boolean,
+            required: true,
+            default: false
+        },
+        overallStatus: {
+            type: String,
+            enum: ['pending', 'verified', 'rejected'],
+            default: 'pending'
+        }
+    },
+    
+    // Verification status and details
+    verificationStatus: {
+        type: String,
+        enum: ['pending', 'processing', 'verified', 'rejected'],
+        default: 'pending',
+        index: true
+    },
+    
+    rejectionReason: {
+        type: String,
+        trim: true
+    },
+    
+    // Processing timestamps
+    uploadedAt: {
+        type: Date,
+        default: Date.now,
+        index: true
+    },
+    
+    processedAt: {
+        type: Date
+    },
+    
+    verifiedAt: {
+        type: Date
+    },
+    
+    // Admin review (optional manual review)
+    reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    
+    reviewedAt: {
+        type: Date
+    },
+    
+    adminNotes: {
+        type: String,
+        trim: true
+    }
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Indexes for performance
+paymentReceiptSchema.index({ order: 1, verificationStatus: 1 });
+paymentReceiptSchema.index({ customer: 1, uploadedAt: -1 });
+paymentReceiptSchema.index({ seller: 1, verificationStatus: 1 });
+
+// Virtual for formatted amount
+paymentReceiptSchema.virtual('formattedAmount').get(function() {
+    return this.extractedData.amount ? `₱${this.extractedData.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : 'N/A';
+});
+
+// Virtual for processing duration
+paymentReceiptSchema.virtual('processingDuration').get(function() {
+    if (!this.processedAt || !this.uploadedAt) return null;
+    return Math.round((this.processedAt - this.uploadedAt) / 1000); // in seconds
+});
+
+// Pre-save middleware to update timestamps
+paymentReceiptSchema.pre('save', function(next) {
+    if (this.isModified('verificationStatus')) {
+        if (this.verificationStatus === 'processing' && !this.processedAt) {
+            this.processedAt = new Date();
+        } else if (['verified', 'rejected'].includes(this.verificationStatus) && !this.verifiedAt) {
+            this.verifiedAt = new Date();
+        }
+    }
+    next();
+});
+
+// Static method to check for duplicate reference numbers
+paymentReceiptSchema.statics.isDuplicateReference = async function(referenceNumber, excludeId = null) {
+    const query = { 'extractedData.referenceNumber': referenceNumber };
+    if (excludeId) {
+        query._id = { $ne: excludeId };
+    }
+    const existing = await this.findOne(query);
+    return !!existing;
+};
+
+// Instance method to validate receipt data
+paymentReceiptSchema.methods.validateReceiptData = async function(orderData, sellerGcashDetails) {
+    const validation = {
+        amountMatch: false,
+        receiverMatch: false,
+        referenceValid: false,
+        isDuplicate: false,
+        overallStatus: 'rejected'
+    };
+    
+    // Check amount match (allow small rounding differences)
+    const extractedAmount = this.extractedData.amount;
+    const orderAmount = orderData.totalAmount;
+    const amountDifference = Math.abs(extractedAmount - orderAmount);
+    validation.amountMatch = amountDifference <= 0.01; // Allow 1 centavo difference
+    
+    // Check receiver match (fallback to sender number if receiver not detected)
+    const extractedReceiverRaw = this.extractedData.receiver?.number || this.extractedData.sender?.number || '';
+    const extractedReceiverNumber = extractedReceiverRaw.replace(/[^\d]/g, '');
+    const sellerGcashNumber = sellerGcashDetails?.number?.replace(/[^\d]/g, '');
+    validation.receiverMatch = extractedReceiverNumber === sellerGcashNumber;
+    
+    // Check reference number format (GCash reference numbers are typically 10-13 digits)
+    const refNumber = this.extractedData.referenceNumber;
+    validation.referenceValid = /^\d{10,13}$/.test(refNumber);
+    
+    // Check for duplicate reference number
+    validation.isDuplicate = await this.constructor.isDuplicateReference(refNumber, this._id);
+    
+    // Overall status
+    if (validation.amountMatch && validation.receiverMatch && validation.referenceValid && !validation.isDuplicate) {
+        validation.overallStatus = 'verified';
+    }
+    
+    this.validation = validation;
+    return validation;
+};
+
+// Add pagination plugin
+paymentReceiptSchema.plugin(mongoosePaginate);
+
+const PaymentReceipt = mongoose.model('PaymentReceipt', paymentReceiptSchema);
+
+export default PaymentReceipt;

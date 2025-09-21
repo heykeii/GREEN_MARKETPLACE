@@ -216,4 +216,54 @@ export class NotificationService {
       'medium'
     );
   }
+
+  // GCash Receipt Notifications
+  static async notifyReceiptVerified(customerId, order, referenceNumber) {
+    await createNotification(
+      customerId,
+      'receipt_verified',
+      `Payment Verified - Order #${order.orderNumber}`,
+      `Your GCash payment (Ref: ${referenceNumber}) has been verified and confirmed. Your order is now being processed.`,
+      { orderId: order._id, referenceNumber },
+      `/orders/${order._id}`,
+      'high'
+    );
+  }
+
+  static async notifyReceiptRejected(customerId, order, rejectionReason) {
+    await createNotification(
+      customerId,
+      'receipt_rejected',
+      `Payment Verification Failed - Order #${order.orderNumber}`,
+      `Your GCash receipt could not be verified: ${rejectionReason}. Please upload a new receipt with correct information.`,
+      { orderId: order._id },
+      `/orders/${order._id}`,
+      'high'
+    );
+  }
+
+  static async notifyPaymentReceived(sellerId, order, amount) {
+    await createNotification(
+      sellerId,
+      'payment_received',
+      `Payment Received - Order #${order.orderNumber}`,
+      `GCash payment of ₱${amount.toFixed(2)} has been verified for your order. You can now process the order.`,
+      { orderId: order._id },
+      `/seller/orders`,
+      'high'
+    );
+  }
+
+  // Admin review notifications
+  static async notifyReceiptNeedsReview(adminId, receipt, order) {
+    await createNotification(
+      adminId,
+      'receipt_needs_review',
+      `GCash Receipt Needs Review - Order #${order.orderNumber}`,
+      `A GCash payment receipt requires manual review for order verification.`,
+      { receiptId: receipt._id, orderId: order._id },
+      `/admin/receipts/${receipt._id}`,
+      'medium'
+    );
+  }
 }
