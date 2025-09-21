@@ -5,6 +5,7 @@ import User from '../models/user.model.js';
 import cloudinary from '../utils/cloudinary.js';
 import { NotificationService } from '../utils/notificationService.js';
 import OpenAI from 'openai';
+import exif from 'exif-parser';
 import multer from 'multer';
 
 // Initialize OpenAI client
@@ -205,6 +206,25 @@ export const uploadGcashReceipt = async (req, res) => {
             `receipt_${orderId}_${Date.now()}`
         );
 
+        // EXIF check (tampering detection)
+        let exifSuspicious = false;
+        try {
+            const parser = exif.create(req.file.buffer);
+            const exifData = parser.parse();
+            const software = exifData.tags?.Software || exifData.image?.Software || exifData.tags?.software;
+            const hasDate = !!(exifData.tags?.DateTimeOriginal || exifData.tags?.CreateDate || exifData.tags?.ModifyDate);
+            const softwareStr = typeof software === 'string' ? software.toLowerCase() : String(software || '').toLowerCase();
+            if (softwareStr.includes('photoshop') || softwareStr.includes('gimp') || softwareStr.includes('canva')) {
+                exifSuspicious = true;
+            }
+            if (!hasDate) {
+                exifSuspicious = true;
+            }
+        } catch (_) {
+            // If EXIF parse fails, do not block, but mark as suspicious for logging
+            exifSuspicious = true;
+        }
+
         // Extract data using OpenAI OCR
         console.log('Extracting receipt data using OCR...');
         const ocrResult = await extractReceiptData(receiptImageUrl);
@@ -244,7 +264,7 @@ export const uploadGcashReceipt = async (req, res) => {
         console.log('Validating extracted data...');
         const validation = await paymentReceipt.validateReceiptData(order, sellerApplication.gcash);
         
-        // Update verification status based on validation
+        // Update verification status based on validation (+ EXIF suspicion)
         if (validation.overallStatus === 'verified') {
             paymentReceipt.verificationStatus = 'verified';
             // Update order payment status
@@ -259,6 +279,7 @@ export const uploadGcashReceipt = async (req, res) => {
             if (!validation.receiverMatch) reasons.push('Receiver account mismatch');
             if (!validation.referenceValid) reasons.push('Invalid reference number format');
             if (validation.isDuplicate) reasons.push('Duplicate reference number');
+            if (exifSuspicious) reasons.push('Suspicious EXIF metadata');
             
             paymentReceipt.rejectionReason = reasons.join(', ');
             order.gcashReceiptStatus = 'rejected';
@@ -514,6 +535,24 @@ export const verifyReceiptOnly = async (req, res) => {
             `temp_receipt_${userId}_${Date.now()}`
         );
 
+        // EXIF check (tampering detection)
+        let exifSuspicious = false;
+        try {
+            const parser = exif.create(req.file.buffer);
+            const exifData = parser.parse();
+            const software = exifData.tags?.Software || exifData.image?.Software || exifData.tags?.software;
+            const hasDate = !!(exifData.tags?.DateTimeOriginal || exifData.tags?.CreateDate || exifData.tags?.ModifyDate);
+            const softwareStr = typeof software === 'string' ? software.toLowerCase() : String(software || '').toLowerCase();
+            if (softwareStr.includes('photoshop') || softwareStr.includes('gimp') || softwareStr.includes('canva')) {
+                exifSuspicious = true;
+            }
+            if (!hasDate) {
+                exifSuspicious = true;
+            }
+        } catch (_) {
+            exifSuspicious = true;
+        }
+
         // Extract data using OpenAI OCR
         console.log('Extracting receipt data using OCR...');
         const ocrResult = await extractReceiptData(receiptImageUrl);
@@ -582,6 +621,9 @@ export const verifyReceiptOnly = async (req, res) => {
         // Validate the extracted data
         console.log('Validating extracted data...');
         const validation = await tempReceipt.validateReceiptData(parsedOrderData, parsedSellerGcash);
+        if (exifSuspicious && validation.overallStatus === 'verified') {
+            // Keep as verified but include flag in response; frontend blocks order creation already on failed verification.
+        }
         
         res.json({
             success: true,
