@@ -41,6 +41,12 @@ import FollowingPage from './pages/FollowingPage';
 import CreateCampaign from './pages/CreateCampaign';
 import AdminCampaignManagement from './pages/AdminCampaignManagement';
 import AdminAnnouncementManagement from './pages/AdminAnnouncementManagement';
+import AdminFeedback from './pages/AdminFeedback';
+import SustainabilityHub from './pages/SustainabilityHub';
+import SustainabilityDetail from './pages/SustainabilityDetail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import AdminSustainability from './pages/AdminSustainability';
 import Terms from './pages/Terms';
 
 const App = () => {
@@ -81,6 +87,10 @@ const App = () => {
         <Route path="/profile/followers" element={<FollowersPage />} />
         <Route path="/profile/following" element={<FollowingPage />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/sustainability" element={<SustainabilityHub />} />
+        <Route path="/sustainability/:id" element={<SustainabilityDetail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route 
           path="/admin" 
           element={
@@ -135,6 +145,22 @@ const App = () => {
           element={
             <ProtectedAdminRoute>
               <AdminAnnouncementManagement />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/sustainability" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminSustainability />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/feedback" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminFeedback />
             </ProtectedAdminRoute>
           }
         />

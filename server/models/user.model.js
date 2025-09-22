@@ -121,6 +121,15 @@ const userSchema = new mongoose.Schema({
         default: null,
         sparse: true
     },
+    resetPasswordToken: {
+        type: String,
+        default: null,
+        index: true
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: null
+    },
     isVerified: {
         type: Boolean,
         default: false,

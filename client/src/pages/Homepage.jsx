@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import ProductsListing from '@/components/ProductsListing';
 import { FaLeaf, FaRecycle, FaUsers, FaHandsHelping, FaStar, FaShieldAlt, FaHeart, FaTruck } from 'react-icons/fa';
 import Footer from '@/components/Footer';
+import FeedbackWidget from '@/components/FeedbackWidget';
 
 const categories = [
   { icon: <FaLeaf className="text-emerald-600 text-4xl" />, label: 'Eco-Friendly', description: 'Sustainable living' },
@@ -269,6 +270,8 @@ const Homepage = () => {
           </div>
         </div>
       </section>
+
+      <FeedbackWidget />
 
       <Footer ref={footerRef} />
 

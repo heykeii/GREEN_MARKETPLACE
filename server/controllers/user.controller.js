@@ -541,6 +541,99 @@ export const resendVerification = async (req, res) => {
   }
 };
 
+// Forgot Password - request reset link
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    // Rate limit: max 5 requests per 30 minutes per email
+    const now = Date.now();
+    const windowMs = 30 * 60 * 1000;
+    if (!global.__resetRate__) global.__resetRate__ = new Map();
+    const key = email.toLowerCase();
+    const entry = global.__resetRate__.get(key) || { count: 0, last: now };
+    if (now - entry.last > windowMs) { entry.count = 0; entry.last = now; }
+    entry.count += 1; global.__resetRate__.set(key, entry);
+    if (entry.count > 5) {
+      return res.status(200).json({ message: 'If your email exists, a reset link has been sent.' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(200).json({ message: 'If your email exists, a reset link has been sent.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${token}`;
+
+    // Reuse Resend to send email
+    try {
+      const html = `
+        <table role="presentation" width="100%" style="background:#f6f9fc;padding:24px 0;font-family:Arial,sans-serif">
+          <tr><td align="center">
+            <table width="600" style="background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.05);padding:28px;">
+              <tr><td align="center" style="padding-bottom:16px;">
+                <div style="display:inline-block;padding:10px 14px;border-radius:12px;background:#10b981;color:#fff;font-weight:700;">Green Marketplace</div>
+              </td></tr>
+              <tr><td>
+                <h2 style="margin:0 0 12px;color:#111827;">Reset your password</h2>
+                <p style="margin:0 0 16px;color:#374151;">We received a request to reset your password. Click the button below to continue.</p>
+                <p style="text-align:center;margin:24px 0;">
+                  <a href="${resetUrl}" style="display:inline-block;background:#10b981;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600">Reset Password</a>
+                </p>
+                <p style="margin:0 0 12px;color:#6b7280;font-size:13px;">If the button doesn’t work, copy and paste this link:</p>
+                <p style="word-break:break-all;color:#2563eb;">${resetUrl}</p>
+                <p style="margin-top:24px;color:#6b7280;font-size:13px;">This link expires in 1 hour. If you didn’t request this, ignore this email.</p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>`;
+      if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'dummy-key') {
+        console.log('Password reset URL:', resetUrl);
+      } else {
+        await resend.emails.send({ from: 'Green Marketplace <noreply@greenmarketcom.shop>', to: email, subject: 'Reset your password', html });
+      }
+    } catch (e) {
+      console.error('Failed to send reset email', e);
+    }
+
+    return res.status(200).json({ message: 'If your email exists, a reset link has been sent.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reset Password - with token
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ message: 'Token and password are required' });
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password reset successful. You can now log in.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const deactivateAccount = async (req, res) => {
   try {
     const userId = req.user._id;

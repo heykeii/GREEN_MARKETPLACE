@@ -21,6 +21,9 @@ import chatRoutes from './routes/chat.route.js'
 import campaignRoutes from './routes/campaign.route.js'
 import announcementRoutes from './routes/announcement.route.js'
 import paymentReceiptRoutes from './routes/paymentReceipt.route.js'
+import feedbackRoutes from './routes/feedback.route.js'
+import adminFeedbackRoutes from './routes/adminFeedback.route.js'
+import sustainabilityContentRoutes from './routes/sustainabilityContent.route.js'
 import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import jwt from 'jsonwebtoken'
@@ -45,10 +48,10 @@ app.use(
   })
 );
 app.use(compression()); // Compress responses
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.json({ limit: '15mb' })); // Parse JSON bodies with larger limit for uploads
+app.use(express.urlencoded({ extended: true, limit: '15mb' })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Parse cookies
-app.use(bodyParser.json()); // Parse JSON payloads
+app.use(bodyParser.json({ limit: '15mb' })); // Parse JSON payloads
 
 // Routes
 app.use("/api/v1/users", userRoutes);
@@ -64,6 +67,10 @@ app.use("/api/v1/chat", chatRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/v1/announcements", announcementRoutes);
 app.use("/api/v1/payment-receipts", paymentReceiptRoutes);
+app.use("/api/v1/feedback", feedbackRoutes);
+app.use("/api/v1/admin/feedback", adminFeedbackRoutes);
+app.use("/api/v1/sustainability", sustainabilityContentRoutes);
+app.use("/api/v1/admin/sustainability", sustainabilityContentRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

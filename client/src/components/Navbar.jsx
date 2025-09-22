@@ -14,6 +14,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, FaLeaf, FaShoppingCart, FaBox, FaExclamationTriangle, FaBell } from 'react-icons/fa';
+import { Sprout } from 'lucide-react';
 import { FaEnvelope } from 'react-icons/fa';
 import NotificationIcon from './NotificationIcon';
 
@@ -319,6 +320,13 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   >
                     <FaBox className="text-emerald-600" /> My Orders
                   </DropdownMenuItem>
+
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/sustainability")}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
+                  >
+                    <Sprout className="h-4 w-4 text-emerald-600" /> Sustainability Hub
+                  </DropdownMenuItem>
                   
                                      <DropdownMenuItem 
                      onClick={() => navigate("/my-reports")}
@@ -466,6 +474,15 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                     >
                       My Orders
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/sustainability');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      Sustainability Hub
                     </button>
                                          <button
                        onClick={() => {

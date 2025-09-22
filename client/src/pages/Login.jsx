@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from '@/utils/toast';
 import GoogleLogin from '../components/GoogleLogin';
@@ -173,13 +173,12 @@ const Login = () => {
                                         </label>
                                     </div>
                                     <div className="text-sm">
-                                        <button
-                                            type="button"
-                                            className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors duration-200 
-                                                     hover:underline decoration-2 underline-offset-2"
+                                        <Link
+                                            to={`/forgot-password?email=${encodeURIComponent(formData.email || '')}`}
+                                            className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors duration-200 hover:underline decoration-2 underline-offset-2"
                                         >
                                             Forgot password?
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
 

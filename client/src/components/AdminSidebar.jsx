@@ -61,6 +61,18 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
       color: 'text-indigo-500'
     },
     {
+      icon: MessageSquare,
+      label: 'Feedback',
+      path: '/admin/feedback',
+      color: 'text-emerald-500'
+    },
+    {
+      icon: FileText,
+      label: 'Sustainability',
+      path: '/admin/sustainability',
+      color: 'text-teal-500'
+    },
+    {
       icon: AlertTriangle,
       label: 'Reports',
       path: '/admin/report-management',
