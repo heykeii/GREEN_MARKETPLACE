@@ -32,6 +32,7 @@ import {
   FaToggleOff,
   FaTimes,
   FaImage,
+  FaPlus,
   FaEnvelope
 } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';

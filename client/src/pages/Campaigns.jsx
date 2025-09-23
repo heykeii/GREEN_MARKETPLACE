@@ -165,7 +165,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
       return;
     }
     try {
-      const response = await axios.post(`/api/campaigns/${campaign._id}/like`, {}, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/campaigns/${campaign._id}/like`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -191,7 +191,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
     if (!currentUser || !newComment.trim()) return;
     
     try {
-      const response = await axios.post(`/api/campaigns/${campaign._id}/comment`, 
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/campaigns/${campaign._id}/comment`, 
         { text: newComment.trim() }, 
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -212,8 +212,8 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
       {/* Enhanced Header */}
-      <div className="flex items-center justify-between p-6">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6">
+        <div className="flex items-center space-x-4 min-w-0">
           <Link to={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`}>
             <Avatar className="h-12 w-12 ring-2 ring-gray-100 cursor-pointer">
               <AvatarImage src={campaign.createdBy?.avatar} alt={campaign.createdBy?.name} />
@@ -223,7 +223,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
             </Avatar>
           </Link>
           <div className="flex-1">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 min-w-0">
               <Link to={`/profile/${campaign.createdBy?._id || campaign.createdBy?.id}`} className="font-bold text-gray-900 text-base hover:underline">
                 {campaign.createdBy?.firstName ? `${campaign.createdBy.firstName}${campaign.createdBy.lastName ? ' ' + campaign.createdBy.lastName : ''}` : (campaign.createdBy?.name || 'User')}
               </Link>
@@ -248,7 +248,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
             </div>
           </div>
         </div>
-        <Link to={`/campaigns/${campaign._id}`}>
+        <Link to={`/campaigns/${campaign._id}`} className="self-start sm:self-auto">
           <MoreHorizontal className="h-6 w-6 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors" />
         </Link>
       </div>
@@ -280,8 +280,8 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
         <div className="relative">
           <ImageCarousel
             images={(campaign.media && campaign.media.length ? campaign.media : [campaign.image]).slice(0, 10)}
-            className="w-full h-96"
-            imgClassName="h-96"
+            className="w-full h-64 sm:h-80 md:h-96"
+            imgClassName="h-64 sm:h-80 md:h-96"
           />
           <div className="absolute top-4 right-4">
             <Badge className="bg-black/70 text-white backdrop-blur-sm">
@@ -458,7 +458,7 @@ const Campaigns = () => {
       if (filters.type) params.append('type', filters.type);
       if (filters.status) params.append('status', filters.status);
       
-      const response = await axios.get(`/api/campaigns?${params.toString()}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/campaigns?${params.toString()}`);
       if (response.data.success) {
         let filteredCampaigns = response.data.campaigns;
         
@@ -599,7 +599,7 @@ const Campaigns = () => {
       </div>
 
       {/* Main Content - Instagram Layout */}
-      <div className="max-w-6xl mx-auto flex gap-8 px-4 py-6">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 px-4 py-6">
         {/* Left Sidebar - Stories & Quick Stats */}
         <div className="hidden lg:block w-80 space-y-6">
           {/* Campaign Stories */}
@@ -676,7 +676,7 @@ const Campaigns = () => {
         <div className="flex-1 max-w-2xl space-y-8">
           {/* Enhanced Filter Pills */}
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center space-x-3 overflow-x-auto">
+            <div className="flex items-center space-x-3 overflow-x-auto scrollbar-none">
               <button 
                 onClick={() => handleFilterChange('type', '')}
                 className={`px-6 py-3 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${

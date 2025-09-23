@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const AdminSidebar = ({ collapsed, setCollapsed }) => {
+const AdminSidebar = ({ collapsed, setCollapsed, isMobile = false, mobileOpen = false, onMobileClose = () => {} }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -95,7 +95,13 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
   return (
     <div className={cn(
       "fixed left-0 top-0 h-full bg-white border-r border-gray-200 shadow-lg transition-all duration-300 z-40",
-      collapsed ? "w-16" : "w-64"
+      collapsed ? "w-16" : "w-64",
+      isMobile ? 
+        cn(
+          "block md:hidden transform",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )
+        : "hidden md:block"
     )}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -110,18 +116,29 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
             </div>
           </div>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 hover:bg-gray-100"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
+        {isMobile ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMobileClose}
+            className="p-1.5 hover:bg-gray-100 md:hidden"
+          >
             <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 hover:bg-gray-100"
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Navigation */}

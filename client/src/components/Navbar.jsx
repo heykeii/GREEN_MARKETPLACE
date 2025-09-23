@@ -219,15 +219,19 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
-            {/* Notification Icon */}
-            {user && <NotificationIcon />}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Notification Icon (hide on very small screens) */}
+            {user && (
+              <div className="hidden sm:inline-flex">
+                <NotificationIcon />
+              </div>
+            )}
 
             {/* Messages Icon */}
             {user && (
               <button
                 onClick={() => navigate('/messages')}
-                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 hidden sm:inline-flex"
                 aria-label="Messages"
                 title="Messages"
               >
@@ -253,7 +257,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
             </button>
 
             {/* Search Bar */}
-            <div className="relative">
+            <div className="relative hidden md:block">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
               <Input
                 type="text"
@@ -282,9 +286,9 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                           e.target.src = noProfile;
                         }}
                         alt="avatar"
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 hover:border-emerald-300 transition-colors duration-200"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200 hover:border-emerald-300 transition-colors duration-200"
                       />
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -411,6 +415,18 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
             <div className="px-4 py-4 space-y-3">
+              {/* Compact user row for mobile to expose avatar */}
+              {user && (
+                <div className="flex items-center gap-3 px-2">
+                  <img
+                    src={user.avatar || noProfile}
+                    onError={(e) => { e.target.onerror = null; e.target.src = noProfile; }}
+                    alt="avatar"
+                    className="w-8 h-8 rounded-full object-cover border"
+                  />
+                  <div className="text-sm font-medium text-gray-800 truncate">{user.firstName} {user.lastName}</div>
+                </div>
+              )}
               {/* Mobile Search */}
               <form onSubmit={handleMobileSearch} className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
