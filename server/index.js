@@ -24,6 +24,7 @@ import paymentReceiptRoutes from './routes/paymentReceipt.route.js'
 import feedbackRoutes from './routes/feedback.route.js'
 import adminFeedbackRoutes from './routes/adminFeedback.route.js'
 import sustainabilityContentRoutes from './routes/sustainabilityContent.route.js'
+import certificationRoutes from './routes/certification.route.js'
 import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import jwt from 'jsonwebtoken'
@@ -71,6 +72,7 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/admin/feedback", adminFeedbackRoutes);
 app.use("/api/v1/sustainability", sustainabilityContentRoutes);
 app.use("/api/v1/admin/sustainability", sustainabilityContentRoutes);
+app.use("/api/v1/certifications", certificationRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

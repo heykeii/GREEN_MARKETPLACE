@@ -14,6 +14,7 @@ import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpe
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
+import { onSellerAnalyticsUpdated } from '@/lib/socket';
 
 const SellerDashboard = () => {
   const [user, setUser] = useState(null);
@@ -133,6 +134,25 @@ const SellerDashboard = () => {
     fetchProducts();
     fetchAnalytics();
     fetchGcashDetails();
+
+    // Listen for real-time analytics updates (e.g., when products are deleted)
+    const cleanup = onSellerAnalyticsUpdated((data) => {
+      console.log('Analytics update received:', data);
+      if (data.reason === 'product_deleted') {
+        console.log('Product deleted, refreshing analytics...');
+        // Refresh analytics when a product is deleted
+        // Add a small delay to ensure database is updated
+        setTimeout(() => {
+          fetchAnalytics(true);
+        }, 500);
+      }
+    });
+
+    return () => {
+      if (cleanup && cleanup.off) {
+        cleanup.off('seller_analytics_updated');
+      }
+    };
   }, []);
 
   const fetchGcashDetails = useCallback(async () => {
@@ -180,15 +200,13 @@ const SellerDashboard = () => {
 
   // Update analytics data when products are fetched
   useEffect(() => {
-    // Always update analytics data, even if no products
+    // Only update the total products count, let server provide real analytics data
     setAnalyticsData(prev => ({
       ...prev,
       overview: {
         ...prev.overview,
         totalProducts: approvedProducts.length + pendingProducts.length
-      },
-      topProducts: generateMockTopProducts(),
-      categoryPerformance: generateMockCategoryPerformance()
+      }
     }));
   }, [approvedProducts, pendingProducts]);
 
@@ -221,7 +239,7 @@ const SellerDashboard = () => {
     }
   }, [navigate]);
 
-  const fetchAnalytics = useCallback(async () => {
+  const fetchAnalytics = useCallback(async (forceRefresh = false) => {
     setAnalyticsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -231,7 +249,8 @@ const SellerDashboard = () => {
         hasToken: !!token,
         userId: user?._id,
         isSeller: user?.isSeller,
-        sellerStatus: user?.sellerStatus
+        sellerStatus: user?.sellerStatus,
+        forceRefresh
       });
 
       // Check if user is verified seller before making request
@@ -247,10 +266,15 @@ const SellerDashboard = () => {
         return;
       }
       
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/analytics?timeframe=${analyticsTimeframe}`, {
+      // Add cache-busting parameter when force refreshing
+      const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/seller/analytics?timeframe=${analyticsTimeframe}${cacheBuster}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       console.log('Analytics response:', response.data);
+      console.log('Category Performance:', response.data.categoryPerformance);
+      console.log('Customer Insights:', response.data.customerInsights);
+      console.log('Inventory Metrics:', response.data.inventoryMetrics);
       setAnalyticsData(response.data);
     } catch (error) {
       console.error('Analytics fetch error:', error);
@@ -326,79 +350,7 @@ const SellerDashboard = () => {
     }
   }, [analyticsTimeframe, fetchAnalytics, user, checkSellerStatus]);
 
-  // Mock data generators for development
-  const generateMockSalesData = (type) => {
-    const data = [];
-    const days = type === 'daily' ? 30 : type === 'weekly' ? 12 : 6;
-    for (let i = 0; i < days; i++) {
-      data.push({
-        date: new Date(Date.now() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        revenue: 0, // No revenue since no orders
-        orders: 0 // No orders since no actual sales
-      });
-    }
-    return data;
-  };
-
-  const generateMockTopProducts = async () => {
-    if (!approvedProducts || approvedProducts.length === 0) {
-      return [];
-    }
-    
-    const productsWithRatings = await Promise.all(
-      approvedProducts.slice(0, 5).map(async (product) => {
-        try {
-          // Fetch real review stats for each product
-          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/reviews/product/${product._id}?page=1&limit=1`);
-          const rating = response.data.success ? response.data.stats.averageRating : 0;
-          
-          return {
-            id: product._id,
-            name: product.name,
-            revenue: 0, // No revenue since no orders
-            orders: 0, // No orders since this is mock data
-            rating: rating > 0 ? rating.toFixed(1) : '0.0'
-          };
-        } catch (error) {
-          console.error(`Error fetching rating for product ${product._id}:`, error);
-          return {
-            id: product._id,
-            name: product.name,
-            revenue: 0,
-            orders: 0,
-            rating: '0.0'
-          };
-        }
-      })
-    );
-    
-    return productsWithRatings;
-  };
-
-  const generateMockCategoryPerformance = () => {
-    if (!approvedProducts || approvedProducts.length === 0) {
-      return [];
-    }
-    // Use actual category options instead of dynamic categories from products
-    return CATEGORY_OPTIONS.map(category => {
-      // Find products in this category
-      const categoryProducts = approvedProducts.filter(p => p.category === category.name);
-      const productCount = categoryProducts.length;
-      
-      // Since there are no actual orders, show 0 revenue
-      const mockRevenue = 0; // No revenue since no orders
-      
-      // Show neutral growth since no actual data
-      const mockGrowth = "0.0"; // No growth since no orders
-      
-      return {
-        category: category.name,
-        revenue: mockRevenue,
-        products: productCount,
-        growth: mockGrowth
-      };
-    }).filter(category => category.products > 0); // Only show categories with products
-  };
+  // Note: Mock data generators removed - now using real data from server
 
   const handleInputChange = useCallback((e) => {
     const { name, value, files } = e.target;
@@ -490,7 +442,13 @@ const SellerDashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       toast.success('Product deleted successfully.');
+      console.log('Product deleted, refreshing products and analytics...');
       fetchProducts();
+      // Also refresh analytics immediately to ensure sync
+      // Add a small delay to ensure database is updated
+      setTimeout(() => {
+        fetchAnalytics(true);
+      }, 500);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to delete product.');
     } finally {
@@ -1126,7 +1084,7 @@ const SellerDashboard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {analyticsData.categoryPerformance.map((category, index) => (
+          {analyticsData.categoryPerformance?.map((category, index) => (
             <div key={category.category} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">

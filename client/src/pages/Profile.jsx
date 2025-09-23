@@ -33,6 +33,9 @@ const Profile = () => {
   const [initialForm, setInitialForm] = useState(null);
   const [myCampaigns, setMyCampaigns] = useState([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+  const [certs, setCerts] = useState([]);
+  const [certForm, setCertForm] = useState({ title: '', description: '', issuedBy: '', issueDate: '', mediaUrl: '', mediaType: 'image' });
+  const [certUploading, setCertUploading] = useState(false);
 
   useEffect(() => {
     // Load user from localStorage
@@ -117,6 +120,16 @@ const Profile = () => {
       }
     };
     fetchMyCampaigns();
+    // Fetch certifications
+    const fetchCerts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/certifications/me`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data?.success) setCerts(res.data.items);
+      } catch (e) {}
+    };
+    fetchCerts();
   }, []);
 
   const handleInputChange = (e) => {
@@ -802,6 +815,79 @@ const Profile = () => {
                       ))}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Certifications Section */}
+              <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm mt-8">
+                <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+                  <CardTitle className="text-2xl font-bold flex items-center">
+                    <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    Sustainability Certifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {/* Upload form */}
+                  <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input placeholder="Title" value={certForm.title} onChange={(e)=>setCertForm({...certForm,title:e.target.value})} className="rounded-md border-emerald-200" />
+                      <input placeholder="Issued by" value={certForm.issuedBy} onChange={(e)=>setCertForm({...certForm,issuedBy:e.target.value})} className="rounded-md border-emerald-200" />
+                      <input type="date" placeholder="Issue date" value={certForm.issueDate} onChange={(e)=>setCertForm({...certForm,issueDate:e.target.value})} className="rounded-md border-emerald-200" />
+                      <input placeholder="Description" value={certForm.description} onChange={(e)=>setCertForm({...certForm,description:e.target.value})} className="rounded-md border-emerald-200" />
+                      <div className="md:col-span-2 flex flex-col gap-2">
+                        <input type="file" accept="image/*,application/pdf,video/*" onChange={async (e)=>{
+                          const file=e.target.files?.[0]; if(!file) return; setCertUploading(true);
+                          const reader=new FileReader();
+                          reader.onload=async()=>{
+                            try{
+                              const dataUrl=reader.result;
+                              const upload=await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/admin/sustainability/upload`,{dataUrl},{ headers:{ Authorization:`Bearer ${localStorage.getItem('admin_token')||localStorage.getItem('token')}`}});
+                              setCertForm((p)=>({...p, mediaUrl: upload.data.media.url, mediaType: upload.data.media.type }));
+                              toast.success('Uploaded');
+                            }catch(err){ toast.error('Upload failed'); } finally{ setCertUploading(false); }
+                          };
+                          reader.readAsDataURL(file);
+                        }} />
+                        <input placeholder="Or paste media URL" value={certForm.mediaUrl} onChange={(e)=>setCertForm({...certForm,mediaUrl:e.target.value})} className="rounded-md border-emerald-200" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <button disabled={certUploading || !certForm.title} onClick={async()=>{
+                        try{
+                          const token=localStorage.getItem('token');
+                          const payload={ title: certForm.title, description: certForm.description, issuedBy: certForm.issuedBy, issueDate: certForm.issueDate, media: certForm.mediaUrl ? { url: certForm.mediaUrl, type: certForm.mediaType } : undefined };
+                          const res=await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/certifications`, payload, { headers:{ Authorization:`Bearer ${token}` }});
+                          setCerts((prev)=>[res.data.certification, ...prev]);
+                          setCertForm({ title:'', description:'', issuedBy:'', issueDate:'', mediaUrl:'', mediaType:'image' });
+                          toast.success('Certification added');
+                        }catch(e){ toast.error('Failed to add certification'); }
+                      }} className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60">{certUploading ? 'Uploading…' : 'Add certification'}</button>
+                    </div>
+                  </div>
+
+                  {/* List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {certs.map((c)=> (
+                      <div key={c._id} className="border rounded-xl p-4 bg-white flex items-start gap-3">
+                        {c.media?.url ? (
+                          c.media.type==='image' ? <img src={c.media.url} alt="cert" className="w-16 h-16 object-cover rounded-lg border"/> : <div className="w-16 h-16 flex items-center justify-center bg-gray-100 rounded-lg border text-xs text-gray-600">{c.media.type}</div>
+                        ) : (
+                          <div className="w-16 h-16 flex items-center justify-center bg-gray-100 rounded-lg border text-xs text-gray-400">No media</div>
+                        )}
+                        <div className="flex-1">
+                          <div className="font-semibold text-emerald-900">{c.title}</div>
+                          <div className="text-sm text-emerald-700">{c.issuedBy} {c.issueDate ? `• ${new Date(c.issueDate).toLocaleDateString()}` : ''}</div>
+                          {c.description && <div className="text-sm text-emerald-700 line-clamp-2">{c.description}</div>}
+                          {c.media?.url && <a href={c.media.url} target="_blank" className="text-emerald-700 text-sm hover:underline">Open attachment</a>}
+                        </div>
+                        <button onClick={async()=>{
+                          if(!confirm('Delete this certification?')) return;
+                          try{ const token=localStorage.getItem('token'); await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/certifications/${c._id}`, { headers:{ Authorization:`Bearer ${token}`}}); setCerts((prev)=>prev.filter(x=>x._id!==c._id)); toast.success('Deleted'); }catch(e){ toast.error('Delete failed'); }
+                        }} className="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                      </div>
+                    ))}
+                    {certs.length===0 && (<div className="text-emerald-700">No certifications yet.</div>)}
+                  </div>
                 </CardContent>
               </Card>
             </div>

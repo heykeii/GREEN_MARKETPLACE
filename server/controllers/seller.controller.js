@@ -283,6 +283,15 @@ export const getSellerAnalytics = async (req, res) => {
     const sellerId = req.user._id;
     const { timeframe = '30d' } = req.query;
 
+    // Validate timeframe parameter
+    const validTimeframes = ['7d', '30d', '90d', '1y'];
+    if (!validTimeframes.includes(timeframe)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid timeframe. Must be one of: 7d, 30d, 90d, 1y'
+      });
+    }
+
     console.log('Fetching analytics for seller:', sellerId);
     console.log('User details:', {
       id: req.user._id,
@@ -317,8 +326,8 @@ export const getSellerAnalytics = async (req, res) => {
         previousStartDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
     }
 
-    // Get seller's products
-    const products = await Product.find({ seller: sellerId });
+    // Get seller's products (only approved and available for accurate inventory metrics)
+    const products = await Product.find({ seller: sellerId, status: 'approved', isAvailable: true });
     console.log('Found products:', products.length);
     
     const productIds = products.map(p => p._id);
@@ -329,16 +338,20 @@ export const getSellerAnalytics = async (req, res) => {
     
     if (productIds.length > 0) {
       try {
-        // Current period orders
+        // Current period orders - only include completed/paid orders for accurate revenue
         currentOrders = await Order.find({
           'items.product': { $in: productIds },
-          createdAt: { $gte: startDate }
+          createdAt: { $gte: startDate },
+          status: { $in: ['completed', 'delivered'] },
+          paymentStatus: 'paid'
         }).populate('items.product customer');
 
         // Previous period orders for growth calculation
         previousOrders = await Order.find({
           'items.product': { $in: productIds },
-          createdAt: { $gte: previousStartDate, $lt: startDate }
+          createdAt: { $gte: previousStartDate, $lt: startDate },
+          status: { $in: ['completed', 'delivered'] },
+          paymentStatus: 'paid'
         }).populate('items.product customer');
 
         console.log('Found current orders:', currentOrders.length);
@@ -348,12 +361,14 @@ export const getSellerAnalytics = async (req, res) => {
       }
     }
 
-    // Get all orders for lifetime metrics
+    // Get all orders for lifetime metrics - only completed/paid orders
     let allOrders = [];
     if (productIds.length > 0) {
       try {
         allOrders = await Order.find({
-          'items.product': { $in: productIds }
+          'items.product': { $in: productIds },
+          status: { $in: ['completed', 'delivered'] },
+          paymentStatus: 'paid'
         }).populate('items.product customer');
       } catch (error) {
         console.error('Error fetching all orders:', error);
@@ -422,30 +437,52 @@ export const getSellerAnalytics = async (req, res) => {
       });
     });
 
-    // Calculate growth percentage
-    const revenueGrowth = previousRevenue > 0 
-      ? ((currentRevenue - previousRevenue) / previousRevenue * 100) 
-      : currentRevenue > 0 ? 100 : 0;
+    // Calculate growth percentage with proper handling of edge cases
+    let revenueGrowth = 0;
+    if (previousRevenue > 0) {
+      revenueGrowth = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
+    } else if (currentRevenue > 0) {
+      revenueGrowth = 100; // 100% growth when starting from 0
+    }
 
-    // Calculate order growth
-    const orderGrowth = previousOrders.length > 0
-      ? ((currentOrders.length - previousOrders.length) / previousOrders.length * 100)
-      : currentOrders.length > 0 ? 100 : 0;
+    // Calculate order growth with proper handling
+    let orderGrowth = 0;
+    if (previousOrders.length > 0) {
+      orderGrowth = ((currentOrders.length - previousOrders.length) / previousOrders.length) * 100;
+    } else if (currentOrders.length > 0) {
+      orderGrowth = 100; // 100% growth when starting from 0
+    }
 
     // Calculate repeat customers
     const repeatCustomers = Object.values(customerOrders).filter(orders => orders.length > 1).length;
 
     // Calculate inventory metrics
-    const lowStockItems = products.filter(p => p.quantity < 10 && p.quantity > 0).length;
-    const outOfStockItems = products.filter(p => p.quantity === 0).length;
-    const totalInventoryValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+    const lowStockItems = products.filter(p => Number(p.quantity) < 10 && Number(p.quantity) > 0).length;
+    const outOfStockItems = products.filter(p => Number(p.quantity) === 0).length;
+    const totalInventoryValue = products.reduce((sum, p) => {
+      const price = Number(p.price) || 0;
+      const qty = Math.max(Number(p.quantity) || 0, 0);
+      if (price <= 0 || qty <= 0) return sum;
+      return sum + (price * qty);
+    }, 0);
 
-    // Calculate inventory turnover (simplified)
-    const averageInventoryValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0) / Math.max(products.length, 1);
-    const inventoryTurnover = averageInventoryValue > 0 ? (currentRevenue / averageInventoryValue) : 0;
+    // Calculate inventory turnover (annualized)
+    let inventoryTurnover = 0;
+    if (totalInventoryValue > 0) {
+      // Annualize the turnover based on the timeframe
+      const timeframeDays = timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 365;
+      const annualizedRevenue = (currentRevenue / timeframeDays) * 365;
+      inventoryTurnover = annualizedRevenue / totalInventoryValue;
+    }
 
-    // Calculate conversion rate (mock for now - would need view/visit tracking)
-    const conversionRate = currentOrders.length > 0 ? Math.min((currentOrders.length / Math.max(products.length * 10, 1)) * 100, 15) : 0;
+    // Calculate conversion rate based on actual order data
+    // Use a more realistic approach: orders per product per period
+    let conversionRate = 0;
+    if (products.length > 0) {
+      const ordersPerProduct = currentOrders.length / products.length;
+      // Convert to percentage (assuming 1 order per product per period is 100% conversion)
+      conversionRate = Math.min(ordersPerProduct * 100, 100);
+    }
 
     // Generate top products based on revenue
     const productRevenue = {};
@@ -537,14 +574,35 @@ export const getSellerAnalytics = async (req, res) => {
       });
     });
 
-    const categoryPerformance = Object.entries(categoryStats).map(([category, data]) => ({
-      category,
-      revenue: data.revenue,
-      products: data.products,
-      orders: data.orders,
-      averagePrice: data.revenue / Math.max(data.quantity, 1),
-      growth: Math.round((Math.random() * 20 - 5) * 10) / 10 // Mock growth - would need historical data
-    })).sort((a, b) => b.revenue - a.revenue);
+    // Calculate real growth for categories by comparing current vs previous period
+    const previousCategoryStats = {};
+    previousOrders.forEach(order => {
+      order.items.forEach(item => {
+        const product = products.find(p => p._id.toString() === item.product._id.toString());
+        if (product) {
+          if (!previousCategoryStats[product.category]) {
+            previousCategoryStats[product.category] = { revenue: 0 };
+          }
+          previousCategoryStats[product.category].revenue += item.price * item.quantity;
+        }
+      });
+    });
+
+    const categoryPerformance = Object.entries(categoryStats).map(([category, data]) => {
+      const previousRevenue = previousCategoryStats[category]?.revenue || 0;
+      const growth = previousRevenue > 0 
+        ? ((data.revenue - previousRevenue) / previousRevenue * 100)
+        : data.revenue > 0 ? 100 : 0;
+      
+      return {
+        category,
+        revenue: data.revenue,
+        products: data.products,
+        orders: data.orders,
+        averagePrice: data.revenue / Math.max(data.quantity, 1),
+        growth: Math.round(growth * 10) / 10
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
 
     // Generate realistic sales data based on actual orders
     const generateSalesData = (type) => {
@@ -559,7 +617,10 @@ export const getSellerAnalytics = async (req, res) => {
         let periodRevenue = 0;
         let periodOrders = 0;
         
-        currentOrders.forEach(order => {
+        // Use all orders (not just current period) for better historical data
+        const ordersToCheck = type === 'daily' ? allOrders : currentOrders;
+        
+        ordersToCheck.forEach(order => {
           const orderDate = new Date(order.createdAt);
           if (orderDate >= periodStart && orderDate < periodEnd) {
             order.items.forEach(item => {
@@ -573,7 +634,7 @@ export const getSellerAnalytics = async (req, res) => {
         
         data.push({
           date: periodStart.toISOString().split('T')[0],
-          revenue: periodRevenue,
+          revenue: Math.round(periodRevenue * 100) / 100,
           orders: periodOrders
         });
       }
@@ -581,13 +642,13 @@ export const getSellerAnalytics = async (req, res) => {
       return data;
     };
 
-    // Compile final analytics
+    // Compile final analytics with proper validation
     const analytics = {
       overview: {
         totalRevenue: Math.round(currentRevenue * 100) / 100,
         totalOrders: currentOrders.length,
         totalProducts: products.length,
-        averageRating: reviewStats.averageRating,
+        averageRating: Math.round(reviewStats.averageRating * 10) / 10,
         monthlyGrowth: Math.round(revenueGrowth * 10) / 10,
         conversionRate: Math.round(conversionRate * 10) / 10
       },
@@ -602,17 +663,44 @@ export const getSellerAnalytics = async (req, res) => {
         totalCustomers: customerSet.size,
         repeatCustomers: repeatCustomers,
         averageOrderValue: Math.round((currentOrders.length > 0 ? totalOrderValue / currentOrders.length : 0) * 100) / 100,
-        customerSatisfaction: reviewStats.customerSatisfaction
+        customerSatisfaction: Math.round(reviewStats.customerSatisfaction * 10) / 10
       },
       inventoryMetrics: {
         lowStockItems,
         outOfStockItems,
         totalInventoryValue: Math.round(totalInventoryValue * 100) / 100,
         inventoryTurnover: Math.round(inventoryTurnover * 100) / 100
+      },
+      // Add metadata for debugging
+      metadata: {
+        timeframe,
+        dateRange: {
+          start: startDate.toISOString(),
+          end: now.toISOString()
+        },
+        calculatedAt: new Date().toISOString()
       }
     };
 
+    // Validate analytics data before sending
+    if (analytics.overview.totalRevenue < 0) {
+      console.warn('Warning: Negative revenue detected, setting to 0');
+      analytics.overview.totalRevenue = 0;
+    }
+    
+    if (analytics.overview.averageRating < 0 || analytics.overview.averageRating > 5) {
+      console.warn('Warning: Invalid average rating detected, setting to 0');
+      analytics.overview.averageRating = 0;
+    }
+
     console.log('Analytics calculated successfully');
+    console.log('Analytics summary:', {
+      revenue: analytics.overview.totalRevenue,
+      orders: analytics.overview.totalOrders,
+      products: analytics.overview.totalProducts,
+      growth: analytics.overview.monthlyGrowth
+    });
+    
     res.json(analytics);
   } catch (error) {
     console.error('Analytics error:', error);

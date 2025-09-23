@@ -35,7 +35,10 @@ export const getAdminStats = async (req, res) => {
       totalReports,
       pendingReports,
       usersByMonthAgg,
-      sellersByMonthAgg
+      sellersByMonthAgg,
+      totalProducts,
+      totalOrders,
+      totalRevenue
     ] = await Promise.all([
       User.countDocuments({ isActive: true }),
       User.countDocuments({ isSeller: true, sellerStatus: 'verified' }),
@@ -52,6 +55,15 @@ export const getAdminStats = async (req, res) => {
       SellerApplication.aggregate([
         { $match: { status: 'approved', reviewedAt: { $ne: null, $gte: start } } },
         { $group: { _id: { y: { $year: '$reviewedAt' }, m: { $month: '$reviewedAt' } }, count: { $sum: 1 } } }
+      ]),
+      // Additional metrics for better analytics
+      Product.countDocuments({ status: 'approved' }),
+      Order.countDocuments({ status: { $in: ['completed', 'delivered'] }, paymentStatus: 'paid' }),
+      // Calculate total revenue from completed orders
+      Order.aggregate([
+        { $match: { status: { $in: ['completed', 'delivered'] }, paymentStatus: 'paid' } },
+        { $unwind: '$items' },
+        { $group: { _id: null, totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } }
       ])
     ]);
 
@@ -71,6 +83,9 @@ export const getAdminStats = async (req, res) => {
       users: usersMap.get(`${y}-${m}`) || 0,
       sellers: sellersMap.get(`${y}-${m}`) || 0
     }));
+
+    // Extract total revenue from aggregation result
+    const platformRevenue = totalRevenue.length > 0 ? totalRevenue[0].totalRevenue : 0;
 
     // Build recent admin activity (lightweight, last 5 by recency across key collections)
     const [latestUsers, latestApprovedProducts, latestReports, latestOrders] = await Promise.all([
@@ -98,7 +113,20 @@ export const getAdminStats = async (req, res) => {
       .sort((a, b) => (a.timeStamp || 0) < (b.timeStamp || 0))
       .slice(0, 5);
 
+    // Validate admin stats data
+    if (platformRevenue < 0) {
+      console.warn('Warning: Negative platform revenue detected, setting to 0');
+      platformRevenue = 0;
+    }
+
     console.log('Admin stats fetched successfully');
+    console.log('Admin stats summary:', {
+      users: totalUsers,
+      sellers: totalSellers,
+      products: totalProducts,
+      orders: totalOrders,
+      revenue: Math.round(platformRevenue * 100) / 100
+    });
 
     res.status(200).json({
       success: true,
@@ -108,8 +136,19 @@ export const getAdminStats = async (req, res) => {
       verifiedSellers,
       totalReports,
       pendingReports,
+      totalProducts,
+      totalOrders,
+      totalRevenue: Math.round(platformRevenue * 100) / 100,
       platformGrowth,
-      recentActivities
+      recentActivities,
+      // Add metadata for debugging
+      metadata: {
+        calculatedAt: new Date().toISOString(),
+        dateRange: {
+          start: start.toISOString(),
+          end: now.toISOString()
+        }
+      }
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
