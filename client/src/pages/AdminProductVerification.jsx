@@ -113,13 +113,24 @@ const AdminProductVerification = () => {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                <Badge 
-                  variant="secondary" 
-                  className="px-4 py-2 text-sm font-semibold bg-amber-50 text-amber-700 border-amber-200 rounded-full"
-                >
-                  {products.length} Pending Review
-                </Badge>
+                {(() => {
+                  const meta = {
+                    pending: { dot: 'bg-amber-400', badge: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Pending Review' },
+                    approved: { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Approved Items' },
+                    rejected: { dot: 'bg-rose-500', badge: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Rejected Items' }
+                  }[statusFilter] || { dot: 'bg-gray-400', badge: 'bg-gray-50 text-gray-700 border-gray-200', label: 'Items' };
+                  return (
+                    <>
+                      <div className={`w-2 h-2 ${meta.dot} rounded-full animate-pulse`}></div>
+                      <Badge 
+                        variant="secondary" 
+                        className={`px-4 py-2 text-sm font-semibold ${meta.badge} rounded-full`}
+                      >
+                        {products.length} {meta.label}
+                      </Badge>
+                    </>
+                  );
+                })()}
               </div>
               <Button 
                 variant="outline" 
@@ -186,10 +197,21 @@ const AdminProductVerification = () => {
                         {/* Enhanced Product Images Section */}
                         <div className="lg:col-span-2 bg-gradient-to-br from-gray-50 via-white to-gray-100 p-8 flex flex-col justify-center relative overflow-hidden">
                           <div className="absolute top-4 right-4 z-10">
-                            <Badge className="bg-amber-100/90 backdrop-blur-sm text-amber-700 border-amber-200/50 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Pending
-                            </Badge>
+                            {(() => {
+                              const s = product.status;
+                              const meta = s === 'approved'
+                                ? { cls: 'bg-emerald-100/90 text-emerald-700 border-emerald-200/50', Icon: CheckCircle, label: 'Approved' }
+                                : s === 'rejected'
+                                ? { cls: 'bg-rose-100/90 text-rose-700 border-rose-200/50', Icon: XCircle, label: 'Rejected' }
+                                : { cls: 'bg-amber-100/90 text-amber-700 border-amber-200/50', Icon: Clock, label: 'Pending' };
+                              const { Icon } = meta;
+                              return (
+                                <Badge className={`${meta.cls} backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold shadow-sm`}>
+                                  <Icon className="w-3 h-3 mr-1" />
+                                  {meta.label}
+                                </Badge>
+                              );
+                            })()}
                           </div>
                           
                           {product.images && product.images.length > 0 ? (
