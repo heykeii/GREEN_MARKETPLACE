@@ -23,7 +23,7 @@ const AdminLayout = ({ children }) => {
         sidebarCollapsed ? 'ml-0 md:ml-16' : 'ml-0 md:ml-64'
       }`}>
         {/* Mobile top bar */}
-        <div className="md:hidden sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-gray-200">
+        <div className="md:hidden sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200">
           <div className="flex items-center justify-between px-4 py-3">
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} className="rounded-lg">
               <Menu className="h-5 w-5" />
@@ -33,7 +33,7 @@ const AdminLayout = ({ children }) => {
           </div>
         </div>
 
-        <main className="p-6">
+        <main className="p-4 sm:p-6">
           {children}
         </main>
       </div>

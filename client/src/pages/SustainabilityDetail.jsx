@@ -68,7 +68,7 @@ const SustainabilityDetail = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <section className="px-4 pt-28 pb-10">
+      <section className="px-3 sm:px-4 pt-28 pb-8 sm:pb-10">
         <div className="max-w-4xl mx-auto">
           <Link to="/sustainability" className="inline-flex items-center gap-1 text-sm text-emerald-700 hover:text-emerald-800">
             <ArrowLeft className="h-4 w-4" /> Back to Sustainability Hub
@@ -78,7 +78,7 @@ const SustainabilityDetail = () => {
           ) : !item ? (
             <div className="mt-6 bg-white border rounded-xl p-6">Content not found.</div>
           ) : (
-            <div className="mt-6 bg-white border rounded-2xl p-6 space-y-6">
+            <div className="mt-6 bg-white border rounded-2xl p-5 sm:p-6 space-y-5 sm:space-y-6">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="px-2 py-1 rounded-md bg-gray-100 text-gray-700 text-xs capitalize">{item.type}</span>
@@ -89,8 +89,8 @@ const SustainabilityDetail = () => {
                     <span className="inline-flex items-center gap-1 text-xs text-gray-600"><MapPin className="h-3.5 w-3.5" />{item.location}</span>
                   )}
                 </div>
-                <div className="flex items-start justify-between gap-4">
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900">{item.title}</h1>
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900">{item.title}</h1>
                   <div className="shrink-0 inline-flex gap-2">
                     {item.link && (
                       <a href={item.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">

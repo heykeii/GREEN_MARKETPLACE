@@ -405,7 +405,7 @@ const ProductPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50 py-8 px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50 py-6 sm:py-8 px-3 sm:px-4 pt-24">
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Button
@@ -417,7 +417,7 @@ const ProductPage = () => {
             Back
           </Button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12">
             {/* Product Images */}
             <div className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl overflow-hidden">
@@ -435,20 +435,20 @@ const ProductPage = () => {
                           <>
                             <button
                               onClick={prevImage}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+                              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 p-2 sm:p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
                             >
                               <FaChevronLeft className="h-5 w-5" />
                             </button>
                             <button
                               onClick={nextImage}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+                              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 p-2 sm:p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
                             >
                               <FaChevronRight className="h-5 w-5" />
                             </button>
                           </>
                         )}
                         {/* Image Counter */}
-                        <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                        <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-black/60 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm">
                           {selectedImage + 1} / {product.images.length}
                         </div>
                       </>
@@ -463,12 +463,12 @@ const ProductPage = () => {
 
               {/* Thumbnail Images */}
               {product.images && product.images.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
+                <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
                   {product.images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                         selectedImage === index
                           ? 'border-emerald-500 shadow-lg'
                           : 'border-gray-200 hover:border-emerald-300'
@@ -486,12 +486,12 @@ const ProductPage = () => {
             </div>
 
             {/* Product Information */}
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {/* Product Header */}
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">{product.name}</h1>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex items-center gap-1">
                         <FaStar className="text-amber-500" />
@@ -575,9 +575,9 @@ const ProductPage = () => {
                 </div>
 
                 {/* Price */}
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-bold text-emerald-600">₱{product.price.toLocaleString()}</span>
-                  <span className="text-lg text-gray-500">per unit</span>
+                <div className="flex items-baseline gap-2 sm:gap-3">
+                  <span className="text-3xl sm:text-4xl font-bold text-emerald-600">₱{product.price.toLocaleString()}</span>
+                  <span className="text-sm sm:text-lg text-gray-500">per unit</span>
                 </div>
 
                 {/* Stock Status */}
@@ -602,7 +602,7 @@ const ProductPage = () => {
               {/* Product Details */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Product Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {product.origin && (
                     <div className="flex items-center gap-3">
                       <FaMapMarkerAlt className="text-emerald-600" />
@@ -658,7 +658,7 @@ const ProductPage = () => {
               {product.externalUrls && product.externalUrls.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900">Buy on Other Platforms</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {product.externalUrls.map((url, index) => (
                       <a
                         key={index}
@@ -737,10 +737,10 @@ const ProductPage = () => {
               {/* Add to Cart Section */}
               {isOwner ? (
                 <div className="space-y-4">
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 sm:gap-4">
                     <Button
                       onClick={handleEditProduct}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 text-lg font-semibold"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 sm:py-3 text-base sm:text-lg font-semibold"
                       size="lg"
                     >
                       <FaEdit className="mr-2 h-5 w-5" /> Edit Product
@@ -751,7 +751,7 @@ const ProductPage = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div className="flex items-center border border-gray-300 rounded-lg">
                       <Button
                         variant="ghost"
@@ -762,7 +762,7 @@ const ProductPage = () => {
                       >
                         -
                       </Button>
-                      <span className="px-4 py-2 text-lg font-medium">{quantity}</span>
+                      <span className="px-3 sm:px-4 py-2 text-base sm:text-lg font-medium">{quantity}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -775,11 +775,11 @@ const ProductPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 sm:gap-4">
                     <Button
                       onClick={handleAddToCart}
                       disabled={product.quantity === 0 || cartLoading}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 text-lg font-semibold"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 sm:py-3 text-base sm:text-lg font-semibold"
                       size="lg"
                     >
                       {cartLoading ? (
@@ -809,7 +809,7 @@ const ProductPage = () => {
               {/* Shipping & Returns */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Payment & Returns</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                   <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                     <FaTruck className="text-emerald-600" />
                     <div>

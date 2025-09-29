@@ -61,13 +61,13 @@ const AdminDashboard = () => {
   return (
     <AdminLayout>
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8 px-3 sm:px-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your marketplace today.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">Welcome back! Here's what's happening with your marketplace today.</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button variant="outline" className="gap-2">
               <Calendar className="h-4 w-4" />
               Today
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Primary Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 px-3 sm:px-0">
         <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-xl">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -188,7 +188,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Charts and Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 px-3 sm:px-0">
         {/* Bar Chart */}
         <Card className="lg:col-span-2 shadow-xl border-0">
           <CardHeader className="pb-4">
@@ -267,7 +267,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick Actions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-3 sm:px-0">
         <Card className="shadow-xl border-0 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-4">

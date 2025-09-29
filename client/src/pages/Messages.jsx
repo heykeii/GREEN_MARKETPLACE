@@ -47,28 +47,28 @@ const Messages = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen pt-24 px-4 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50">
+      <div className="min-h-screen pt-24 px-3 sm:px-4 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-4">Messages</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Messages</h1>
           {loading ? (
             <div>Loading...</div>
           ) : conversations.length === 0 ? (
             <div>No conversations yet.</div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {conversations.map(conv => {
                 const me = JSON.parse(localStorage.getItem('user') || 'null');
                 const other = (conv.participants || []).find(p => p._id !== me?._id) || {};
                 return (
                   <div key={conv._id} className="p-3 bg-white rounded shadow-sm flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img src={other.avatar || '/default-avatar.png'} alt="avatar" className="w-10 h-10 rounded-full border" onError={(e)=>{ e.currentTarget.src='/default-avatar.png';}} />
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <img src={other.avatar || '/default-avatar.png'} alt="avatar" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border" onError={(e)=>{ e.currentTarget.src='/default-avatar.png';}} />
                       <div>
-                        <div className="font-semibold">{other.firstName} {other.lastName}</div>
-                        <div className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
+                        <div className="font-semibold text-sm sm:text-base truncate">{other.firstName} {other.lastName}</div>
+                        <div className="text-xs sm:text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
                           <span>{conv.lastMessage?.content || 'No messages yet'}</span>
                           {conv.lastMessage?.isRead && conv.lastMessage?.sender?._id === me?._id && (
-                            <span className="text-xs text-emerald-600">Seen</span>
+                            <span className="text-[10px] sm:text-xs text-emerald-600">Seen</span>
                           )}
                         </div>
                       </div>

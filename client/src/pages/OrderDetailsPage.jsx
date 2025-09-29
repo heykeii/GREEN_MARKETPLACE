@@ -183,7 +183,7 @@ const OrderDetailsPage = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-16 px-4 pt-24">
+        <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-14 sm:py-16 px-3 sm:px-4 pt-24">
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-center items-center py-20">
               <div className="text-2xl text-emerald-600">Loading order details...</div>
@@ -221,9 +221,9 @@ const OrderDetailsPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-16 px-4 pt-24">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-4xl font-extrabold text-emerald-800 flex items-center gap-3">
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-emerald-800 flex items-center gap-2 sm:gap-3">
                 <FaBox className="text-emerald-600 text-3xl" />
                 Order #{order.orderNumber}
               </h1>
@@ -236,7 +236,7 @@ const OrderDetailsPage = () => {
                 })}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link to="/orders">
                 <Button variant="outline">Back to Orders</Button>
               </Link>
@@ -268,9 +268,9 @@ const OrderDetailsPage = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Order Items */}
-            <div className="md:col-span-2 space-y-6">
+            <div className="md:col-span-2 space-y-5 sm:space-y-6">
               {/* Status */}
               <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md">
                 <CardHeader>
@@ -282,7 +282,7 @@ const OrderDetailsPage = () => {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Badge className={`${getStatusColor(order.status)} text-sm px-3 py-1`}>
+                      <Badge className={`${getStatusColor(order.status)} text-xs sm:text-sm px-2.5 sm:px-3 py-0.5 sm:py-1`}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                       <p className="text-gray-600 mt-2">{getStatusMessage(order.status)}</p>
@@ -296,16 +296,16 @@ const OrderDetailsPage = () => {
                 <CardHeader>
                   <CardTitle className="text-xl text-emerald-800">Order Items</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4">
                   {order.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div key={idx} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-xl">
                       <img
                         src={item.product?.images?.[0]}
                         alt={item.product?.name}
-                        className="w-20 h-20 object-cover rounded-lg border"
+                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border"
                       />
                       <div className="flex-1">
-                        <h3 className="font-semibold text-emerald-800 text-lg">
+                        <h3 className="font-semibold text-emerald-800 text-base sm:text-lg">
                           {item.product?.name}
                         </h3>
                         <div className="text-gray-600 mt-1">
@@ -314,7 +314,7 @@ const OrderDetailsPage = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-emerald-700 text-lg">
+                        <p className="font-bold text-emerald-700 text-base sm:text-lg">
                           ₱{(item.price * item.quantity).toFixed(2)}
                         </p>
                         <div className="flex flex-col gap-2 mt-2">
@@ -368,7 +368,7 @@ const OrderDetailsPage = () => {
             </div>
 
             {/* Order Summary */}
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
               {/* Customer Info */}
               <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md">
                 <CardHeader>

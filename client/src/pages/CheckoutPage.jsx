@@ -355,37 +355,37 @@ const CheckoutPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-16 px-4 pt-24">
+        <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-14 sm:py-16 px-3 sm:px-4 pt-24">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-extrabold text-emerald-800 mb-10 flex items-center gap-3">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-emerald-800 mb-6 sm:mb-10 flex items-center gap-2 sm:gap-3">
             <FaShoppingCart className="text-emerald-600 text-3xl" /> Checkout
           </h1>
 
-          <div className="grid md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
             {/* Order Summary */}
             <div>
               <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-emerald-800 flex items-center gap-2">
+                  <CardTitle className="text-xl sm:text-2xl text-emerald-800 flex items-center gap-2">
                     <FaShoppingCart className="text-emerald-600" />
                     Order Summary
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {cart.map((item, idx) => (
-                    <div key={item._id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div key={item._id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-xl">
                       <img
                         src={(item.images && item.images[0]) || item.image || '/placeholder-product.jpg'}
                         alt={item.name}
                         onError={(e)=>{ e.currentTarget.src='/placeholder-product.jpg'; }}
-                        className="w-16 h-16 object-cover rounded-lg border"
+                        className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg border"
                       />
                       <div className="flex-1">
-                        <h3 className="font-semibold text-emerald-800">{item.name}</h3>
+                        <h3 className="font-semibold text-emerald-800 text-sm sm:text-base break-words">{item.name}</h3>
                         <p className="text-gray-600">₱{item.price.toFixed(2)} x {item.quantity}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-emerald-700">
+                        <p className="font-bold text-emerald-700 text-sm sm:text-base">
                           ₱{(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
@@ -395,7 +395,7 @@ const CheckoutPage = () => {
                   <Separator />
                   
                   <div className="space-y-2">
-                    <div className="flex justify-between text-lg">
+                    <div className="flex justify-between text-base sm:text-lg">
                       <span>Subtotal</span>
                       <span>₱{total.toFixed(2)}</span>
                     </div>
@@ -404,7 +404,7 @@ const CheckoutPage = () => {
                       <span>Free</span>
                     </div>
                     <Separator />
-                    <div className="flex justify-between text-xl font-bold text-emerald-800">
+                    <div className="flex justify-between text-lg sm:text-xl font-bold text-emerald-800">
                       <span>Total</span>
                       <span>₱{total.toFixed(2)}</span>
                     </div>
@@ -418,7 +418,7 @@ const CheckoutPage = () => {
               {/* Shipping Address */}
               <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="text-xl text-emerald-800 flex items-center gap-2">
+                  <CardTitle className="text-lg sm:text-xl text-emerald-800 flex items-center gap-2">
                     <FaMapMarkerAlt className="text-emerald-600" />
                     Shipping Address
                   </CardTitle>
@@ -472,7 +472,7 @@ const CheckoutPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <Label htmlFor="city" className="text-sm font-medium text-gray-700">
                         City/Municipality *
@@ -531,7 +531,7 @@ const CheckoutPage = () => {
               {/* Payment Method */}
               <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="text-xl text-emerald-800 flex items-center gap-2">
+                  <CardTitle className="text-lg sm:text-xl text-emerald-800 flex items-center gap-2">
                     <FaCreditCard className="text-emerald-600" />
                     Payment Method
                   </CardTitle>
@@ -574,7 +574,7 @@ const CheckoutPage = () => {
 
                     {/* GCash Details */}
                     {paymentMethod === 'gcash' && (
-                      <div className="mt-4 space-y-4">
+                      <div className="mt-2 sm:mt-4 space-y-3 sm:space-y-4">
                         {sellerGcashDetails ? (
                           <div className="bg-blue-50 p-4 rounded-lg space-y-3">
                             <div className="flex items-center justify-between">
@@ -597,7 +597,7 @@ const CheckoutPage = () => {
 
                             <div>
                               <Label className="text-sm font-medium text-gray-700 mb-2 block">GCash QR Code</Label>
-                              <div className="relative aspect-square w-full max-w-[200px] mx-auto">
+                              <div className="relative aspect-square w-full max-w-[180px] sm:max-w-[200px] mx-auto">
                                 <img
                                   src={sellerGcashDetails.qrCode}
                                   alt="GCash QR Code"
@@ -719,7 +719,7 @@ const CheckoutPage = () => {
               <Button
                 onClick={handlePlaceOrder}
                 disabled={loading || cart.length === 0 || (paymentMethod === 'gcash' && !gcashReceipt)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-bold py-4 rounded-xl shadow-lg transition-all duration-200"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg font-bold py-3 sm:py-4 rounded-xl shadow-lg transition-all duration-200"
               >
                 {loading ? 'Placing Order...' : `Place Order - ₱${total.toFixed(2)}`}
               </Button>

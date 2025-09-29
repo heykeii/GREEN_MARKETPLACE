@@ -201,10 +201,10 @@ const AdminReportManagement = () => {
 
   return (
     <AdminLayout>
-    <div className="container mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Report Management</h1>
-        <p className="text-gray-600">Manage and resolve user reports</p>
+    <div className="container mx-auto px-3 sm:px-6">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Report Management</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Manage and resolve user reports</p>
       </div>
 
       {/* Statistics Cards */}
@@ -247,7 +247,7 @@ const AdminReportManagement = () => {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <label className="text-sm font-medium">Status</label>
               <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value, page: 1 }))}>
@@ -310,7 +310,7 @@ const AdminReportManagement = () => {
       </Card>
 
       {/* Reports List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {reports.map((report) => (
           <Card key={report._id}>
             <CardContent className="p-6">

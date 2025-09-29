@@ -203,19 +203,19 @@ const AdminAnnouncementManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6">
         {/* Header */}
-        <div className="mb-8 pt-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 sm:mb-8 pt-6 sm:pt-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl shadow-xl shadow-purple-500/25">
                 <Megaphone className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                   Announcement Management
                 </h1>
-                <p className="text-slate-600 text-lg mt-1">Create and manage platform-wide announcements</p>
+                <p className="text-slate-600 text-sm sm:text-lg mt-1">Create and manage platform-wide announcements</p>
               </div>
             </div>
             
@@ -347,9 +347,9 @@ const AdminAnnouncementManagement = () => {
 
         {/* Announcements List */}
         <Card className="bg-white/70 backdrop-blur-xl border-0 shadow-xl shadow-slate-500/10">
-          <CardHeader className="px-8 py-6 border-b border-slate-100">
+          <CardHeader className="px-4 sm:px-8 py-5 sm:py-6 border-b border-slate-100">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-semibold text-slate-800">All Announcements</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-semibold text-slate-800">All Announcements</CardTitle>
               <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
                 <span>Page {currentPage} of {totalPages}</span>
               </div>

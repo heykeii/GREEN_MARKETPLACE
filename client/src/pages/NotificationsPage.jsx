@@ -242,14 +242,14 @@ const NotificationsPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-16 px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-14 sm:py-16 px-3 sm:px-4 pt-24">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-extrabold text-emerald-800 mb-2 flex items-center gap-3">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-emerald-800 mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
               <FaBell className="text-emerald-600 text-3xl" />
               Notifications
             </h1>
-            <p className="text-gray-600">Stay updated with your latest activities</p>
+            <p className="text-gray-600 text-sm sm:text-base">Stay updated with your latest activities</p>
           </div>
 
           {/* Filters and Actions */}

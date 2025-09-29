@@ -97,8 +97,8 @@ const Register = () => {
             </div>
 
             {/* Main Content */}
-            <div className="relative flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-md w-full space-y-8">
+            <div className="relative flex items-center justify-center min-h-[80vh] sm:min-h-screen py-10 sm:py-12 px-3 sm:px-6 lg:px-8">
+                <div className="max-w-md w-full space-y-6 sm:space-y-8">
                     {/* Glass Card Container */}
                     <div className="backdrop-blur-xl bg-white/20 rounded-3xl shadow-2xl border border-white/30 p-10 relative overflow-hidden">
                         {/* Inner glow effect */}
@@ -119,11 +119,11 @@ const Register = () => {
                             </div>
 
                             {/* Header */}
-                            <div className="text-center mb-8">
-                                <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-700 via-teal-700 to-green-700 bg-clip-text text-transparent mb-3">
+                            <div className="text-center mb-6 sm:mb-8">
+                                <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-700 via-teal-700 to-green-700 bg-clip-text text-transparent mb-3">
                                     Join Our Community
                                 </h2>
-                                <p className="text-emerald-600/80 text-base leading-relaxed">
+                                <p className="text-emerald-600/80 text-sm sm:text-base leading-relaxed px-2">
                                     Create your account to start your sustainable journey or{' '}
                                     <button
                                         onClick={() => navigate('/login')}
@@ -135,10 +135,10 @@ const Register = () => {
                             </div>
 
                             {/* Form */}
-                            <form className="space-y-6" onSubmit={handleSubmit}>
-                                <div className="space-y-5">
+                            <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
+                                <div className="space-y-4 sm:space-y-5">
                                     {/* Name Fields */}
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                         <div className="group">
                                             <label htmlFor="firstName" className="block text-sm font-semibold text-emerald-800 mb-2 transition-colors group-focus-within:text-emerald-600">
                                                 First Name
@@ -292,7 +292,7 @@ const Register = () => {
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="group relative w-full py-3 px-4 border border-transparent text-base font-semibold rounded-xl 
+                                    className="group relative w-full py-2.5 sm:py-3 px-4 border border-transparent text-base font-semibold rounded-xl 
                                              text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 
                                              hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-700 
                                              focus:outline-none focus:ring-4 focus:ring-emerald-200/50 
@@ -399,13 +399,13 @@ const Register = () => {
                             </Dialog>
 
                             {/* Divider */}
-                            <div className="mt-8">
+                            <div className="mt-6 sm:mt-8">
                                 <div className="relative mb-6">
                                     <div className="absolute inset-0 flex items-center">
                                         <div className="w-full border-t border-gradient-to-r from-transparent via-emerald-200 to-transparent" />
                                     </div>
                                     <div className="relative flex justify-center text-sm">
-                                        <span className="px-4 backdrop-blur-sm bg-white/30 text-emerald-600 rounded-full font-medium">
+                                        <span className="px-3 sm:px-4 backdrop-blur-sm bg-white/30 text-emerald-600 rounded-full font-medium text-xs sm:text-sm">
                                             Or continue with
                                         </span>
                                     </div>

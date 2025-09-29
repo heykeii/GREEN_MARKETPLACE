@@ -339,15 +339,15 @@ const AdminCampaignManagement = () => {
 
   return (
     <AdminLayout>
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Campaign Management</h1>
-        <p className="text-gray-600">Manage and verify user-submitted campaigns</p>
+    <div className="p-4 sm:p-6">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Campaign Management</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Manage and verify user-submitted campaigns</p>
       </div>
 
       {/* Filters */}
       <Card className="mb-6">
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           <div className="flex flex-wrap gap-4">
             <Select value={filters.type || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value === "all" ? "" : value }))}>
               <SelectTrigger className="w-48">
@@ -400,7 +400,7 @@ const AdminCampaignManagement = () => {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="pending" className="space-y-4">
+      <Tabs defaultValue="pending" className="space-y-3 sm:space-y-4">
         <TabsList>
           <TabsTrigger value="pending">
             Pending Verification ({pendingCampaigns.length})

@@ -367,19 +367,19 @@ const Profile = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-6 sm:py-8 px-3 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             
             {/* Profile Summary Card - Left Side */}
             <div className="lg:col-span-1">
-              <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm sticky top-8">
-                <CardContent className="p-8">
+              <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm lg:sticky lg:top-8">
+                <CardContent className="p-6 sm:p-8">
                   <div className="flex flex-col items-center space-y-6">
                     
                     {/* Avatar Section */}
                     <div className="relative group">
-                      <div className="w-40 h-40 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 p-1 shadow-xl">
+                      <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 p-1 shadow-xl">
                         <img
                           src={user.avatar || noProfile}
                           onError={(e) => {
@@ -396,12 +396,12 @@ const Profile = () => {
                     </div>
 
                     {/* User Info */}
-                    <div className="text-center space-y-3">
-                      <h1 className="text-2xl font-bold text-green-800">
+                    <div className="text-center space-y-2 sm:space-y-3">
+                      <h1 className="text-xl sm:text-2xl font-bold text-green-800">
                         {user.firstName} {user.lastName}
                       </h1>
-                      <div className="px-4 py-2 bg-green-50 rounded-full">
-                        <span className="text-green-700 text-sm font-medium">{user.email}</span>
+                      <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-50 rounded-full">
+                        <span className="text-green-700 text-xs sm:text-sm font-medium break-all">{user.email}</span>
                       </div>
                       
                       {/* Seller Badge */}
@@ -425,7 +425,7 @@ const Profile = () => {
                     {/* Social Links */}
                     {user.socialLinks && user.socialLinks.length > 0 && (
                       <div className="w-full space-y-3">
-                        <h4 className="text-green-800 font-semibold text-sm text-center">Social Links</h4>
+                        <h4 className="text-green-800 font-semibold text-xs sm:text-sm text-center">Social Links</h4>
                         <div className="space-y-2">
                           {user.socialLinks.map((link, index) => (
                             <a
@@ -436,7 +436,7 @@ const Profile = () => {
                               className="flex items-center justify-center w-full px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
                             >
                               <span className="text-lg mr-2">{getSocialIcon(link.platform)}</span>
-                              <span className="text-green-700 text-sm font-medium group-hover:text-green-800 truncate">
+                              <span className="text-green-700 text-xs sm:text-sm font-medium group-hover:text-green-800 truncate">
                                 {link.displayName || link.platform}
                               </span>
                             </a>
@@ -485,18 +485,18 @@ const Profile = () => {
             <div className="lg:col-span-2">
               <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm">
                 <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
-                  <CardTitle className="text-2xl font-bold flex items-center">
+                  <CardTitle className="text-xl sm:text-2xl font-bold flex items-center">
                     <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Profile Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 space-y-8 bg-white/95 rounded-b-xl">
+                <CardContent className="p-6 sm:p-8 space-y-6 sm:space-y-8 bg-white/95 rounded-b-xl">
                   
                   {/* Avatar Upload Section */}
                   {editMode && (
-                    <div className="mb-8 p-6 bg-green-50 rounded-xl border-2 border-dashed border-green-200">
+                    <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-green-50 rounded-xl border-2 border-dashed border-green-200">
                       <div className="text-center">
                         <svg className="mx-auto h-12 w-12 text-green-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                           <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -517,7 +517,7 @@ const Profile = () => {
                   )}
 
                   <form
-                    className="space-y-8"
+                    className="space-y-6 sm:space-y-8"
                     onSubmit={(e) => {
                       e.preventDefault();
                       handleSave();
@@ -526,7 +526,7 @@ const Profile = () => {
                     {/* Basic Information */}
                     <div className="space-y-4">
                       <h3 className="text-xl font-bold text-emerald-800 mb-2">Basic Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="firstName" className="text-emerald-600 font-semibold">First Name</Label>
                           <Input
@@ -581,7 +581,7 @@ const Profile = () => {
                     {/* Location Information */}
                     <div className="space-y-4">
                       <h3 className="text-xl font-bold text-emerald-800 mb-2">Location</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="address" className="text-emerald-600 font-semibold">Address</Label>
                           <Input
@@ -636,7 +636,7 @@ const Profile = () => {
                         {editMode ? (
                           <>
                             {form.socialLinks.map((link, idx) => (
-                              <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex flex-col md:flex-row items-center gap-4">
+                              <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex flex-col md:flex-row items-center gap-3 sm:gap-4">
                                 <div className="flex-shrink-0 w-full md:w-auto flex items-center gap-2">
                                   <select
                                     value={link.platform}
@@ -692,11 +692,11 @@ const Profile = () => {
                         ) : (
                           <>
                             {form.socialLinks.map((link, idx) => (
-                              <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-4">
+                              <div key={idx} className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-3 sm:gap-4">
                                 <div className="flex-shrink-0">{getSocialIcon(link.platform)}</div>
                                 <div className="flex-1">
-                                  <div className="text-emerald-900 font-semibold text-sm">{link.displayName || link.platform}</div>
-                                  <div className="text-emerald-900 text-xs truncate">{link.url}</div>
+                                  <div className="text-emerald-900 font-semibold text-xs sm:text-sm">{link.displayName || link.platform}</div>
+                                  <div className="text-emerald-900 text-[11px] sm:text-xs truncate">{link.url}</div>
                                 </div>
                               </div>
                             ))}
@@ -706,7 +706,7 @@ const Profile = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 pt-6 border-t border-green-200">
+                    <div className="flex gap-3 sm:gap-4 pt-6 border-t border-green-200">
                       {!editMode ? (
                         <Button
                           type="button"

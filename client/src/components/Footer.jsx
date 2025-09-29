@@ -8,32 +8,32 @@ const Footer = forwardRef((props, ref) => (
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
     </div>
     
-    <div className="relative max-w-7xl mx-auto px-6 py-16">
+    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
       {/* Main footer content */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 mb-10 sm:mb-12">
         {/* Brand section */}
         <div className="lg:col-span-2">
-          <div className="flex items-center mb-6">
+          <div className="flex items-center mb-4 sm:mb-6">
             <div className="w-10 h-10 bg-emerald-400 rounded-xl flex items-center justify-center mr-3">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" className="text-emerald-800">
                 <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2M6.5 18.5L7.5 21.5L10.5 20.5L7.5 19.5L6.5 18.5Z"/>
               </svg>
             </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
+            <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
               Green Marketplace
             </h2>
           </div>
-          <p className="text-emerald-100 text-lg leading-relaxed max-w-md mb-4">
+          <p className="text-emerald-100 text-base sm:text-lg leading-relaxed max-w-md mb-3 sm:mb-4">
             Your trusted platform for eco-friendly, sustainable, and community-empowering products. Shop green, live clean, and support a better future for all.
           </p>
-          <p className="text-emerald-200 font-medium text-sm tracking-wide uppercase">
+          <p className="text-emerald-200 font-medium text-xs sm:text-sm tracking-wide uppercase">
             Empowering communities • Protecting the planet
           </p>
         </div>
         
         {/* Contact section */}
         <div>
-          <h3 className="text-xl font-semibold mb-6 text-emerald-100">Get in Touch</h3>
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-emerald-100">Get in Touch</h3>
           <div className="space-y-4">
             <div className="flex items-center group">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" className="text-emerald-300 mr-3 group-hover:text-emerald-200 transition-colors">
@@ -62,8 +62,8 @@ const Footer = forwardRef((props, ref) => (
         
         {/* Social media section */}
         <div>
-          <h3 className="text-xl font-semibold mb-6 text-emerald-100">Connect With Us</h3>
-          <div className="flex flex-col space-y-4">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-emerald-100">Connect With Us</h3>
+          <div className="flex flex-col space-y-3 sm:space-y-4">
             <a href="https://facebook.com/greenmarketplace" target="_blank" rel="noopener noreferrer" 
                className="flex items-center text-emerald-100 hover:text-white transition-all duration-300 group">
               <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center mr-3 group-hover:bg-emerald-500 transition-colors">
@@ -97,12 +97,12 @@ const Footer = forwardRef((props, ref) => (
       
      
       {/* Copyright */}
-      <div className="border-t border-emerald-600/50 pt-8 text-center">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
-          <p className="text-emerald-200 text-sm">
+      <div className="border-t border-emerald-600/50 pt-6 sm:pt-8 text-center">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-2 sm:gap-3 md:gap-6">
+          <p className="text-emerald-200 text-xs sm:text-sm">
             &copy; {new Date().getFullYear()} Green Marketplace. All rights reserved. Made with 💚 for a sustainable future.
           </p>
-          <a href="/terms" className="text-emerald-100 hover:text-white text-sm underline underline-offset-4 decoration-emerald-300/70">
+          <a href="/terms" className="text-emerald-100 hover:text-white text-xs sm:text-sm underline underline-offset-4 decoration-emerald-300/70">
             Terms and Conditions
           </a>
         </div>

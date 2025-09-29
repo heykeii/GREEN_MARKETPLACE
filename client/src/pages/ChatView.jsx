@@ -372,10 +372,10 @@ const ChatView = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen pt-24 px-4 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50">
+      <div className="min-h-screen pt-24 px-3 sm:px-4 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50">
         <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur rounded-xl shadow-md overflow-hidden border border-emerald-100">
           {/* Header */}
-          <div className="px-4 py-3 border-b bg-gradient-to-r from-white to-emerald-50 flex items-center gap-3">
+          <div className="px-3 sm:px-4 py-3 border-b bg-gradient-to-r from-white to-emerald-50 flex items-center gap-3">
             <div className="flex-shrink-0">
               <img
                 src={otherUser?.avatar || '/default-avatar.png'}
@@ -385,7 +385,7 @@ const ChatView = () => {
               />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-emerald-700 truncate">
+              <h2 className="text-sm sm:text-base font-semibold text-emerald-700 truncate">
                 {otherUser ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || otherUser.name || 'Conversation' : 'Conversation'}
               </h2>
               {conversation?.product && (
@@ -399,7 +399,7 @@ const ChatView = () => {
             )}
           </div>
           <div className="h-[70vh] flex flex-col">
-            <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div ref={listRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3">
               {showProductCard && <ProductCard />}
               {showProductCard && <AskProductButton />}
               {loading ? (
@@ -470,10 +470,10 @@ const ChatView = () => {
                   value={text}
                   onChange={(e)=>{ setText(e.target.value); emitTyping(conversationId, true); }}
                   onBlur={()=>emitTyping(conversationId, false)}
-                  className="flex-1 border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-full px-4 py-2 outline-none shadow-sm"
+                  className="flex-1 border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-full px-3 sm:px-4 py-2 outline-none shadow-sm"
                   placeholder="Type a message"
                 />
-                <Button type="submit" className="rounded-full px-5">Send</Button>
+                <Button type="submit" className="rounded-full px-4 sm:px-5">Send</Button>
               </div>
               {conversation?.product && (
                 <div className="flex items-center gap-2">

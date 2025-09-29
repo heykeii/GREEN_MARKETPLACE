@@ -423,7 +423,9 @@ const AdminProductVerification = () => {
                                                     recyclabilityScore >= 0.4 ? 'bg-yellow-500' : 'bg-red-500'
                                                   }`}></div>
                                                   <span className="font-medium text-gray-900 capitalize">{material}</span>
-                                                  <span className="text-sm text-gray-600">{weight}</span>
+                                                  {product.sustainabilityData.weightsProvided && (
+                                                    <span className="text-sm text-gray-600">{weight}</span>
+                                                  )}
                                                 </div>
                                                 <div className="text-right">
                                                   <div className="text-sm font-semibold text-gray-700">
@@ -435,11 +437,34 @@ const AdminProductVerification = () => {
                                             );
                                           })}
                                         </div>
+                                        {/* Formula used (always shown) */}
+                                        <div className="mt-3 pt-3 border-t border-green-100">
+                                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                                            <Info className="w-4 h-4 text-blue-500" />
+                                            <span>
+                                              {(() => {
+                                                const structured = product.sustainabilityData?.structuredMaterials || {};
+                                                const heuristicHasWeights = Object.values(structured).some((w) => typeof w === 'string' && /\d/.test(w) && w !== '1g');
+                                                const hasWeights = product.sustainabilityData?.weightsProvided ?? heuristicHasWeights;
+                                                const fallbackWeighted = 'Sustainability Score = (Σ(Material Weight × Recyclability Score)) ÷ Total Weight';
+                                                const fallbackAverage = 'Sustainability Score = (Σ(Recyclability Score of each material) / Number of Materials) × 100';
+                                                const fromCalc = product.sustainabilityData?.calculation?.formula;
+                                                if (fromCalc) return fromCalc;
+                                                return hasWeights ? fallbackWeighted : fallbackAverage;
+                                              })()}
+                                            </span>
+                                          </div>
+                                        </div>
                                       </div>
                                     )}
 
                                     {/* Calculation Details */}
-                                    {product.sustainabilityData.calculation && (
+                                    {(() => {
+                                      const structured = product.sustainabilityData?.structuredMaterials || {};
+                                      const heuristicHasWeights = Object.values(structured).some((w) => typeof w === 'string' && /\d/.test(w) && w !== '1g');
+                                      const hasWeights = product.sustainabilityData?.weightsProvided ?? heuristicHasWeights;
+                                      return Boolean(product.sustainabilityData.calculation && hasWeights);
+                                    })() && (
                                       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-green-200/30">
                                         <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                           <Info className="w-4 h-4 text-blue-600" />

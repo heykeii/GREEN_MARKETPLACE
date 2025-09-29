@@ -172,17 +172,17 @@ const OrdersPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-6 sm:py-8 px-3 sm:px-4 pt-24">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl mb-6 shadow-xl">
-              <FaShoppingBag className="text-3xl text-white" />
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl mb-4 sm:mb-6 shadow-xl">
+              <FaShoppingBag className="text-2xl sm:text-3xl text-white" />
             </div>
-            <h1 className="text-5xl font-black bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3 sm:mb-4">
               My Orders
             </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto px-2">
               Track and manage all your orders in one place. From pending to delivered, stay updated on every step.
             </p>
           </div>
@@ -211,29 +211,29 @@ const OrdersPage = () => {
           ) : (
             <>
               {/* Orders Grid */}
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 {orders.map((order) => {
                   const statusConfig = getStatusConfig(order.status);
                   const StatusIcon = statusConfig.icon;
                   
                   return (
-                    <Card key={order._id} className={`group shadow-xl border-0 bg-gradient-to-r ${statusConfig.bgGradient} backdrop-blur-sm hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] overflow-hidden`}>
+                    <Card key={order._id} className={`group shadow-xl border-0 bg-gradient-to-r ${statusConfig.bgGradient} backdrop-blur-sm hover:shadow-2xl transition-all duration-500 overflow-hidden`}>
                       {/* Status Bar */}
                       <div className={`h-2 bg-gradient-to-r ${statusConfig.color.split(' ')[0]} ${statusConfig.color.split(' ')[1]}`} />
                       
-                      <CardHeader className="pb-6 pt-8">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-6">
-                            <div className={`w-16 h-16 bg-gradient-to-br from-white to-gray-50 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-300`}>
-                              <StatusIcon className={`text-2xl ${statusConfig.iconColor}`} />
+                      <CardHeader className="pb-5 sm:pb-6 pt-6 sm:pt-8">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex items-start gap-4 sm:gap-6">
+                            <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white to-gray-50 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white`}>
+                              <StatusIcon className={`text-xl sm:text-2xl ${statusConfig.iconColor}`} />
                             </div>
-                            <div className="space-y-3">
+                            <div className="space-y-2 sm:space-y-3">
                               <div>
-                                <CardTitle className="text-2xl font-bold text-slate-800 mb-1">
+                                <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">
                                   Order #{order.orderNumber}
                                 </CardTitle>
-                                <div className="flex items-center gap-6 text-slate-600">
-                                  <span className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-lg">
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-slate-600">
+                                  <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-lg">
                                     <FaCalendar className="text-sm" />
                                     {new Date(order.createdAt).toLocaleDateString('en-US', { 
                                       year: 'numeric', 
@@ -241,7 +241,7 @@ const OrdersPage = () => {
                                       day: 'numeric' 
                                     })}
                                   </span>
-                                  <span className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-lg font-semibold">
+                                  <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-lg font-semibold">
                                     <FaMoneyBillWave className="text-sm" />
                                     ₱{order.totalAmount.toFixed(2)}
                                   </span>
@@ -250,8 +250,8 @@ const OrdersPage = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3">
-                            <Badge className={`${statusConfig.color} px-4 py-2 text-sm font-semibold shadow-sm`}>
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <Badge className={`${statusConfig.color} px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-sm`}>
                               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                             </Badge>
                             
@@ -297,7 +297,7 @@ const OrdersPage = () => {
                       
                       <CardContent className="pt-0">
                         {/* Items Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
                           {order.items.slice(0, 3).map((item, idx) => (
                             <div key={idx} className="group/item bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-white/50">
                               <div className="flex items-start gap-4">

@@ -203,17 +203,17 @@ const CreateCampaign = () => {
   return (
     <>
     <Navbar />
-    <div className="min-h-screen bg-gray-50 py-8 pt-24">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-8 pt-24">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link to="/campaigns">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Campaigns
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Campaign</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create New Campaign</h1>
           <p className="mt-2 text-gray-600">
             Start a new eco-friendly initiative and engage your community
           </p>
@@ -224,7 +224,7 @@ const CreateCampaign = () => {
             <CardTitle>Campaign Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
               {/* Basic Information */}
               <div className="space-y-4">
                 <div>
@@ -297,7 +297,7 @@ const CreateCampaign = () => {
 
               {/* Date Range - only for community campaigns */}
               {formData.type === 'community' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Label htmlFor="startDate">Event Start Date</Label>
                     <Input
@@ -445,7 +445,7 @@ const CreateCampaign = () => {
               </div>
 
               {/* Submit Button */}
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:space-x-4">
                 <Button
                   type="submit"
                   disabled={loading}

@@ -98,7 +98,7 @@ const AdminSidebar = ({ collapsed, setCollapsed, isMobile = false, mobileOpen = 
       collapsed ? "w-16" : "w-64",
       isMobile ? 
         cn(
-          "block md:hidden transform",
+          "block md:hidden transform will-change-transform",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )
         : "hidden md:block"

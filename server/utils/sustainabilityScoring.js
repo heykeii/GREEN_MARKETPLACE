@@ -324,14 +324,51 @@ export const validateSustainabilityResult = (structuredMaterials, recyclabilityS
  */
 export const processSustainabilityScoring = async (materialsInput) => {
   try {
-    // Step 1: Parse materials input
-    const structuredMaterials = parseMaterialsInput(materialsInput);
+    // Step 1: Try to parse materials with weights
+    let structuredMaterials;
+    let usedWeightlessFallback = false;
+    try {
+      structuredMaterials = parseMaterialsInput(materialsInput);
+    } catch (parseErr) {
+      // Fallback: treat each provided material name as equally weighted (no weights supplied)
+      usedWeightlessFallback = true;
+      const names = (materialsInput || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      if (names.length === 0) {
+        throw parseErr;
+      }
+
+      // Assign equal dummy weights so the weighted formula reduces to a simple average
+      // This preserves downstream logic while matching the "no weights" formula semantics
+      structuredMaterials = Object.fromEntries(
+        names.map((n) => [n.toLowerCase(), '1g'])
+      );
+    }
     
     // Step 2: Get recyclability scores from OpenAI
     const recyclabilityScores = await getRecyclabilityScores(structuredMaterials);
     
-    // Step 3: Calculate sustainability score
+    // Step 3: Calculate sustainability score (0-1 scale)
     const calculationResult = calculateSustainabilityScore(structuredMaterials, recyclabilityScores);
+
+    // If the weightless fallback was used, override formula string to reflect average formula and include percentage
+    if (usedWeightlessFallback) {
+      calculationResult.formula = 'Sustainability Score = (Σ(Recyclability Score of each material) / Number of Materials) × 100';
+      calculationResult.percentageScore = Number((calculationResult.sustainabilityScore * 100).toFixed(2));
+      calculationResult.weightsProvided = false;
+      // Hide dummy weights ("1g") from presentation while retaining them internally for math
+      calculationResult.calculationDetails = (calculationResult.calculationDetails || []).map((d) => ({
+        ...d,
+        weight: '',
+      }));
+    } else {
+      calculationResult.weightsProvided = true;
+      calculationResult.percentageScore = Number((calculationResult.sustainabilityScore * 100).toFixed(2));
+    }
+
     // Step 4: Validate result
     const validation = validateSustainabilityResult(structuredMaterials, recyclabilityScores, calculationResult);
 

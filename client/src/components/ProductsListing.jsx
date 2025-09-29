@@ -163,7 +163,7 @@ const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'g
   }
 
   return (
-    <div className={`${viewMode === 'list' ? 'grid grid-cols-1 gap-6' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'}`}>
+    <div className={`${viewMode === 'list' ? 'grid grid-cols-1 gap-4 sm:gap-6' : 'grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8'}`}>
       {visibleProducts.map((product) => (
         <Card 
           key={product._id} 
@@ -183,33 +183,33 @@ const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'g
 
           <CardContent className={`p-0 ${viewMode === 'list' ? 'flex w-full' : 'flex flex-col'} h-full`}>
             {/* Product Image */}
-            <div className={`${viewMode === 'list' ? 'w-56 h-40' : 'aspect-video'} bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative`}>
+            <div className={`${viewMode === 'list' ? 'w-40 sm:w-56 h-36 sm:h-40' : 'aspect-video'} bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative`}>
               <img
                 src={product.images?.[0] || ''}
                 alt={product.name}
                 className={`w-full h-full object-cover ${viewMode === 'list' ? '' : 'group-hover:scale-110'} transition-transform duration-500`}
               />
               {/* Category Badge */}
-              <div className="absolute top-3 left-3 bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+              <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-emerald-500 text-white px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium">
                 {product.category}
               </div>
             </div>
 
               {/* Product Info */}
-            <div className={`p-6 flex-1 flex flex-col ${viewMode === 'list' ? '' : ''}`}>
+            <div className={`p-4 sm:p-6 flex-1 flex flex-col ${viewMode === 'list' ? '' : ''}`}>
               <div className="flex-1 mb-4">
-                <h2 className="font-bold text-lg text-emerald-800 mb-2 line-clamp-2 leading-tight">
+                <h2 className="font-bold text-base sm:text-lg text-emerald-800 mb-2 line-clamp-2 leading-tight">
                   {product.name}
                 </h2>
-                <p className="text-gray-700 text-sm line-clamp-3 mb-3">
+                <p className="text-gray-700 text-xs sm:text-sm line-clamp-3 mb-3">
                   {product.description}
                 </p>
                 
                 {/* Rating and Sustainability Score */}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 gap-2">
                   <div className="flex items-center gap-1">
-                    <FaStar className="text-amber-500 text-sm" />
-                    <span className="text-sm text-gray-600">
+                    <FaStar className="text-amber-500 text-xs sm:text-sm" />
+                    <span className="text-xs sm:text-sm text-gray-600">
                       {reviewStats[product._id]?.averageRating > 0 
                         ? `${reviewStats[product._id].averageRating.toFixed(1)} (${reviewStats[product._id].totalReviews} ${reviewStats[product._id].totalReviews === 1 ? 'review' : 'reviews'})`
                         : 'No reviews yet'
@@ -227,12 +227,12 @@ const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'g
                         </div>
                         <div className="relative">
                           <div
-                            className="w-6 h-6 rounded-full p-[1px] shadow-inner"
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full p-[1px] shadow-inner"
                             style={{
                               background: `conic-gradient(from 0deg, #10b981 ${Math.round(product.sustainabilityScore * 100) * 3.6}deg, #e5e7eb 0deg)`
                             }}
                           >
-                            <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-emerald-50 flex items-center justify-center text-[8px] font-bold text-emerald-700 shadow-inner">
+                            <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-emerald-50 flex items-center justify-center text-[7px] sm:text-[8px] font-bold text-emerald-700 shadow-inner">
                               {Math.round(product.sustainabilityScore * 100)}
                             </div>
                           </div>
@@ -246,7 +246,7 @@ const ProductsListing = ({ categoryFilter = '', sortBy = 'newest', viewMode = 'g
 
               {/* Price and Stock */}
               <div className="flex items-center justify-between mb-4">
-                <span className="text-green-700 font-bold text-xl">
+                <span className="text-green-700 font-bold text-lg sm:text-xl">
                   ₱{product.price.toLocaleString()}
                 </span>
                 <span className={`text-xs font-semibold px-2 py-1 rounded ${

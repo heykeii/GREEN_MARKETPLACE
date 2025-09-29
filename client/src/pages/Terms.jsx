@@ -6,12 +6,12 @@ const Terms = () => {
   return (
     <>
     <Navbar />
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-12 px-4 sm:px-6 lg:px-8 pt-24">
-      <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-8 md:p-12">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-800 mb-2">GREEN Marketplace – Terms and Conditions</h1>
-        <p className="text-sm text-emerald-700 mb-8">Last Updated: {new Date().toLocaleDateString()}</p>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-10 sm:py-12 px-3 sm:px-6 lg:px-8 pt-24">
+      <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-8 md:p-12">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-emerald-800 mb-1 sm:mb-2">GREEN Marketplace – Terms and Conditions</h1>
+        <p className="text-xs sm:text-sm text-emerald-700 mb-6 sm:mb-8">Last Updated: {new Date().toLocaleDateString()}</p>
 
-        <div className="prose prose-emerald max-w-none">
+        <div className="prose prose-emerald max-w-none prose-p:leading-7">
           <p>Welcome to GREEN (Goal Reaching Eco-friendly Exchange for our Nature), a web-based marketplace connecting eco-conscious consumers, upcyclers, and sustainable crafters. By accessing or using GREEN, you agree to be bound by these Terms and Conditions (“Terms”). Please read them carefully before proceeding.</p>
 
           <h2>1. General Provisions</h2>

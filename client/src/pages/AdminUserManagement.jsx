@@ -123,29 +123,29 @@ const AdminUserManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6">
         {/* Header */}
-        <div className="mb-8 pt-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 sm:mb-8 pt-6 sm:pt-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-xl shadow-blue-500/25">
                 <Users className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                   User Management
                 </h1>
-                <p className="text-slate-600 text-lg mt-1">Manage and monitor all registered users in the marketplace</p>
+                <p className="text-slate-600 text-sm sm:text-lg mt-1">Manage and monitor all registered users in the marketplace</p>
               </div>
             </div>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl shadow-blue-500/25 px-6 py-3 rounded-xl">
+            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl shadow-blue-500/25 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
               Export Users
             </Button>
           </div>
         </div>
         {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-white/70 backdrop-blur-xl border-0 shadow-xl shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 hover:-translate-y-1">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -200,9 +200,9 @@ const AdminUserManagement = () => {
           </Card>
         </div>
         {/* Enhanced Search and Filters */}
-        <Card className="mb-8 bg-white/70 backdrop-blur-xl border-0 shadow-xl shadow-slate-500/10">
-          <CardContent className="p-8">
-            <form onSubmit={handleSearch} className="flex gap-4">
+        <Card className="mb-6 sm:mb-8 bg-white/70 backdrop-blur-xl border-0 shadow-xl shadow-slate-500/10">
+          <CardContent className="p-4 sm:p-8">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="flex-1 relative group">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
                 <Input
@@ -210,10 +210,10 @@ const AdminUserManagement = () => {
                   placeholder="Search by name, email, or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-4 py-3 bg-slate-50/50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700 placeholder:text-slate-400"
+                  className="pl-12 pr-4 py-2.5 sm:py-3 bg-slate-50/50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700 placeholder:text-slate-400"
                 />
               </div>
-              <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 px-8 py-3 rounded-xl">
+              <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl w-full sm:w-auto">
                 Search
               </Button>
             </form>

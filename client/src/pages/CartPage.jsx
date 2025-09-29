@@ -116,29 +116,29 @@ const CartPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-16 px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-14 sm:py-16 px-3 sm:px-4 pt-24">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-extrabold text-emerald-800 mb-10 flex items-center gap-3">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-emerald-800 mb-6 sm:mb-10 flex items-center gap-2 sm:gap-3">
             <FaShoppingCart className="text-emerald-600 text-3xl" /> Your Cart
           </h1>
           {cart.length === 0 ? (
-            <div className="text-center py-24 text-gray-500 text-xl font-medium">🛒 Your cart is currently empty.</div>
+            <div className="text-center py-16 sm:py-24 text-gray-500 text-base sm:text-xl font-medium">🛒 Your cart is currently empty.</div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
               {/* Cart Items */}
-              <div className="md:col-span-2 space-y-6">
+              <div className="md:col-span-2 space-y-4 sm:space-y-6">
                 {cart.map((item, idx) => (
                   <div
                     key={item._id}
-                    className="flex items-center gap-6 bg-white shadow-md rounded-2xl p-5 hover:shadow-lg transition-shadow"
+                    className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 bg-white shadow-md rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-shadow"
                   >
                     <img
                       src={item.images?.[0]}
                       alt={item.name}
-                      className="w-24 h-24 object-cover rounded-xl border border-gray-200"
+                      className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl border border-gray-200"
                     />
-                    <div className="flex-1">
-                      <h2 className="text-xl font-semibold text-emerald-800">{item.name}</h2>
+                    <div className="flex-1 w-full">
+                      <h2 className="text-lg sm:text-xl font-semibold text-emerald-800 break-words">{item.name}</h2>
                       <div className="text-gray-500 text-sm">₱{item.price.toFixed(2)} x</div>
                       <div className="flex items-center gap-3 mt-2">
                         <Input
@@ -155,7 +155,7 @@ const CartPage = () => {
                     </div>
                     <Button
                       variant="outline"
-                      className="text-red-600 border-red-300 hover:bg-red-100"
+                      className="text-red-600 border-red-300 hover:bg-red-100 w-full sm:w-auto"
                       onClick={() => handleRemove(idx)}
                     >
                       <FaTrash />
@@ -165,19 +165,19 @@ const CartPage = () => {
               </div>
 
               {/* Order Summary */}
-              <div className="bg-white/90 backdrop-blur-md border border-gray-100 rounded-3xl shadow-xl p-8 h-fit">
-                <h2 className="text-2xl font-bold text-emerald-700 mb-6">Order Summary</h2>
-                <div className="flex justify-between text-lg text-gray-700 font-medium mb-2">
+              <div className="bg-white/90 backdrop-blur-md border border-gray-100 rounded-3xl shadow-xl p-6 sm:p-8 h-fit">
+                <h2 className="text-xl sm:text-2xl font-bold text-emerald-700 mb-4 sm:mb-6">Order Summary</h2>
+                <div className="flex justify-between text-base sm:text-lg text-gray-700 font-medium mb-2">
                   <span>Subtotal</span>
                   <span>₱{total.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-gray-200 my-4" />
-                <div className="flex justify-between text-xl font-bold text-emerald-800">
+                <div className="flex justify-between text-lg sm:text-xl font-bold text-emerald-800">
                   <span>Total</span>
                   <span>₱{total.toFixed(2)}</span>
                 </div>
                 <Button
-                  className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-bold py-3 rounded-xl shadow-lg"
+                  className="w-full mt-4 sm:mt-6 bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg font-bold py-3 rounded-xl shadow-lg"
                   onClick={handleCheckout}
                 >
                   Proceed to Checkout

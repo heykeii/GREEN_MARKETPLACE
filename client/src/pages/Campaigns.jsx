@@ -585,7 +585,7 @@ const Campaigns = () => {
 
       {/* Page-level Search (outside navbar) */}
       <div className="sticky top-16 z-20 bg-white border-b border-gray-200 md:static md:top-auto md:z-auto">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -599,7 +599,7 @@ const Campaigns = () => {
       </div>
 
       {/* Main Content - Instagram Layout */}
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 px-4 py-6">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 sm:gap-8 px-3 sm:px-4 py-4 sm:py-6">
         {/* Left Sidebar - Stories & Quick Stats */}
         <div className="hidden lg:block w-80 space-y-6">
           {/* Campaign Stories */}
@@ -673,7 +673,7 @@ const Campaigns = () => {
         </div>
 
         {/* Main Feed */}
-        <div className="flex-1 max-w-2xl space-y-8">
+        <div className="flex-1 max-w-2xl space-y-6 sm:space-y-8">
           {/* Enhanced Filter Pills */}
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center space-x-3 overflow-x-auto scrollbar-none">

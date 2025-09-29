@@ -1212,14 +1212,14 @@ const SellerDashboard = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50 py-8 px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50 py-6 sm:py-8 px-3 sm:px-4 pt-24">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Header */}
-          <div className="relative mb-10 rounded-3xl overflow-hidden shadow-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-600">
+          <div className="relative mb-8 sm:mb-10 rounded-3xl overflow-hidden shadow-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-600">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80')] bg-cover bg-center opacity-20" />
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-10 gap-8">
-              <div className="flex items-center gap-6">
-                <div className="w-24 h-24 rounded-full bg-white/30 border-4 border-emerald-200 flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 gap-6 sm:gap-8">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/30 border-4 border-emerald-200 flex items-center justify-center shadow-lg overflow-hidden">
                   {/* User avatar or fallback icon */}
                   {user?.avatar ? (
                     <img src={user.avatar} alt="avatar" className="w-full h-full object-cover rounded-full" />
@@ -1228,19 +1228,19 @@ const SellerDashboard = () => {
                   )}
                 </div>
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-lg">Welcome, {user?.firstName}!</h1>
-                  <p className="text-emerald-100 text-lg font-medium drop-shadow">Manage your products and grow your business</p>
+                  <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-1 sm:mb-2 drop-shadow-lg">Welcome, {user?.firstName}!</h1>
+                  <p className="text-emerald-100 text-base sm:text-lg font-medium drop-shadow">Manage your products and grow your business</p>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-4">
+              <div className="flex flex-col items-end gap-3 sm:gap-4">
                 <div className="text-right text-emerald-100">
                   <div className="text-sm">Total Products</div>
-                  <div className="text-3xl font-bold">{approvedProducts.length + pendingProducts.length}</div>
+                  <div className="text-2xl sm:text-3xl font-bold">{approvedProducts.length + pendingProducts.length}</div>
                 </div>
                 <div className="flex gap-3">
                   <Button
                     onClick={() => navigate('/seller/orders')}
-                    className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 rounded-xl font-semibold text-lg"
+                    className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold text-base sm:text-lg"
                     size="lg"
                   >
                     <FaShoppingBag className="mr-2 h-5 w-5" />
@@ -1248,7 +1248,7 @@ const SellerDashboard = () => {
                   </Button>
                 <Button
                   onClick={() => navigate('/seller/create-product')}
-                  className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 rounded-xl font-semibold text-lg"
+                  className="bg-white/90 text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all duration-200 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold text-base sm:text-lg"
                   size="lg"
                 >
                   <FaPlus className="mr-2 h-5 w-5" />
@@ -1260,7 +1260,7 @@ const SellerDashboard = () => {
           </div>
 
           {/* Enhanced Stats Cards */}
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 justify-center">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10 sm:mb-12 justify-center">
             <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-8 flex flex-col items-center text-center">
                 <div className="bg-emerald-100 rounded-full p-4 mb-4 shadow">
@@ -1389,7 +1389,7 @@ const SellerDashboard = () => {
           </Modal>
 
           {/* Quick Navigation */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-2xl font-bold text-emerald-800">Your Products</h2>
             <div className="flex items-center gap-4">
               <Button
@@ -1408,21 +1408,21 @@ const SellerDashboard = () => {
           </div>
 
           {/* Products Section, Tabs, Product List, etc. */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="grid w-full grid-cols-3 bg-emerald-100 rounded-xl mb-4">
-              <TabsTrigger value="approved" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white rounded-xl text-lg font-semibold">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6 sm:mb-8">
+            <TabsList className="grid w-full grid-cols-3 bg-emerald-100 rounded-xl mb-3 sm:mb-4">
+              <TabsTrigger value="approved" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white rounded-xl text-sm sm:text-lg font-semibold">
                 Approved
               </TabsTrigger>
-              <TabsTrigger value="pending" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white rounded-xl text-lg font-semibold">
+              <TabsTrigger value="pending" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white rounded-xl text-sm sm:text-lg font-semibold">
                 Pending
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl text-lg font-semibold">
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl text-sm sm:text-lg font-semibold">
                 Analytics
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="approved">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
                 <div className="flex-1">
                   <Label htmlFor="search" className="text-sm font-medium text-gray-700">
                     Search Products
@@ -1447,7 +1447,7 @@ const SellerDashboard = () => {
                     id="sort"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="p-2 border border-gray-300 rounded-xl text-sm"
+                    className="p-2 border border-gray-300 rounded-xl text-xs sm:text-sm"
                   >
                     <option value="newest">Newest</option>
                     <option value="oldest">Oldest</option>
@@ -1457,7 +1457,7 @@ const SellerDashboard = () => {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {filteredProducts(sortedProducts(activeTab === 'approved' ? approvedProducts : pendingProducts)).map(product => (
                   <ProductCard key={product._id} product={product} status={product.status} />
                 ))}
@@ -1465,7 +1465,7 @@ const SellerDashboard = () => {
             </TabsContent>
             
             <TabsContent value="pending">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
                 <div className="flex-1">
                   <Label htmlFor="search" className="text-sm font-medium text-gray-700">
                     Search Products
@@ -1500,7 +1500,7 @@ const SellerDashboard = () => {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {filteredProducts(sortedProducts(activeTab === 'approved' ? approvedProducts : pendingProducts)).map(product => (
                   <ProductCard key={product._id} product={product} status={product.status} />
                 ))}

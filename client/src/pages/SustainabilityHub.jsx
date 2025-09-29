@@ -109,13 +109,13 @@ const SustainabilityHub = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <section className="px-4 pt-28 pb-10 bg-gradient-to-b from-emerald-50 to-transparent">
+      <section className="px-3 sm:px-4 pt-28 pb-8 sm:pb-10 bg-gradient-to-b from-emerald-50 to-transparent">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <Sprout className="h-6 w-6 text-emerald-600" />
-            <h1 className="text-3xl font-extrabold text-gray-900">Sustainability Hub</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Sustainability Hub</h1>
           </div>
-          <p className="text-gray-600 mb-6 max-w-3xl">Discover initiatives, resources, and community events that promote sustainable living.</p>
+          <p className="text-gray-600 mb-4 sm:mb-6 max-w-3xl text-sm sm:text-base">Discover initiatives, resources, and community events that promote sustainable living.</p>
 
           <div className="flex flex-wrap items-center gap-2">
             <Tab label="All" active={tab === 'all'} onClick={() => setTab('all')} />
@@ -129,7 +129,7 @@ const SustainabilityHub = () => {
             )}
           </div>
 
-          <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
             <div className="relative flex-1">
               <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
@@ -184,8 +184,8 @@ const SustainabilityHub = () => {
         </div>
       </section>
 
-      <section className="px-4 pb-16">
-        <div className={`max-w-6xl mx-auto ${view === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}`}>
+      <section className="px-3 sm:px-4 pb-14 sm:pb-16">
+        <div className={`max-w-6xl mx-auto ${view === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4' : 'space-y-2 sm:space-y-3'}`}>
           {loading ? (
             Array.from({ length: view === 'grid' ? 6 : 4 }).map((_, idx) => (
               <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm animate-pulse">
