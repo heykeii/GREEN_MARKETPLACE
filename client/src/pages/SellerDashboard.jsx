@@ -165,6 +165,7 @@ const SellerDashboard = () => {
         setGcashDetails(res.data.gcash);
       }
     } catch (err) {
+      console.error('Error fetching GCash details:', err);
       // silent
     }
   }, []);

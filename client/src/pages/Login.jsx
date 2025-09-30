@@ -5,7 +5,6 @@ import { toast } from '@/utils/toast';
 import GoogleLogin from '../components/GoogleLogin';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const Login = () => {
@@ -60,8 +59,7 @@ const Login = () => {
 
     return (
         <>
-        <Navbar />
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 pt-24">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
             {/* Animated Background Elements */}
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-200/30 to-teal-200/30 rounded-full blur-3xl animate-pulse"></div>
@@ -230,6 +228,19 @@ const Login = () => {
                                         onError={handleGoogleError}
                                     />
                                 </div>
+                            </div>
+
+                            {/* Register Link */}
+                            <div className="mt-6 text-center">
+                                <p className="text-sm text-emerald-700">
+                                    Don't have an account yet?{' '}
+                                    <Link
+                                        to="/register"
+                                        className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors duration-200 hover:underline decoration-2 underline-offset-2"
+                                    >
+                                        Register
+                                    </Link>
+                                </p>
                             </div>
                         </div>
                     </div>

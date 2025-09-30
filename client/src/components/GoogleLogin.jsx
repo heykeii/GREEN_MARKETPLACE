@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { api } from '@/utils/apiClient';
 import { showErrorToast, parseApiError } from '@/utils/errorHandling';
 import { toast } from '@/utils/toast';
 
 const GoogleLogin = ({ onSuccess, onError }) => {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
         // Load Google Identity Services
         const script = document.createElement('script');
@@ -47,59 +49,103 @@ const GoogleLogin = ({ onSuccess, onError }) => {
 
     const handleCredentialResponse = async (response) => {
         try {
+            setIsLoading(true);
             console.log('Google login response:', response);
             
-            // Send the token to backend using enhanced API client
-            const result = await api.post('/api/v1/users/google-login', {
-                token: response.credential
-            });
+            // Send the token to backend using direct axios call to avoid interceptor issues
+            const result = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/v1/users/google-login`,
+                { token: response.credential },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    timeout: 30000,
+                }
+            );
 
             console.log('Backend response:', result);
 
             // Store the JWT token
-            localStorage.setItem('token', result.token);
-            localStorage.setItem('user', JSON.stringify(result.user));
+            localStorage.setItem('token', result.data.token);
+            localStorage.setItem('user', JSON.stringify(result.data.user));
 
             // Show success message
-            toast.success(result.message || 'Google login successful!');
+            toast.success(result.data.message || 'Google login successful!');
 
-            // Call the success callback
+            // Call the success callback only for successful login
             if (onSuccess) {
-                onSuccess(result);
+                onSuccess(result.data);
             }
 
         } catch (error) {
             console.error('Google login error:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
             
-            // Parse the error using enhanced error handling
-            const appError = parseApiError(error);
+            // Check for email verification FIRST before parsing error
+            const responseData = error.response?.data;
+            const isVerificationRequired = responseData?.isVerificationRequired;
+            const isVerificationMessage = responseData?.message?.toLowerCase().includes('verify');
+            const statusCode = error.response?.status;
             
-            // Check for email verification required
-            if (appError.statusCode === 400 && appError.details?.isVerificationRequired) {
+            console.log('Debug info:', {
+                statusCode,
+                isVerificationRequired,
+                isVerificationMessage,
+                responseData
+            });
+            
+            // Handle email verification case immediately
+            if (statusCode === 403 && (isVerificationRequired || isVerificationMessage)) {
+                console.log('Email verification required, redirecting...');
+                // Show success message since email verification was sent successfully
+                toast.success('Verification email sent! Please check your email and click the verification link.');
                 navigate('/email-verification', {
                     state: {
-                        email: appError.details.email || '',
-                        firstName: appError.details.firstName || '',
+                        email: responseData?.email || '',
+                        firstName: responseData?.firstName || '',
                     }
                 });
+                setIsLoading(false);
                 return;
             }
             
-            // Show error toast with enhanced error handling
-            showErrorToast(appError, 'Google login failed. Please try again.');
+            // Parse the error using enhanced error handling for other cases
+            const appError = parseApiError(error);
+            console.error('Parsed app error:', appError);
+            
+            // Handle other error cases
+            if (appError.type === 'NETWORK_ERROR') {
+                showErrorToast(appError, 'Unable to connect to the server. Please check your internet connection and try again.');
+            } else if (appError.type === 'AUTHENTICATION_ERROR') {
+                showErrorToast(appError, 'Google authentication failed. Please try again or use a different sign-in method.');
+            } else {
+                // Show error toast with enhanced error handling
+                showErrorToast(appError, 'Google login failed. Please try again.');
+            }
             
             if (onError) {
                 onError(appError);
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <div className="w-full">
-            <div 
-                id="google-login-button"
-                className="w-full flex justify-center"
-            ></div>
+            {isLoading ? (
+                <div className="w-full py-3 px-4 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-blue-600 mr-3"></div>
+                    <span className="text-gray-700 font-medium">Signing in with Google...</span>
+                </div>
+            ) : (
+                <div 
+                    id="google-login-button"
+                    className="w-full flex justify-center"
+                ></div>
+            )}
         </div>
     );
 };

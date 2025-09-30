@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // ToastProvider is mounted at root in main.jsx
 import "./styles/toast.css";
 import ErrorBoundary, { PageErrorBoundary } from "./components/ErrorBoundary";
-import { setupGlobalErrorHandling } from "./utils/errorHandling";
+import { setupGlobalErrorHandling, setupAccountValidation } from "./utils/errorHandling";
 import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -53,6 +53,9 @@ const App = () => {
   useEffect(() => {
     // Setup global error handling
     setupGlobalErrorHandling();
+    
+    // Setup account validation for automatic logout
+    setupAccountValidation();
   }, []);
 
   return (

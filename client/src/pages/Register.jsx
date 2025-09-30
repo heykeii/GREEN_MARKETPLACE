@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '@/utils/apiClient';
+import { parseApiError, showErrorToast } from '@/utils/errorHandling';
 import { toast } from '@/utils/toast';
 import GoogleLogin from '../components/GoogleLogin';
 import { Input } from '@/components/ui/input';
@@ -52,17 +53,14 @@ const Register = () => {
                 return;
             }
 
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/v1/users/register`,
-                {
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    password: formData.password
-                }
-            );
+            const response = await api.post('/api/v1/users/register', {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                password: formData.password
+            });
 
-            toast.success(response.data.message);
+            toast.success(response.message);
             navigate('/email-verification', { 
                 state: { 
                     email: formData.email,
@@ -70,8 +68,9 @@ const Register = () => {
                 } 
             });
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
-            toast.error(errorMessage);
+            console.error('Registration error:', error);
+            const appError = parseApiError(error);
+            showErrorToast(appError, 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -84,6 +83,8 @@ const Register = () => {
 
     const handleGoogleError = (error) => {
         console.error('Google registration error:', error);
+        // The error handling is already done in GoogleLogin component
+        // This is just for any additional error handling if needed
     };
 
     return (

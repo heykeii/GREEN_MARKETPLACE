@@ -18,65 +18,76 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAdminCounts } from '@/hooks/useAdminCounts';
 
 const AdminSidebar = ({ collapsed, setCollapsed, isMobile = false, mobileOpen = false, onMobileClose = () => {} }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { counts } = useAdminCounts();
 
   const menuItems = [
     {
       icon: LayoutDashboard,
       label: 'Dashboard',
       path: '/admin',
-      color: 'text-blue-500'
+      color: 'text-blue-500',
+      count: null
     },
     {
       icon: Users,
       label: 'User Management',
       path: '/admin/user-management',
-      color: 'text-purple-500'
+      color: 'text-purple-500',
+      count: null
     },
     {
       icon: UserCheck,
       label: 'Seller Verification',
       path: '/admin/seller-verification',
-      color: 'text-emerald-500'
+      color: 'text-emerald-500',
+      count: counts.sellerVerification
     },
     {
       icon: Package,
       label: 'Product Verification',
       path: '/admin/product-verification',
-      color: 'text-orange-500'
+      color: 'text-orange-500',
+      count: counts.productVerification
     },
     {
       icon: FileText,
       label: 'Campaign Management',
       path: '/admin/campaign-management',
-      color: 'text-pink-500'
+      color: 'text-pink-500',
+      count: null
     },
     {
       icon: Megaphone,
       label: 'Announcements',
       path: '/admin/announcements',
-      color: 'text-indigo-500'
+      color: 'text-indigo-500',
+      count: null
     },
     {
       icon: MessageSquare,
       label: 'Feedback',
       path: '/admin/feedback',
-      color: 'text-emerald-500'
+      color: 'text-emerald-500',
+      count: counts.feedback
     },
     {
       icon: FileText,
       label: 'Sustainability',
       path: '/admin/sustainability',
-      color: 'text-teal-500'
+      color: 'text-teal-500',
+      count: null
     },
     {
       icon: AlertTriangle,
       label: 'Reports',
       path: '/admin/report-management',
-      color: 'text-red-500'
+      color: 'text-red-500',
+      count: counts.reports
     }
   ];
 
@@ -148,16 +159,24 @@ const AdminSidebar = ({ collapsed, setCollapsed, isMobile = false, mobileOpen = 
             key={item.path}
             to={item.path}
             className={cn(
-              "flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+              "flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
               isActive(item.path)
                 ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border border-blue-100"
                 : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             )}
           >
-            <item.icon className={cn(
-              "h-5 w-5 transition-colors",
-              isActive(item.path) ? "text-blue-600" : item.color
-            )} />
+            <div className="relative">
+              <item.icon className={cn(
+                "h-5 w-5 transition-colors",
+                isActive(item.path) ? "text-blue-600" : item.color
+              )} />
+              {/* Notification Badge */}
+              {item.count > 0 && (
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-lg">
+                  {item.count > 99 ? '99+' : item.count}
+                </div>
+              )}
+            </div>
             {!collapsed && (
               <span className="font-medium text-sm">{item.label}</span>
             )}

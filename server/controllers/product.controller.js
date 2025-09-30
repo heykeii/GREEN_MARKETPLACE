@@ -27,6 +27,7 @@ export const createProduct = async (req, res) => {
       materialsUsed,
       materialsInput, // New field for sustainability scoring
       tags = [],
+      variants = [],
     } = req.body;
 
     if (!name || !description || !price || !quantity || !category || !materialsUsed) {
@@ -102,6 +103,26 @@ export const createProduct = async (req, res) => {
       }
     }
 
+    // Process variants if provided
+    let processedVariants = [];
+    if (variants && variants.length > 0) {
+      try {
+        const variantsData = typeof variants === 'string' ? JSON.parse(variants) : variants;
+        processedVariants = variantsData.map(variant => ({
+          name: variant.name,
+          price: parseFloat(variant.price),
+          quantity: parseInt(variant.quantity),
+          sku: variant.sku || '',
+          attributes: variant.attributes || {},
+          images: variant.images || [],
+          isActive: variant.isActive !== false
+        }));
+      } catch (variantError) {
+        console.error('Error processing variants:', variantError);
+        return errorResponse(res, 400, 'Invalid variants data format.');
+      }
+    }
+
     const newProduct = new Product({
       name,
       description,
@@ -115,6 +136,7 @@ export const createProduct = async (req, res) => {
       tags: Array.isArray(tags) ? tags : [tags],
       seller: req.user._id,
       status: 'pending',
+      variants: processedVariants,
       // Add sustainability fields
       structuredMaterials: sustainabilityData.structuredMaterials,
       materialRecyclabilityScores: sustainabilityData.materialRecyclabilityScores,

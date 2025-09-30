@@ -42,7 +42,15 @@ export const getAdminStats = async (req, res) => {
     ] = await Promise.all([
       User.countDocuments({ isActive: true }),
       User.countDocuments({ isSeller: true, sellerStatus: 'verified' }),
-      SellerApplication.countDocuments({ status: 'pending' }),
+      // Count pending applications only for active users
+      (async () => {
+        const activeUsers = await User.find({ isActive: { $ne: false } }).select('_id');
+        const activeUserIds = activeUsers.map(user => user._id);
+        return SellerApplication.countDocuments({ 
+          status: 'pending', 
+          user: { $in: activeUserIds } 
+        });
+      })(),
       User.countDocuments({ sellerStatus: 'verified' }),
       Report.countDocuments({}),
       Report.countDocuments({ status: 'pending' }),
@@ -186,20 +194,30 @@ export const getSellerApplications = async (req, res) => {
     console.log('Sort:', sort);
     console.log('Pagination:', { page, limit, skip });
 
+    // First, get all user IDs that are active
+    const activeUsers = await User.find({ isActive: { $ne: false } }).select('_id');
+    const activeUserIds = activeUsers.map(user => user._id);
+
+    // Update filter to only include applications with active users
+    const filterWithActiveUsers = {
+      ...filter,
+      user: { $in: activeUserIds }
+    };
+
     const [applications, total] = await Promise.all([
-      SellerApplication.find(filter)
+      SellerApplication.find(filterWithActiveUsers)
         .populate('user', 'firstName lastName email avatar contactNumber location')
         .populate('reviewedBy', 'firstName lastName')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .lean(),
-      SellerApplication.countDocuments(filter)
+      SellerApplication.countDocuments(filterWithActiveUsers)
     ]);
 
     const totalPages = Math.ceil(total / parseInt(limit));
 
-    console.log(`Found ${applications.length} applications out of ${total} total`);
+    console.log(`Found ${applications.length} applications with active users out of ${total} total`);
 
     res.status(200).json({ 
       success: true,
@@ -529,8 +547,54 @@ export const deleteUserByAdmin = async (req, res) => {
     if (!user) {
       return errorResponse(res, 404, 'User not found');
     }
+
+    // Store user info before deletion for logging
+    const deletedUserInfo = {
+      id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName
+    };
+
+    // Clean up related data before deleting user
+    try {
+      // Delete seller applications
+      const deletedApplications = await SellerApplication.deleteMany({ user: userId });
+      console.log(`Deleted ${deletedApplications.deletedCount} seller applications for user ${deletedUserInfo.email}`);
+      
+      // Delete user's products
+      const deletedProducts = await Product.deleteMany({ seller: userId });
+      console.log(`Deleted ${deletedProducts.deletedCount} products for user ${deletedUserInfo.email}`);
+      
+      // Delete user's orders
+      const deletedOrders = await Order.deleteMany({ 
+        $or: [{ buyer: userId }, { seller: userId }] 
+      });
+      console.log(`Deleted ${deletedOrders.deletedCount} orders for user ${deletedUserInfo.email}`);
+    } catch (cleanupError) {
+      console.error('Error during user data cleanup:', cleanupError);
+      // Continue with user deletion even if cleanup fails
+    }
+
+    // Delete the user
     await user.deleteOne();
-    res.status(200).json({ success: true, message: 'User deleted successfully.' });
+
+    // Log the deletion for audit purposes
+    console.log(`User account deleted by admin:`, {
+      deletedUserId: deletedUserInfo.id,
+      deletedUserEmail: deletedUserInfo.email,
+      deletedBy: req.user.email,
+      deletedAt: new Date().toISOString()
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'User deleted successfully.',
+      deletedUser: {
+        id: deletedUserInfo.id,
+        email: deletedUserInfo.email
+      }
+    });
   } catch (error) {
     console.error('Error deleting user:', error);
     errorResponse(res, 500, 'Failed to delete user', error);

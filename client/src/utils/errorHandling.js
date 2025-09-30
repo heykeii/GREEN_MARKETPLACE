@@ -61,7 +61,7 @@ export const parseApiError = (error) => {
   const { status, data } = error.response;
   const message = data?.message || 'An error occurred';
   const errorCode = data?.errorCode;
-  const details = data?.details;
+  const details = data?.details || data; // Include the entire response data as details
 
   // Determine error type based on status code
   let errorType;
@@ -126,21 +126,34 @@ export const showErrorToast = (error, customMessage = null) => {
 export const handleAuthError = (error) => {
   const appError = parseApiError(error);
   
-  if (appError.type === ERROR_TYPES.AUTHENTICATION) {
-    // Clear tokens
+  // Check for specific account deletion/deactivation errors
+  const responseData = error.response?.data || error.details;
+  const shouldLogout = responseData?.shouldLogout;
+  const errorCode = responseData?.code;
+  
+  if (appError.type === ERROR_TYPES.AUTHENTICATION || shouldLogout) {
+    // Clear all tokens and user data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     
-    // Show error and redirect
-    toast.error('Your session has expired. Please log in again.');
+    // Show appropriate error message based on the error code
+    let errorMessage = 'Your session has expired. Please log in again.';
+    
+    if (errorCode === 'ACCOUNT_DELETED') {
+      errorMessage = 'Your account has been deleted by an administrator. Please contact support if you believe this is an error.';
+    } else if (errorCode === 'ACCOUNT_DEACTIVATED') {
+      errorMessage = 'Your account has been deactivated. Please contact support for assistance.';
+    }
+    
+    toast.error(errorMessage);
     
     // Redirect to login after a short delay
     setTimeout(() => {
       const isAdmin = window.location.pathname.startsWith('/admin');
       window.location.href = isAdmin ? '/admin/login' : '/login';
-    }, 2000);
+    }, 3000); // Increased delay for account deletion messages
     
     return true; // Handled
   }
@@ -185,6 +198,15 @@ export const setupGlobalErrorHandling = () => {
   window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
     
+    // Check if this is an authentication error that should trigger logout
+    if (event.reason && typeof event.reason === 'object') {
+      const error = event.reason;
+      if (handleAuthError(error)) {
+        event.preventDefault();
+        return;
+      }
+    }
+    
     // Don't show toast for development errors
     if (process.env.NODE_ENV === 'production') {
       toast.error('An unexpected error occurred. Please refresh the page.');
@@ -200,6 +222,52 @@ export const setupGlobalErrorHandling = () => {
     
     if (process.env.NODE_ENV === 'production') {
       toast.error('An unexpected error occurred. Please refresh the page.');
+    }
+  });
+};
+
+// Account validation utility
+export const validateUserAccount = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return true; // No token, user is not logged in
+    
+    // Make a simple API call to check if user account is still valid
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      
+      // Check if account was deleted or deactivated
+      if (errorData.shouldLogout || errorData.code === 'ACCOUNT_DELETED' || errorData.code === 'ACCOUNT_DEACTIVATED') {
+        handleAuthError({ response: { data: errorData } });
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Account validation error:', error);
+    return true; // Don't logout on network errors
+  }
+};
+
+// Set up periodic account validation
+export const setupAccountValidation = () => {
+  // Check account validity every 5 minutes
+  setInterval(async () => {
+    await validateUserAccount();
+  }, 5 * 60 * 1000); // 5 minutes
+  
+  // Also check when the page becomes visible (user switches back to tab)
+  document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden) {
+      await validateUserAccount();
     }
   });
 };
@@ -274,5 +342,7 @@ export default {
   setupGlobalErrorHandling,
   validateForm,
   showValidationErrors,
+  validateUserAccount,
+  setupAccountValidation,
   ERROR_TYPES
 };

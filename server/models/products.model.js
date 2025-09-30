@@ -112,6 +112,39 @@ const productSchema = new mongoose.Schema({
     }
   }],
 
+  variants: [{
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    sku: {
+      type: String,
+      trim: true
+    },
+    attributes: {
+      type: Map,
+      of: String // e.g., {"color": "red", "size": "large"}
+    },
+    images: [{
+      type: String // Array of variant-specific image URLs
+    }],
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }],
+
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],

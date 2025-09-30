@@ -23,7 +23,8 @@ const CreateProduct = () => {
     materialsUsed: '',
     tags: '',
     images: [],
-    externalUrls: [{ platform: '', url: '' }]
+    externalUrls: [{ platform: '', url: '' }],
+    variants: []
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -73,6 +74,16 @@ const CreateProduct = () => {
       if (validUrls.length > 0) {
         formData.append('externalUrls', JSON.stringify(validUrls));
       }
+      
+      // Add variants
+      const validVariants = form.variants.filter(variant => 
+        variant.name.trim() && 
+        variant.price && 
+        variant.quantity !== ''
+      );
+      if (validVariants.length > 0) {
+        formData.append('variants', JSON.stringify(validVariants));
+      }
       await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/products/create/product`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -96,6 +107,71 @@ const CreateProduct = () => {
   const clearAllImages = () => {
     setForm(f => ({ ...f, images: [] }));
     setImagePreviews([]);
+  };
+
+  // Variant management functions
+  const addVariant = () => {
+    setForm(f => ({
+      ...f,
+      variants: [...f.variants, {
+        name: '',
+        price: '',
+        quantity: '',
+        sku: '',
+        attributes: {},
+        images: [],
+        isActive: true
+      }]
+    }));
+  };
+
+  const removeVariant = (index) => {
+    setForm(f => ({
+      ...f,
+      variants: f.variants.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateVariant = (index, field, value) => {
+    setForm(f => ({
+      ...f,
+      variants: f.variants.map((variant, i) => 
+        i === index ? { ...variant, [field]: value } : variant
+      )
+    }));
+  };
+
+  const updateVariantAttribute = (variantIndex, attributeKey, attributeValue) => {
+    setForm(f => ({
+      ...f,
+      variants: f.variants.map((variant, i) => 
+        i === variantIndex 
+          ? { 
+              ...variant, 
+              attributes: { 
+                ...variant.attributes, 
+                [attributeKey]: attributeValue 
+              } 
+            } 
+          : variant
+      )
+    }));
+  };
+
+  const removeVariantAttribute = (variantIndex, attributeKey) => {
+    setForm(f => ({
+      ...f,
+      variants: f.variants.map((variant, i) => 
+        i === variantIndex 
+          ? { 
+              ...variant, 
+              attributes: Object.fromEntries(
+                Object.entries(variant.attributes).filter(([key]) => key !== attributeKey)
+              )
+            } 
+          : variant
+      )
+    }));
   };
 
   const ImageUploadSection = () => {
@@ -413,6 +489,149 @@ const CreateProduct = () => {
                           Add Another URL
                         </Button>
                       </div>
+                    </div>
+
+                    {/* Product Variants Section */}
+                    <div className="col-span-full">
+                      <div className="flex items-center justify-between mb-4">
+                        <Label className="text-sm font-medium text-gray-700">Product Variants</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addVariant}
+                          className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                        >
+                          <FaPlus className="mr-2 h-4 w-4" />
+                          Add Variant
+                        </Button>
+                      </div>
+                      
+                      {form.variants.length > 0 && (
+                        <div className="space-y-4">
+                          {form.variants.map((variant, index) => (
+                            <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                              <div className="flex items-center justify-between mb-4">
+                                <h4 className="text-sm font-medium text-gray-700">Variant {index + 1}</h4>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => removeVariant(index)}
+                                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                >
+                                  <FaTimes className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-600">Variant Name *</Label>
+                                  <Input
+                                    placeholder="e.g., Small, Red, Cotton"
+                                    value={variant.name}
+                                    onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                                    className="w-full"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-600">SKU</Label>
+                                  <Input
+                                    placeholder="e.g., PROD-SM-RED-001"
+                                    value={variant.sku}
+                                    onChange={(e) => updateVariant(index, 'sku', e.target.value)}
+                                    className="w-full"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-600">Price (₱) *</Label>
+                                  <Input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={variant.price}
+                                    onChange={(e) => updateVariant(index, 'price', e.target.value)}
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-600">Quantity *</Label>
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    value={variant.quantity}
+                                    onChange={(e) => updateVariant(index, 'quantity', e.target.value)}
+                                    min="0"
+                                    className="w-full"
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Variant Attributes */}
+                              <div className="mt-4">
+                                <Label className="text-xs font-medium text-gray-600 mb-2 block">Attributes (e.g., Color, Size, Material)</Label>
+                                <div className="space-y-2">
+                                  {Object.entries(variant.attributes).map(([key, value]) => (
+                                    <div key={key} className="flex gap-2">
+                                      <Input
+                                        placeholder="Attribute (e.g., Color)"
+                                        value={key}
+                                        onChange={(e) => {
+                                          const newKey = e.target.value;
+                                          const newAttributes = { ...variant.attributes };
+                                          delete newAttributes[key];
+                                          newAttributes[newKey] = value;
+                                          updateVariant(index, 'attributes', newAttributes);
+                                        }}
+                                        className="flex-1"
+                                      />
+                                      <Input
+                                        placeholder="Value (e.g., Red)"
+                                        value={value}
+                                        onChange={(e) => updateVariantAttribute(index, key, e.target.value)}
+                                        className="flex-1"
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => removeVariantAttribute(index, key)}
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <FaTimes className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newKey = `attribute_${Date.now()}`;
+                                      updateVariantAttribute(index, newKey, '');
+                                    }}
+                                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200"
+                                  >
+                                    <FaPlus className="mr-1 h-3 w-3" />
+                                    Add Attribute
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {form.variants.length === 0 && (
+                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                          <p className="text-sm">No variants added yet</p>
+                          <p className="text-xs text-gray-400 mt-1">Add variants to offer different options (sizes, colors, etc.)</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <Button 

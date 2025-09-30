@@ -229,7 +229,7 @@ export const googleLogin = async (req, res) => {
         user.googleId = googleId;
         user.googleEmail = email;
         user.avatar = avatar;
-        // Do not auto-verify Google users
+        // Do not auto-verify Google users - they still need email verification
         await user.save();
         console.log("User updated successfully.");
       }
@@ -244,7 +244,7 @@ export const googleLogin = async (req, res) => {
         googleId,
         googleEmail: email,
         avatar,
-        isVerified: false, // Google users must verify email
+        isVerified: false, // Google users must still verify email
         verificationToken,
         password: crypto.randomBytes(32).toString("hex"), // Random password for Google users
       });

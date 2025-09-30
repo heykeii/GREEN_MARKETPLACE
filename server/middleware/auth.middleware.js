@@ -39,7 +39,19 @@ export const protect = async (req, res, next) => {
             if (!user) {
                 return res.status(401).json({ 
                     success: false,
-                    message: "User not found" 
+                    message: "User not found",
+                    code: "ACCOUNT_DELETED",
+                    shouldLogout: true
+                });
+            }
+
+            // Check if user account is active
+            if (!user.isActive) {
+                return res.status(401).json({ 
+                    success: false,
+                    message: "Account has been deactivated",
+                    code: "ACCOUNT_DEACTIVATED",
+                    shouldLogout: true
                 });
             }
 

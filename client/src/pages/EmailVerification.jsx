@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from '@/utils/toast';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const EmailVerification = () => {
@@ -39,8 +38,7 @@ const EmailVerification = () => {
 
     return (
         <>
-        <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white py-12 px-4 sm:px-6 lg:px-8 pt-24">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
                     {/* Success Icon */}

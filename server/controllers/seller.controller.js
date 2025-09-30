@@ -31,14 +31,14 @@ export const submitSellerVerification = async (req, res) => {
       files: req.files ? Object.keys(req.files) : 'No files'
     });
 
-    const { sellerType, tin, gcashNumber } = req.body;
+    const { sellerType, gcashNumber } = req.body;
     const userId = req.user._id;
     const files = req.files;
 
     // Validate required fields
-    if (!sellerType || !tin || !gcashNumber) {
+    if (!sellerType || !gcashNumber) {
       return res.status(400).json({ 
-        message: 'Seller type, TIN, and GCash number are required.' 
+        message: 'Seller type and GCash number are required.' 
       });
     }
 
@@ -62,9 +62,9 @@ export const submitSellerVerification = async (req, res) => {
       });
     }
 
-    if (!files.proofOfAddress || !files.bankProof || !files.gcashQR) {
+    if (!files.proofOfAddress || !files.bankProof || !files.gcashQR || !files.tinDocument) {
       return res.status(400).json({ 
-        message: 'Proof of address, bank proof, and GCash QR code are required.' 
+        message: 'Proof of address, bank proof, GCash QR code, and TIN document are required.' 
       });
     }
 
@@ -104,6 +104,9 @@ export const submitSellerVerification = async (req, res) => {
     console.log('Uploading GCash QR...');
     const gcashQR = await uploadFile(files.gcashQR[0]);
 
+    console.log('Uploading TIN document...');
+    const tinDocument = await uploadFile(files.tinDocument[0]);
+
     // Business-specific documents
     let dtiRegistration, businessPermit, birRegistration;
     if (sellerType === 'business') {
@@ -122,7 +125,7 @@ export const submitSellerVerification = async (req, res) => {
     // Prepare documents object
     const documents = {
       govIDs,
-      tin,
+      tinDocument,
       proofOfAddress,
       bankProof,
       ...(sellerType === 'business' && {

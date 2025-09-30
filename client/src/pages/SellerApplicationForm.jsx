@@ -11,7 +11,7 @@ import Navbar from '@/components/Navbar';
 
 const SellerApplicationForm = () => {
   const [sellerType, setSellerType] = useState('individual');
-  const [tin, setTin] = useState('');
+  const [tinDocument, setTinDocument] = useState(null);
   const [govID1, setGovID1] = useState(null);
   const [govID2, setGovID2] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
@@ -35,6 +35,7 @@ const SellerApplicationForm = () => {
     digits = digits.slice(0, 9);
     return '+639' + digits;
   };
+
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -67,10 +68,16 @@ const SellerApplicationForm = () => {
       toast.error('Please upload both government IDs.');
       return;
     }
+    
+    if (!tinDocument) {
+      toast.error('Please upload your TIN document.');
+      return;
+    }
+    
     setLoading(true);
     const formData = new FormData();
     formData.append('sellerType', sellerType);
-    formData.append('tin', tin);
+    if (tinDocument) formData.append('tinDocument', tinDocument);
     formData.append('govIDs', govID1);
     formData.append('govIDs', govID2);
     if (proofOfAddress) formData.append('proofOfAddress', proofOfAddress);
@@ -259,15 +266,16 @@ const SellerApplicationForm = () => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="tin">TIN</Label>
+                <Label htmlFor="tinDocument">TIN Document</Label>
                 <Input
-                  id="tin"
-                  name="tin"
-                  value={tin}
-                  onChange={e => setTin(e.target.value)}
+                  id="tinDocument"
+                  name="tinDocument"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={e => handleFileChange(e, setTinDocument)}
                   required
-                  placeholder="Enter your TIN"
                 />
+                <p className="text-sm text-gray-500 mt-1">Upload your TIN document (image or PDF)</p>
               </div>
               <div>
                 <Label htmlFor="govID1">Government ID 1</Label>
