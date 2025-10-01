@@ -151,6 +151,62 @@ const productSchema = new mongoose.Schema({
     default: "pending",
   },
 
+  // Carbon footprint tracking
+  carbonFootprint: {
+    hasCalculation: {
+      type: Boolean,
+      default: false
+    },
+    carbonFootprintKg: {
+      type: Number,
+      min: 0
+    },
+    baselineFootprintKg: {
+      type: Number,
+      min: 0
+    },
+    co2SavingsKg: {
+      type: Number,
+      min: 0
+    },
+    equivalentTrees: {
+      type: Number,
+      min: 0
+    },
+    equivalentMiles: {
+      type: Number,
+      min: 0
+    },
+    calculatedAt: {
+      type: Date
+    }
+  },
+
+  // Carbon footprint input data
+  carbonFootprintInput: {
+    materials: [{
+      name: {
+        type: String,
+        trim: true
+      },
+      percentage: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 100
+      }
+    }],
+    weight: {
+      type: Number,
+      min: 0.001,
+      default: 1
+    },
+    productionMethod: {
+      type: String,
+      enum: ['handmade', 'machine-made', 'upcycled', 'recycled', 'organic', 'conventional', 'artisan', 'industrial']
+    }
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,

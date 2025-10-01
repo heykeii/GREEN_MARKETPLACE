@@ -152,6 +152,30 @@ const userSchema = new mongoose.Schema({
     lastLogin: {
         type: Date,
         default: null
+    },
+    // Gamification tracking
+    purchaseCount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    campaignsJoinedCount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    // Badge system
+    badges: {
+        shopper: {
+            bronze: { type: Boolean, default: false },
+            silver: { type: Boolean, default: false },
+            gold: { type: Boolean, default: false }
+        },
+        campaigner: {
+            bronze: { type: Boolean, default: false },
+            silver: { type: Boolean, default: false },
+            gold: { type: Boolean, default: false }
+        }
     }
 }, {
     timestamps: true,

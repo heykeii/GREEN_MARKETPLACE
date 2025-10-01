@@ -10,6 +10,8 @@ import { toast } from '@/utils/toast';
 import Navbar from "@/components/Navbar";
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 import Footer from '@/components/Footer';
+import BadgeModal from '@/components/BadgeModal';
+import CompactBadgeDisplay from '@/components/CompactBadgeDisplay';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -36,6 +38,7 @@ const Profile = () => {
   const [certs, setCerts] = useState([]);
   const [certForm, setCertForm] = useState({ title: '', description: '', issuedBy: '', issueDate: '', mediaUrl: '', mediaType: 'image' });
   const [certUploading, setCertUploading] = useState(false);
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
 
   useEffect(() => {
     // Load user from localStorage
@@ -413,6 +416,25 @@ const Profile = () => {
                           Verified Seller
                         </Badge>
                       )}
+
+                      {/* Badges Display */}
+                      <div className="w-full space-y-3">
+                        <h4 className="text-green-800 font-semibold text-xs sm:text-sm text-center">🏆 Achievements</h4>
+                        <div 
+                          className="cursor-pointer hover:bg-green-50 rounded-lg p-2 transition-colors"
+                          onClick={() => setBadgeModalOpen(true)}
+                        >
+                          <CompactBadgeDisplay userId={user._id} isOwnProfile={true} />
+                        </div>
+                        <div className="text-center">
+                          <button 
+                            onClick={() => setBadgeModalOpen(true)}
+                            className="text-green-600 hover:text-green-800 text-xs font-medium underline"
+                          >
+                            View all badges & progress
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Bio */}
@@ -818,6 +840,7 @@ const Profile = () => {
                 </CardContent>
               </Card>
 
+
               {/* Certifications Section */}
               <Card className="shadow-2xl border-green-200 bg-white/95 backdrop-blur-sm mt-8">
                 <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
@@ -894,6 +917,15 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      
+      {/* Badge Modal */}
+      <BadgeModal 
+        isOpen={badgeModalOpen}
+        onClose={() => setBadgeModalOpen(false)}
+        userId={user._id}
+        isOwnProfile={true}
+      />
+      
       <Footer />
     </>
   );

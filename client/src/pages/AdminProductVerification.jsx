@@ -353,6 +353,80 @@ const AdminProductVerification = () => {
                               </div>
                             </div>
 
+                            {/* Carbon Footprint Section */}
+                            {product.carbonFootprint && product.carbonFootprint.hasCalculation && (
+                              <div className="space-y-4 p-6 bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 rounded-2xl border border-blue-200/50 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                      <div className="absolute inset-0 bg-blue-500 rounded-2xl blur opacity-20"></div>
+                                      <div className="relative p-3 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl shadow-lg">
+                                        <span className="text-2xl">🌍</span>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h3 className="text-lg font-bold text-blue-900">Carbon Footprint Analysis</h3>
+                                      <p className="text-sm text-blue-700">AI-powered environmental impact calculation</p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-3xl font-bold text-blue-600">
+                                      {product.carbonFootprint.carbonFootprintKg} kg CO₂
+                                    </div>
+                                    <div className="text-xs text-blue-600 font-medium">Carbon Footprint</div>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-blue-200/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-2xl">🌳</span>
+                                      <span className="text-sm font-semibold text-gray-700">Trees Equivalent</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-green-600">
+                                      {product.carbonFootprint.equivalentTrees || 0}
+                                    </div>
+                                  </div>
+                                  <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-blue-200/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-2xl">🚗</span>
+                                      <span className="text-sm font-semibold text-gray-700">Miles Driven</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-orange-600">
+                                      {product.carbonFootprint.equivalentMiles || 0}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {product.carbonFootprint.co2SavingsKg > 0 && (
+                                  <div className="bg-green-100 rounded-xl p-4 border border-green-200">
+                                    <div className="text-center">
+                                      <div className="text-green-800 font-bold text-lg mb-1">
+                                        🌱 Saves {product.carbonFootprint.co2SavingsKg.toFixed(1)} kg CO₂
+                                      </div>
+                                      <div className="text-green-700 text-sm">
+                                        vs. conventional alternatives
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {product.carbonFootprintInput && (
+                                  <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-blue-200/30">
+                                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                      <Info className="w-4 h-4 text-blue-600" />
+                                      Input Data
+                                    </h4>
+                                    <div className="space-y-2 text-sm">
+                                      <div><strong>Materials:</strong> {product.carbonFootprintInput.materials?.map(m => `${m.name} (${m.percentage}%)`).join(', ')}</div>
+                                      <div><strong>Weight:</strong> {product.carbonFootprintInput.weight} kg</div>
+                                      <div><strong>Production Method:</strong> {product.carbonFootprintInput.productionMethod}</div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             {/* Sustainability Score Section */}
                             {product.sustainabilityData && (
                               <div className="space-y-4 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-2xl border border-green-200/50 shadow-sm">

@@ -10,6 +10,7 @@ import { FaSpinner, FaPlus, FaImage, FaTimes, FaArrowLeft } from 'react-icons/fa
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
+import CarbonFootprintInput from '@/components/CarbonFootprintInput';
 
 const CreateProduct = () => {
   const [form, setForm] = useState({
@@ -24,7 +25,8 @@ const CreateProduct = () => {
     tags: '',
     images: [],
     externalUrls: [{ platform: '', url: '' }],
-    variants: []
+    variants: [],
+    carbonFootprintInput: null
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -39,6 +41,10 @@ const CreateProduct = () => {
     } else {
       setForm(f => ({ ...f, [name]: value }));
     }
+  }, []);
+
+  const handleCarbonFootprintChange = useCallback((carbonData) => {
+    setForm(f => ({ ...f, carbonFootprintInput: carbonData }));
   }, []);
 
   const handleCreateProduct = async (e) => {
@@ -392,15 +398,23 @@ const CreateProduct = () => {
                     </div>
                     <div>
                       <Label htmlFor="productionMethod" className="text-sm font-medium text-gray-700">Production Method</Label>
-                      <Input
+                      <select
                         id="productionMethod"
                         name="productionMethod"
-                        type="text"
                         value={form.productionMethod}
                         onChange={handleInputChange}
-                        className="w-full"
-                        placeholder="e.g., Handcrafted, Machine-assisted"
-                      />
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      >
+                        <option value="">How was your product made? (e.g., handmade, upcycled, machine-made)</option>
+                        <option value="handmade">Handmade - Crafted by hand, lower energy use</option>
+                        <option value="machine-made">Machine-made - Manufactured using machines</option>
+                        <option value="upcycled">Upcycled - Repurposed from existing materials</option>
+                        <option value="recycled">Recycled - Made from recycled materials</option>
+                        <option value="organic">Organic - Produced using organic methods</option>
+                        <option value="conventional">Conventional - Standard production methods</option>
+                        <option value="artisan">Artisan - Handcrafted by skilled artisans</option>
+                        <option value="industrial">Industrial - Large-scale industrial production</option>
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="materialsUsed" className="text-sm font-medium text-gray-700">Materials Used *</Label>
@@ -632,6 +646,14 @@ const CreateProduct = () => {
                           <p className="text-xs text-gray-400 mt-1">Add variants to offer different options (sizes, colors, etc.)</p>
                         </div>
                       )}
+                    </div>
+
+                    {/* Carbon Footprint Input Section */}
+                    <div className="col-span-full">
+                      <CarbonFootprintInput 
+                        onDataChange={handleCarbonFootprintChange}
+                        initialData={form.carbonFootprintInput}
+                      />
                     </div>
                   </div>
                   <Button 

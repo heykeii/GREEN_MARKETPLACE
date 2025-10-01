@@ -11,6 +11,8 @@ import { toast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink } from 'react-icons/fa';
 import ReportButton from '@/components/ReportButton';
+import BadgeModal from '@/components/BadgeModal';
+import CompactBadgeDisplay from '@/components/CompactBadgeDisplay';
 
 const getSocialIcon = (platform) => {
   const iconMap = {
@@ -40,6 +42,7 @@ const PublicProfile = () => {
   const [products, setProducts] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [followLoading, setFollowLoading] = useState(false);
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
   const isAdmin = typeof window !== 'undefined' && localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -227,6 +230,25 @@ const PublicProfile = () => {
                     Verified Seller
                   </Badge>
                 )}
+
+                {/* Badges Display */}
+                <div className="w-full space-y-3">
+                  <h4 className="text-green-800 font-semibold text-xs sm:text-sm text-center">🏆 Achievements</h4>
+                  <div 
+                    className="cursor-pointer hover:bg-green-50 rounded-lg p-2 transition-colors"
+                    onClick={() => setBadgeModalOpen(true)}
+                  >
+                    <CompactBadgeDisplay userId={userId} isOwnProfile={false} />
+                  </div>
+                  <div className="text-center">
+                    <button 
+                      onClick={() => setBadgeModalOpen(true)}
+                      className="text-green-600 hover:text-green-800 text-xs font-medium underline"
+                    >
+                      View all badges
+                    </button>
+                  </div>
+                </div>
               </div>
               {/* Bio */}
               {profile.bio && (
@@ -309,6 +331,7 @@ const PublicProfile = () => {
           </div>
         )}
 
+
         {/* User's Campaigns */}
         <div className="max-w-5xl mx-auto mt-10">
           <h2 className="text-xl font-bold text-green-800 mb-4">Campaigns by {profile.firstName}</h2>
@@ -333,6 +356,15 @@ const PublicProfile = () => {
           )}
         </div>
       </div>
+      
+      {/* Badge Modal */}
+      <BadgeModal 
+        isOpen={badgeModalOpen}
+        onClose={() => setBadgeModalOpen(false)}
+        userId={userId}
+        isOwnProfile={false}
+      />
+      
       {!isAdmin && <Footer />}
     </>
   );

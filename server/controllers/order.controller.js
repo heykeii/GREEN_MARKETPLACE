@@ -4,6 +4,7 @@ import Product from '../models/products.model.js';
 import SellerApplication from '../models/seller.model.js';
 import PaymentReceipt from '../models/paymentReceipt.model.js';
 import { NotificationService } from '../utils/notificationService.js';
+import { BadgeService } from '../utils/badgeService.js';
 
 // Create a new order from cart
 export const createOrder = async (req, res) => {
@@ -432,6 +433,20 @@ export const updateOrderStatus = async (req, res) => {
         } catch (notificationError) {
             console.error('Failed to send notification:', notificationError);
             // Don't fail the status update if notification fails
+        }
+
+        // Track purchase count and check for badges when order is completed
+        if (status === 'completed' && oldStatus !== 'completed') {
+            try {
+                // Calculate total quantity of items purchased
+                const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                
+                // Update purchase count and check for badges
+                await BadgeService.updatePurchaseCount(order.customer._id, totalQuantity);
+            } catch (badgeError) {
+                console.error('Failed to update purchase count and check badges:', badgeError);
+                // Don't fail the status update if badge tracking fails
+            }
         }
 
         res.json({

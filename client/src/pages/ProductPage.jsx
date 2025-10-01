@@ -536,6 +536,34 @@ const ProductPage = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Carbon Footprint Display */}
+                      {product.carbonFootprint && product.carbonFootprint.hasCalculation && (
+                        <div className="group relative">
+                          <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 via-cyan-50 to-teal-50 px-4 py-3 rounded-xl border border-blue-200/60 shadow-lg hover:shadow-xl transition-all duration-500 backdrop-blur-sm">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                              <span className="relative text-blue-600 text-base drop-shadow-sm">🌍</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-semibold text-blue-800">Carbon Footprint</span>
+                              <span className="text-xs text-blue-600">
+                                {product.carbonFootprint.carbonFootprintKg} kg CO₂
+                              </span>
+                            </div>
+                            {product.carbonFootprint.co2SavingsKg > 0 && (
+                              <div className="ml-auto">
+                                <div className="text-xs text-green-600 font-semibold">
+                                  Saves {product.carbonFootprint.co2SavingsKg.toFixed(1)} kg CO₂
+                                </div>
+                                <div className="text-xs text-green-500">
+                                  vs. conventional
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {/* Seller Avatar & Link */}
                       {seller && (
                         <div className="flex items-center gap-2">
@@ -718,6 +746,36 @@ const ProductPage = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Carbon Footprint Card */}
+                  {product.carbonFootprint && product.carbonFootprint.hasCalculation && (
+                    <div className="group relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 via-cyan-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 rounded-2xl border border-blue-200/60 shadow-lg hover:shadow-xl transition-all duration-500">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <span className="relative text-blue-600 text-2xl drop-shadow-sm">🌍</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-900 text-lg">Carbon Footprint</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {product.carbonFootprint.carbonFootprintKg} kg CO₂
+                            {product.carbonFootprint.equivalentTrees > 0 && (
+                              <span className="ml-2 text-green-600">
+                                (≈{product.carbonFootprint.equivalentTrees} trees)
+                              </span>
+                            )}
+                          </p>
+                          {product.carbonFootprint.co2SavingsKg > 0 && (
+                            <p className="text-sm text-green-600 font-semibold mt-1">
+                              Saves {product.carbonFootprint.co2SavingsKg.toFixed(1)} kg CO₂ vs. conventional
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="group relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500">

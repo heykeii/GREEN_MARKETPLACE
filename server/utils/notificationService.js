@@ -266,4 +266,22 @@ export class NotificationService {
       'medium'
     );
   }
+
+  // Badge notifications
+  static async notifyBadgeEarned(userId, badges) {
+    if (!badges || badges.length === 0) return;
+
+    const badgeNames = badges.map(badge => badge.name).join(', ');
+    const badgeCount = badges.length;
+    
+    await createNotification(
+      userId,
+      'badge_earned',
+      `🏆 New Badge${badgeCount > 1 ? 's' : ''} Earned!`,
+      `Congratulations! You've earned ${badgeCount > 1 ? 'badges' : 'a badge'}: ${badgeNames}`,
+      { badges: badges },
+      `/profile`,
+      'high'
+    );
+  }
 }

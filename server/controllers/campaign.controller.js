@@ -2,6 +2,7 @@ import Campaign from "../models/campaign.model.js";
 import User from "../models/user.model.js";
 import cloudinary from "../utils/cloudinary.js";
 import { NotificationService } from "../utils/notificationService.js";
+import { BadgeService } from "../utils/badgeService.js";
 
 // Create campaign (pending admin verification)
 const createCampaign = async (req, res) => {
@@ -532,6 +533,16 @@ const joinCampaign = async (req, res) => {
     campaign.progress = campaign.participants.length;
 
     await campaign.save();
+
+    // Track campaign participation and check for badges when user joins
+    if (!isParticipant) {
+      try {
+        await BadgeService.updateCampaignParticipation(userId);
+      } catch (badgeError) {
+        console.error('Failed to update campaign participation and check badges:', badgeError);
+        // Don't fail the campaign join if badge tracking fails
+      }
+    }
 
     res.json({
       success: true,
