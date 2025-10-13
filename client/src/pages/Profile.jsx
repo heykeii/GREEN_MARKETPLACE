@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import noProfile from "@/assets/no_profile.jpg";
+// Using consistent default avatar from public folder
 import axios from "axios";
 import { toast } from '@/utils/toast';
 import Navbar from "@/components/Navbar";
@@ -384,10 +384,10 @@ const Profile = () => {
                     <div className="relative group">
                       <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 p-1 shadow-xl">
                         <img
-                          src={user.avatar || noProfile}
+                          src={user.avatar || '/default-avatar.svg'}
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = noProfile;
+                            e.target.src = '/default-avatar.svg';
                           }}
                           alt="avatar"
                           className="w-full h-full rounded-full object-cover bg-white"

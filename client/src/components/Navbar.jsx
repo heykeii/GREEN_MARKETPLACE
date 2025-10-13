@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import noProfile from "@/assets/no_profile.jpg";
+// Using consistent default avatar from public folder
 import { toast } from "react-toastify";
 import {
   DropdownMenu,
@@ -280,10 +280,10 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   <button className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
                     <div className="relative">
                       <img
-                        src={user.avatar || noProfile}
+                        src={user.avatar || '/default-avatar.svg'}
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = noProfile;
+                          e.target.src = '/default-avatar.svg';
                         }}
                         alt="avatar"
                         className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200 hover:border-emerald-300 transition-colors duration-200"
@@ -296,10 +296,10 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                   <DropdownMenuLabel className="font-semibold text-gray-800 text-base pb-3 border-b border-gray-100 mb-2 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-emerald-200">
                       <img
-                        src={user.avatar || noProfile}
+                        src={user.avatar || '/default-avatar.svg'}
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = noProfile;
+                          e.target.src = '/default-avatar.svg';
                         }}
                         alt="avatar"
                         className="w-full h-full object-cover"
@@ -419,8 +419,8 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
               {user && (
                 <div className="flex items-center gap-3 px-2">
                   <img
-                    src={user.avatar || noProfile}
-                    onError={(e) => { e.target.onerror = null; e.target.src = noProfile; }}
+                    src={user.avatar || '/default-avatar.svg'}
+                    onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.svg'; }}
                     alt="avatar"
                     className="w-8 h-8 rounded-full object-cover border"
                   />

@@ -81,7 +81,7 @@ const SuggestedFriends = () => {
         <div key={u._id} className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full overflow-hidden border">
-              <img src={u.avatar || '/default-avatar.png'} onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }} className="w-full h-full object-cover" />
+              <img src={u.avatar || '/default-avatar.svg'} onError={(e)=>{ e.currentTarget.src='/default-avatar.svg'; }} className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="font-medium text-gray-900 text-sm truncate">{`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}</p>
@@ -600,63 +600,8 @@ const Campaigns = () => {
 
       {/* Main Content - Instagram Layout */}
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 sm:gap-8 px-3 sm:px-4 py-4 sm:py-6">
-        {/* Left Sidebar - Stories & Quick Stats */}
+        {/* Left Sidebar */}
         <div className="hidden lg:block w-80 space-y-6">
-          {/* Campaign Stories */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Campaign Types</h3>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 rounded-xl hover:bg-green-50 cursor-pointer transition-colors">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                  <Lightbulb className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Awareness</p>
-                  <p className="text-sm text-gray-500">{stats.awarenessCampaigns} active</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50 cursor-pointer transition-colors">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center">
-                  <Store className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Promotional</p>
-                  <p className="text-sm text-gray-500">{stats.promotionalCampaigns} active</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-50 cursor-pointer transition-colors">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Community</p>
-                  <p className="text-sm text-gray-500">{stats.communityCampaigns} active</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Impact Stats</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Campaigns</span>
-                <span className="font-bold text-green-600">{stats.totalCampaigns}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Participants</span>
-                <span className="font-bold text-blue-600">{stats.totalParticipants}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Likes</span>
-                <span className="font-bold text-red-500">{stats.totalLikes}</span>
-              </div>
-            </div>
-          </div>
-
           {/* Create Campaign CTA */}
           {user && (
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white">

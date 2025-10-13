@@ -3,7 +3,6 @@ import Product from '../models/products.model.js';
 import cloudinary from '../utils/cloudinary.js';
 import { getIO } from '../utils/socket.js';
 import { processSustainabilityScoring } from '../utils/sustainabilityScoring.js';
-import { CarbonFootprintService } from '../utils/carbonFootprintService.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null, details = null) => {
@@ -151,39 +150,6 @@ export const createProduct = async (req, res) => {
       return errorResponse(res, 400, 'Failed to save product.', dbError.message, dbError.errors);
     }
 
-    // Calculate carbon footprint if carbon footprint data is provided
-    let carbonFootprintData = null;
-    if (req.body.carbonFootprintInput) {
-      try {
-        const { materials, weight, productionMethod: carbonProductionMethod } = req.body.carbonFootprintInput;
-        
-        if (materials && weight && carbonProductionMethod) {
-          console.log('Calculating carbon footprint for product:', newProduct._id);
-          
-          const carbonResult = await CarbonFootprintService.calculateCarbonFootprint({
-            materials,
-            weight,
-            productionMethod: carbonProductionMethod
-          });
-          
-          if (carbonResult.success) {
-            await CarbonFootprintService.saveCarbonFootprint(
-              newProduct._id,
-              carbonResult.data,
-              carbonResult.aiResponse,
-              carbonResult.prompt
-            );
-            
-            carbonFootprintData = carbonResult.data;
-            console.log('Carbon footprint calculated successfully:', carbonResult.data.carbonFootprintKg, 'kg CO2');
-          }
-        }
-      } catch (carbonError) {
-        console.error('Carbon footprint calculation failed:', carbonError.message);
-        // Continue with product creation but log the error
-        // Don't fail the entire product creation process
-      }
-    }
 
     // If validation exists and is invalid, include warning in response
     const validation = sustainabilityData?.validation;
@@ -192,8 +158,7 @@ export const createProduct = async (req, res) => {
       success: true,
       message: 'Product submitted successfully with images for admin approval.',
       product: newProduct,
-      ...(validation && validation.valid === false ? { sustainabilityValidation: validation } : {}),
-      ...(carbonFootprintData ? { carbonFootprint: carbonFootprintData } : {})
+      ...(validation && validation.valid === false ? { sustainabilityValidation: validation } : {})
     });
   } catch (error) {
     return errorResponse(res, 500, 'Failed to create product.', error.message);

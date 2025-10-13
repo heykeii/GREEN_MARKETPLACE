@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { joinConversation, onMessage, onMessagesSeen, onMessageSeen, emitTyping, markMessageAsSeen } from '@/lib/socket';
 import MessageStatus from '@/components/MessageStatus';
+import Avatar from '@/components/Avatar';
 import { FaShoppingCart, FaTimes, FaQuestion } from 'react-icons/fa';
 
 const ChatView = () => {
@@ -378,8 +379,8 @@ const ChatView = () => {
           <div className="px-3 sm:px-4 py-3 border-b bg-gradient-to-r from-white to-emerald-50 flex items-center gap-3">
             <div className="flex-shrink-0">
               <img
-                src={otherUser?.avatar || '/default-avatar.png'}
-                onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }}
+                src={otherUser?.avatar || '/default-avatar.svg'}
+                onError={(e)=>{ e.currentTarget.src='/default-avatar.svg'; }}
                 alt="avatar"
                 className="w-9 h-9 rounded-full border"
               />
@@ -409,7 +410,7 @@ const ChatView = () => {
               ) : (
                 messages.map((m) => {
                   const isMe = m.sender?._id === me?._id;
-                  const avatar = m.sender?.avatar || '/default-avatar.png';
+                  const avatar = m.sender?.avatar && m.sender.avatar !== 'null' && m.sender.avatar.trim() !== '' ? m.sender.avatar : '/default-avatar.svg';
                   const displayName = `${m.sender?.firstName || ''} ${m.sender?.lastName || ''}`.trim();
                   
                   // Create ref for intersection observer
@@ -429,9 +430,13 @@ const ChatView = () => {
                       className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'}`}
                     >
                       {!isMe && (
-                        <button onClick={()=>navigate(`/profile/${m.sender?._id}`)} title={displayName} className="mr-2">
-                          <img src={avatar} alt="avatar" onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }} className="w-8 h-8 rounded-full border" />
-                        </button>
+                        <Avatar 
+                          src={m.sender?.avatar} 
+                          alt="avatar" 
+                          className="w-8 h-8 rounded-full border mr-2"
+                          onClick={() => navigate(`/profile/${m.sender?._id}`)}
+                          title={displayName}
+                        />
                       )}
                       <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}> 
                         <div className={`text-[11px] mb-1 ${isMe ? 'text-emerald-700' : 'text-gray-500'}`}>{displayName || (isMe ? 'You' : 'User')}</div>
@@ -455,9 +460,13 @@ const ChatView = () => {
                         </div>
                       </div>
                       {isMe && (
-                        <button onClick={()=>navigate(`/profile/${m.sender?._id}`)} title={displayName} className="ml-2">
-                          <img src={avatar} alt="avatar" onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }} className="w-8 h-8 rounded-full border" />
-                        </button>
+                        <Avatar 
+                          src={m.sender?.avatar} 
+                          alt="avatar" 
+                          className="w-8 h-8 rounded-full border ml-2"
+                          onClick={() => navigate(`/profile/${m.sender?._id}`)}
+                          title={displayName}
+                        />
                       )}
                     </div>
                   );

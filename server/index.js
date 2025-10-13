@@ -26,7 +26,6 @@ import adminFeedbackRoutes from './routes/adminFeedback.route.js'
 import sustainabilityContentRoutes from './routes/sustainabilityContent.route.js'
 import certificationRoutes from './routes/certification.route.js'
 import badgeRoutes from './routes/badge.route.js'
-import carbonFootprintRoutes from './routes/carbonFootprint.route.js'
 import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import jwt from 'jsonwebtoken'
@@ -76,7 +75,6 @@ app.use("/api/v1/sustainability", sustainabilityContentRoutes);
 app.use("/api/v1/admin/sustainability", sustainabilityContentRoutes);
 app.use("/api/v1/certifications", certificationRoutes);
 app.use("/api/v1/badges", badgeRoutes);
-app.use("/api/v1/carbon-footprint", carbonFootprintRoutes);
 
 // Test route
 app.get("/api", (req, res) => {

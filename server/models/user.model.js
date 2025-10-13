@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
           },
           message: "Avatar must be a valid URL"
         }
-      }
+    }
       ,
     bio: {
         type: String,
@@ -181,6 +181,45 @@ const userSchema = new mongoose.Schema({
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
+});
+
+// Ensure badges field always has the expected object shape
+function getDefaultBadges() {
+    return {
+        shopper: { bronze: false, silver: false, gold: false },
+        campaigner: { bronze: false, silver: false, gold: false }
+    };
+}
+
+userSchema.pre('save', function(next) {
+    // Normalize badges field
+    const b = this.badges;
+    if (!b || typeof b !== 'object' || Array.isArray(b)) {
+        this.badges = getDefaultBadges();
+    } else {
+        if (!b.shopper || typeof b.shopper !== 'object' || Array.isArray(b.shopper)) {
+            b.shopper = { bronze: false, silver: false, gold: false };
+        } else {
+            b.shopper.bronze = Boolean(b.shopper.bronze);
+            b.shopper.silver = Boolean(b.shopper.silver);
+            b.shopper.gold = Boolean(b.shopper.gold);
+        }
+        if (!b.campaigner || typeof b.campaigner !== 'object' || Array.isArray(b.campaigner)) {
+            b.campaigner = { bronze: false, silver: false, gold: false };
+        } else {
+            b.campaigner.bronze = Boolean(b.campaigner.bronze);
+            b.campaigner.silver = Boolean(b.campaigner.silver);
+            b.campaigner.gold = Boolean(b.campaigner.gold);
+        }
+        this.badges = b;
+    }
+
+    // Normalize avatar field - ensure it's either a valid URL or null
+    if (this.avatar && (this.avatar === 'null' || this.avatar.trim() === '')) {
+        this.avatar = null;
+    }
+
+    next();
 });
 
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import noProfile from '@/assets/no_profile.jpg';
+// Using consistent default avatar from public folder
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -136,8 +136,8 @@ const PublicProfile = () => {
               <div className="relative group">
                 <div className="w-40 h-40 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 p-1 shadow-xl">
                   <img
-                    src={profile.avatar || noProfile}
-                    onError={e => { e.target.onerror = null; e.target.src = noProfile; }}
+                    src={profile.avatar || '/default-avatar.svg'}
+                    onError={e => { e.target.onerror = null; e.target.src = '/default-avatar.svg'; }}
                     alt="avatar"
                     className="w-full h-full rounded-full object-cover bg-white"
                   />

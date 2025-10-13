@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import noProfile from '@/assets/no_profile.jpg';
+// Using consistent default avatar from public folder
 
 const FollowersPage = () => {
   const [followers, setFollowers] = useState([]);
@@ -51,7 +51,7 @@ const FollowersPage = () => {
                 return (
                   <div key={u._id} className="flex items-center justify-between py-3 hover:bg-emerald-50 px-2 rounded">
                     <a href={`/profile/${u._id}`} className="flex items-center gap-3">
-                      <img src={u.avatar || noProfile} onError={(e)=>{e.currentTarget.src=noProfile}} className="w-10 h-10 rounded-full border" />
+                      <img src={u.avatar || '/default-avatar.svg'} onError={(e)=>{e.currentTarget.src='/default-avatar.svg'}} className="w-10 h-10 rounded-full border" />
                       <div className="text-emerald-800 font-medium truncate">{`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}</div>
                     </a>
                     <button

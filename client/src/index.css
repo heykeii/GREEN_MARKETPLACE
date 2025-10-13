@@ -141,5 +141,29 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Global pointer cursor for interactive elements on hover */
+  a:hover,
+  button:not([disabled]):hover,
+  [role="button"]:not([aria-disabled="true"]):hover,
+  input[type="button"]:not([disabled]):hover,
+  input[type="submit"]:not([disabled]):hover,
+  label[for]:hover,
+  summary:hover,
+  .link:hover,
+  .btn:hover {
+    cursor: pointer;
+  }
+
+  /* Disabled state cursors */
+  button[disabled],
+  [aria-disabled="true"],
+  input[disabled] {
+    cursor: not-allowed;
+  }
+}
+
+/* Utility: apply to any custom clickable text or wrappers */
+@layer utilities {
+  .clickable { cursor: pointer; }
 }
 

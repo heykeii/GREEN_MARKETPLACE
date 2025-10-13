@@ -10,7 +10,6 @@ import { FaSpinner, FaPlus, FaImage, FaTimes, FaArrowLeft } from 'react-icons/fa
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
-import CarbonFootprintInput from '@/components/CarbonFootprintInput';
 
 const CreateProduct = () => {
   const [form, setForm] = useState({
@@ -25,8 +24,7 @@ const CreateProduct = () => {
     tags: '',
     images: [],
     externalUrls: [{ platform: '', url: '' }],
-    variants: [],
-    carbonFootprintInput: null
+    variants: []
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -43,9 +41,7 @@ const CreateProduct = () => {
     }
   }, []);
 
-  const handleCarbonFootprintChange = useCallback((carbonData) => {
-    setForm(f => ({ ...f, carbonFootprintInput: carbonData }));
-  }, []);
+  
 
   const handleCreateProduct = async (e) => {
     e.preventDefault();
@@ -648,13 +644,7 @@ const CreateProduct = () => {
                       )}
                     </div>
 
-                    {/* Carbon Footprint Input Section */}
-                    <div className="col-span-full">
-                      <CarbonFootprintInput 
-                        onDataChange={handleCarbonFootprintChange}
-                        initialData={form.carbonFootprintInput}
-                      />
-                    </div>
+                    
                   </div>
                   <Button 
                     type="submit" 

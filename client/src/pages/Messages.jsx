@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '@/components/Avatar';
 
 const Messages = () => {
   const navigate = useNavigate();
@@ -62,7 +63,12 @@ const Messages = () => {
                 return (
                   <div key={conv._id} className="p-3 bg-white rounded shadow-sm flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <img src={other.avatar || '/default-avatar.png'} alt="avatar" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border" onError={(e)=>{ e.currentTarget.src='/default-avatar.png';}} />
+                      <Avatar 
+                        src={other.avatar} 
+                        alt="avatar" 
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border"
+                        onClick={() => navigate(`/profile/${other._id}`)}
+                      />
                       <div>
                         <div className="font-semibold text-sm sm:text-base truncate">{other.firstName} {other.lastName}</div>
                         <div className="text-xs sm:text-sm text-gray-600 line-clamp-1 flex items-center gap-2">

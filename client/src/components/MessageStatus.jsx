@@ -1,4 +1,5 @@
 import React from 'react';
+import Avatar from './Avatar';
 
 // Shows a subtle "Seen" indicator beneath the LAST read outgoing message only.
 // No check icons are used, per requirement.
@@ -17,10 +18,9 @@ const MessageStatus = ({ message, isOwnMessage, isLastReadOwnMessage, recipientA
 
   return (
     <div className="flex items-center justify-end mt-1 gap-2">
-      {recipientAvatar ? (
-        <img
+      {recipientAvatar && recipientAvatar !== 'null' && recipientAvatar.trim() !== '' ? (
+        <Avatar
           src={recipientAvatar}
-          onError={(e)=>{ e.currentTarget.src='/default-avatar.png'; }}
           alt="seen by"
           className="w-4 h-4 rounded-full border border-emerald-200"
         />

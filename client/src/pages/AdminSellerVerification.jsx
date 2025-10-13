@@ -6,7 +6,7 @@ import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, FileText, Clock, Users, Mail, User, Star, Filter, Search, ExternalLink, Eye, ChevronDown, ChevronUp } from 'lucide-react';
-import noProfile from '@/assets/no_profile.jpg';
+// Using consistent default avatar from public folder
 import AdminLayout from '@/components/AdminLayout';
 
 const AdminSellerVerification = () => {
@@ -502,11 +502,11 @@ const AdminSellerVerification = () => {
                       <div className="flex items-center gap-4">
                         <div className="relative">
                           <img
-                            src={application.user?.avatar || noProfile}
+                            src={application.user?.avatar || '/default-avatar.svg'}
                             alt="avatar"
                             className="w-16 h-16 rounded-2xl object-cover border-2 border-gray-100 cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-lg"
                             onClick={() => navigate(`/profile/${application.user?._id}`)}
-                            onError={e => { e.target.onerror = null; e.target.src = noProfile; }}
+                            onError={e => { e.target.onerror = null; e.target.src = '/default-avatar.svg'; }}
                             title="View Profile"
                           />
                           {application.status === 'approved' && (
