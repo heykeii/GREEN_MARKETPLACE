@@ -80,8 +80,7 @@ const CreateProduct = () => {
       // Add variants
       const validVariants = form.variants.filter(variant => 
         variant.name.trim() && 
-        variant.price && 
-        variant.quantity !== ''
+        variant.price
       );
       if (validVariants.length > 0) {
         formData.append('variants', JSON.stringify(validVariants));
@@ -118,7 +117,6 @@ const CreateProduct = () => {
       variants: [...f.variants, {
         name: '',
         price: '',
-        quantity: '',
         sku: '',
         attributes: {},
         images: [],
@@ -568,17 +566,7 @@ const CreateProduct = () => {
                                   />
                                 </div>
                                 
-                                <div>
-                                  <Label className="text-xs font-medium text-gray-600">Quantity *</Label>
-                                  <Input
-                                    type="number"
-                                    placeholder="0"
-                                    value={variant.quantity}
-                                    onChange={(e) => updateVariant(index, 'quantity', e.target.value)}
-                                    min="0"
-                                    className="w-full"
-                                  />
-                                </div>
+                                
                               </div>
                               
                               {/* Variant Attributes */}

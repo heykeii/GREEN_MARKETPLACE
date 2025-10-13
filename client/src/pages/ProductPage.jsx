@@ -52,6 +52,7 @@ const ProductPage = () => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -85,6 +86,9 @@ const ProductPage = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/view/${productId}`);
       setProduct(response.data.product);
+      // Default select first variant if available
+      const variants = response.data?.product?.variants || [];
+      setSelectedVariantIndex(variants.length > 0 ? 0 : null);
       // fetch seller basic for avatar link if present
       if (response.data?.product?.seller) {
         try {
@@ -128,9 +132,21 @@ const ProductPage = () => {
 
     setCartLoading(true);
     try {
+      const variantPayload = (() => {
+        if (!Array.isArray(product.variants) || product.variants.length === 0 || selectedVariantIndex === null) return undefined;
+        const v = product.variants[selectedVariantIndex];
+        return {
+          name: v?.name,
+          sku: v?.sku,
+          attributes: v?.attributes || {},
+          price: typeof v?.price === 'number' ? v.price : parseFloat(v?.price || 0)
+        };
+      })();
+
       await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/cart/add`, {
         productId: product._id,
-        quantity: quantity
+        quantity: quantity,
+        variant: variantPayload
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -402,6 +418,17 @@ const ProductPage = () => {
     );
   }
 
+  // Compute effective price depending on selected variant
+  const effectivePrice = (() => {
+    if (!product) return 0;
+    if (Array.isArray(product.variants) && product.variants.length > 0 && selectedVariantIndex !== null) {
+      const v = product.variants[selectedVariantIndex];
+      const priceNum = typeof v?.price === 'number' ? v.price : parseFloat(v?.price || product.price);
+      return isNaN(priceNum) ? product.price : priceNum;
+    }
+    return product.price;
+  })();
+
   return (
     <>
       <Navbar />
@@ -578,7 +605,7 @@ const ProductPage = () => {
 
                 {/* Price */}
                 <div className="flex items-baseline gap-2 sm:gap-3">
-                  <span className="text-3xl sm:text-4xl font-bold text-emerald-600">₱{product.price.toLocaleString()}</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-emerald-600">₱{Number(effectivePrice).toLocaleString()}</span>
                   <span className="text-sm sm:text-lg text-gray-500">per unit</span>
                 </div>
 
@@ -594,6 +621,38 @@ const ProductPage = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Variant Selector */}
+              {Array.isArray(product.variants) && product.variants.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Choose a Variant</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((variant, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedVariantIndex(index)}
+                        className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
+                          selectedVariantIndex === index
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-white border-gray-300 text-gray-800 hover:border-emerald-300'
+                        }`}
+                        title={variant?.sku || ''}
+                      >
+                        {variant?.name || `Variant ${index + 1}`}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedVariantIndex !== null && product.variants[selectedVariantIndex]?.attributes && (
+                    <div className="text-sm text-gray-600">
+                      {Object.entries(product.variants[selectedVariantIndex].attributes).map(([k, v]) => (
+                        <span key={k} className="mr-3">
+                          <strong className="text-gray-700">{k}:</strong> {String(v)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Description */}
               <div className="space-y-4">
@@ -682,16 +741,85 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* Sustainability Features */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <FaLeaf className="text-white text-sm" />
+              {/* AI-Powered Eco Assessment */}
+              {product.ecoAssessment && product.ecoAssessment.rating && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <FaLeaf className="text-white text-sm" />
+                    </div>
+                    <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent">Sustainability Features</h3>
                   </div>
-                  <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent">Sustainability Features</h3>
+
+                  {/* Rating Card */}
+                  <div className="bg-gradient-to-br from-white to-emerald-50/30 rounded-2xl border border-emerald-200/60 p-5 shadow-md">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md ${
+                        product.ecoAssessment.rating === 'High' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
+                        product.ecoAssessment.rating === 'Moderate' ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
+                        'bg-gradient-to-br from-orange-400 to-red-500'
+                      }`}>
+                        <FaLeaf className="text-white text-lg" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900">{product.ecoAssessment.rating} Sustainability</h4>
+                        <p className="text-xs text-gray-600">
+                          {product.ecoAssessment.rating === 'High' ? 'Fair environmental impact' :
+                           product.ecoAssessment.rating === 'Moderate' ? 'Good environmental consideration' :
+                           'Environmental impact'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-700 text-sm leading-relaxed mb-4">{product.ecoAssessment.summary}</p>
+
+                    {/* Strengths */}
+                    {product.ecoAssessment.strengths && product.ecoAssessment.strengths.length > 0 && (
+                      <div className="mb-3">
+                        <h5 className="font-semibold text-emerald-800 text-sm mb-2 flex items-center gap-2">
+                          <span className="text-green-600">✓</span> Strengths
+                        </h5>
+                        <ul className="space-y-1.5">
+                          {product.ecoAssessment.strengths.map((strength, index) => (
+                            <li key={index} className="text-sm text-gray-700 flex items-start gap-2 pl-1">
+                              <span className="text-green-500 mt-0.5">•</span>
+                              <span>{strength}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {product.ecoAssessment.recommendations && product.ecoAssessment.recommendations.length > 0 && (
+                      <div>
+                        <h5 className="font-semibold text-blue-800 text-sm mb-2 flex items-center gap-2">
+                          <span className="text-blue-600">💡</span> Recommendations
+                        </h5>
+                        <ul className="space-y-1.5">
+                          {product.ecoAssessment.recommendations.map((rec, index) => (
+                            <li key={index} className="text-sm text-gray-700 flex items-start gap-2 pl-1">
+                              <span className="text-blue-500 mt-0.5">•</span>
+                              <span>{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {typeof product.sustainabilityScore === 'number' && product.sustainabilityScore > 0 && (
+              )}
+
+              {/* Sustainability Features (Legacy) */}
+              {typeof product.sustainabilityScore === 'number' && product.sustainabilityScore > 0 && !product.ecoAssessment?.rating && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <FaLeaf className="text-white text-sm" />
+                    </div>
+                    <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent">Sustainability Features</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="group relative overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                       <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500">
@@ -719,25 +847,23 @@ const ProductPage = () => {
                         </div>
                       </div>
                     </div>
-                  )}
 
-                  
-
-                  <div className="group relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <FaRecycle className="relative text-emerald-600 text-2xl drop-shadow-sm" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900 text-lg">Recyclable</p>
-                        <p className="text-sm text-gray-600 mt-1">Made with recyclable materials</p>
+                    <div className="group relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="relative flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-500">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <FaRecycle className="relative text-emerald-600 text-2xl drop-shadow-sm" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 text-lg">Recyclable</p>
+                          <p className="text-sm text-gray-600 mt-1">Made with recyclable materials</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Add to Cart Section */}
               {isOwner ? (

@@ -15,6 +15,13 @@ const orderSchema = new mongoose.Schema({
             ref: 'Product',
             required: true
         },
+        // Snapshot of selected variant at order time (optional)
+        variant: {
+            name: { type: String, trim: true },
+            sku: { type: String, trim: true },
+            attributes: { type: Map, of: String },
+            price: { type: Number, min: 0 }
+        },
         quantity: {
             type: Number,
             required: true,
@@ -51,6 +58,17 @@ const orderSchema = new mongoose.Schema({
     subtotal: {
         type: Number,
         required: true
+    },
+    shippingFee: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    shippingDetails: {
+        estimatedDays: { type: Number },
+        courierType: { type: String },
+        distance: { type: String },
+        explanation: { type: String }
     },
     totalAmount: {
         type: Number,

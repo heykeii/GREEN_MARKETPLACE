@@ -3,6 +3,7 @@ import Product from '../models/products.model.js';
 import cloudinary from '../utils/cloudinary.js';
 import { getIO } from '../utils/socket.js';
 import { processSustainabilityScoring } from '../utils/sustainabilityScoring.js';
+import EcoAssessmentService from '../services/ecoAssessment.service.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null, details = null) => {
@@ -111,7 +112,6 @@ export const createProduct = async (req, res) => {
         processedVariants = variantsData.map(variant => ({
           name: variant.name,
           price: parseFloat(variant.price),
-          quantity: parseInt(variant.quantity),
           sku: variant.sku || '',
           attributes: variant.attributes || {},
           images: variant.images || [],
@@ -149,6 +149,37 @@ export const createProduct = async (req, res) => {
     } catch (dbError) {
       return errorResponse(res, 400, 'Failed to save product.', dbError.message, dbError.errors);
     }
+
+    // Perform AI-powered eco assessment (async, don't block response)
+    EcoAssessmentService.assessProduct({
+      name,
+      description,
+      materials: sustainabilityData.structuredMaterials,
+      productionMethod,
+      isRecyclable: materialsUsed.some(m => 
+        typeof m === 'string' && (m.toLowerCase().includes('recyclable') || m.toLowerCase().includes('recycled'))
+      ),
+      packaging: description.toLowerCase().includes('packaging') ? 
+        description.substring(description.toLowerCase().indexOf('packaging'), description.toLowerCase().indexOf('packaging') + 100) : 
+        'Standard packaging'
+    })
+    .then(async (assessment) => {
+      if (assessment.success) {
+        newProduct.ecoAssessment = {
+          rating: assessment.rating,
+          summary: assessment.summary,
+          strengths: assessment.strengths,
+          recommendations: assessment.recommendations,
+          assessedAt: assessment.assessedAt
+        };
+        await newProduct.save();
+        console.log(`Eco assessment completed for product ${newProduct._id}: ${assessment.rating}`);
+      }
+    })
+    .catch(error => {
+      console.error('Eco assessment error:', error);
+      // Don't fail product creation if eco assessment fails
+    });
 
 
     // If validation exists and is invalid, include warning in response

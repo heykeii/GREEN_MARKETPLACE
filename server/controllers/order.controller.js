@@ -3,8 +3,10 @@ import Cart from '../models/cart.model.js';
 import Product from '../models/products.model.js';
 import SellerApplication from '../models/seller.model.js';
 import PaymentReceipt from '../models/paymentReceipt.model.js';
+import User from '../models/user.model.js';
 import { NotificationService } from '../utils/notificationService.js';
 import { BadgeService } from '../utils/badgeService.js';
+import ShippingService from '../services/shipping.service.js';
 
 // Create a new order from cart
 export const createOrder = async (req, res) => {
@@ -55,12 +57,51 @@ export const createOrder = async (req, res) => {
         // Calculate totals
         const orderItems = validItems.map(item => ({
             product: item.product._id,
+            // snapshot chosen variant; use variant.price if provided, else product price
+            variant: item.variant ? {
+                name: item.variant.name,
+                sku: item.variant.sku,
+                attributes: item.variant.attributes || undefined,
+                price: typeof item.variant.price === 'number' ? item.variant.price : undefined
+            } : undefined,
             quantity: item.quantity,
-            price: item.product.price
+            price: (typeof item?.variant?.price === 'number' ? item.variant.price : item.product.price)
         }));
 
         const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const totalAmount = subtotal; // Add shipping, taxes later if needed
+        
+        // Calculate shipping fee
+        let shippingFee = 0;
+        let shippingDetails = null;
+        try {
+            // Get seller location from first product
+            const firstProduct = validItems[0].product;
+            const seller = await User.findById(firstProduct.seller);
+            const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+            
+            const shippingEstimate = await ShippingService.estimateShippingFee({
+                sellerLocation,
+                buyerCity: shippingAddress.city,
+                buyerProvince: shippingAddress.province,
+                totalWeight: validItems.reduce((sum, item) => sum + item.quantity, 0) * 0.5 // Estimate 0.5kg per item
+            });
+            
+            if (shippingEstimate.success) {
+                shippingFee = shippingEstimate.shippingFee;
+                shippingDetails = {
+                    estimatedDays: shippingEstimate.estimatedDays,
+                    courierType: shippingEstimate.courierType,
+                    distance: shippingEstimate.distance,
+                    explanation: shippingEstimate.explanation
+                };
+            }
+        } catch (shippingError) {
+            console.error('Shipping calculation error:', shippingError);
+            // Use default shipping fee if calculation fails
+            shippingFee = 50;
+        }
+
+        const totalAmount = subtotal + shippingFee;
 
         // Create order
         const order = new Order({
@@ -69,6 +110,8 @@ export const createOrder = async (req, res) => {
             paymentMethod,
             paymentStatus: paymentMethod === 'cod' ? 'pending' : (req.body.verifiedReceiptData ? 'paid' : 'pending'),
             subtotal,
+            shippingFee,
+            shippingDetails,
             totalAmount,
             shippingAddress,
             notes: notes || ''
@@ -199,11 +242,52 @@ export const createDirectOrder = async (req, res) => {
             if (p.quantity < qty) {
                 return res.status(400).json({ success: false, message: `Insufficient stock for ${p.name}` });
             }
-            orderItems.push({ product: p._id, quantity: qty, price: p.price });
+            const variant = i.variant || null;
+            orderItems.push({ 
+                product: p._id, 
+                variant: variant ? {
+                    name: variant.name,
+                    sku: variant.sku,
+                    attributes: variant.attributes || undefined,
+                    price: typeof variant.price === 'number' ? variant.price : undefined
+                } : undefined,
+                quantity: qty, 
+                price: (typeof variant?.price === 'number' ? variant.price : p.price) 
+            });
         }
 
         const subtotal = orderItems.reduce((sum, it) => sum + it.price * it.quantity, 0);
-        const totalAmount = subtotal;
+        
+        // Calculate shipping fee
+        let shippingFee = 0;
+        let shippingDetails = null;
+        try {
+            const firstProduct = products[0];
+            const seller = await User.findById(firstProduct.seller);
+            const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+            
+            const shippingEstimate = await ShippingService.estimateShippingFee({
+                sellerLocation,
+                buyerCity: shippingAddress.city,
+                buyerProvince: shippingAddress.province,
+                totalWeight: orderItems.reduce((sum, it) => sum + it.quantity, 0) * 0.5
+            });
+            
+            if (shippingEstimate.success) {
+                shippingFee = shippingEstimate.shippingFee;
+                shippingDetails = {
+                    estimatedDays: shippingEstimate.estimatedDays,
+                    courierType: shippingEstimate.courierType,
+                    distance: shippingEstimate.distance,
+                    explanation: shippingEstimate.explanation
+                };
+            }
+        } catch (shippingError) {
+            console.error('Shipping calculation error:', shippingError);
+            shippingFee = 50;
+        }
+
+        const totalAmount = subtotal + shippingFee;
 
         const order = new Order({
             customer: userId,
@@ -211,6 +295,8 @@ export const createDirectOrder = async (req, res) => {
             paymentMethod,
             paymentStatus: paymentMethod === 'cod' ? 'pending' : (req.body.verifiedReceiptData ? 'paid' : 'pending'),
             subtotal,
+            shippingFee,
+            shippingDetails,
             totalAmount,
             shippingAddress,
             notes: notes || ''
@@ -641,6 +727,67 @@ export const cancelOrder = async (req, res) => {
     }
 };
 
+// Calculate shipping fee before order placement
+export const calculateShipping = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { shippingAddress, items } = req.body;
+
+        if (!shippingAddress || !shippingAddress.city || !shippingAddress.province) {
+            return res.status(400).json({
+                success: false,
+                message: 'Shipping address with city and province is required'
+            });
+        }
+
+        let productIds = [];
+        let totalItems = 0;
+
+        if (items && Array.isArray(items)) {
+            // Direct checkout
+            productIds = items.map(i => i.productId);
+            totalItems = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+        } else {
+            // Cart checkout
+            const cart = await Cart.findOne({ user: userId }).populate('items.product');
+            if (!cart || cart.items.length === 0) {
+                return res.status(400).json({ success: false, message: 'Cart is empty' });
+            }
+            productIds = cart.items.map(i => i.product._id);
+            totalItems = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+
+        // Get seller location from first product
+        const firstProduct = await Product.findById(productIds[0]).populate('seller');
+        if (!firstProduct) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        const seller = await User.findById(firstProduct.seller);
+        const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+
+        const shippingEstimate = await ShippingService.estimateShippingFee({
+            sellerLocation,
+            buyerCity: shippingAddress.city,
+            buyerProvince: shippingAddress.province,
+            totalWeight: totalItems * 0.5 // 0.5kg per item estimate
+        });
+
+        res.json({
+            success: true,
+            shipping: shippingEstimate
+        });
+
+    } catch (error) {
+        console.error('Calculate shipping error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to calculate shipping',
+            error: error.message
+        });
+    }
+};
+
 // Verify receipt data before order creation (pre-order validation)
 export const verifyReceiptBeforeOrder = async (req, res) => {
     try {
@@ -732,7 +879,29 @@ export const verifyReceiptBeforeOrder = async (req, res) => {
         }
 
         subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        totalAmount = subtotal;
+        
+        // Calculate shipping fee
+        let shippingFee = 0;
+        try {
+            const seller = await User.findById(firstProductSellerId);
+            const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+            
+            const shippingEstimate = await ShippingService.estimateShippingFee({
+                sellerLocation,
+                buyerCity: shippingAddress.city,
+                buyerProvince: shippingAddress.province,
+                totalWeight: orderItems.reduce((sum, item) => sum + item.quantity, 0) * 0.5
+            });
+            
+            if (shippingEstimate.success) {
+                shippingFee = shippingEstimate.shippingFee;
+            }
+        } catch (shippingError) {
+            console.error('Shipping calculation error in verify-receipt:', shippingError);
+            shippingFee = 50; // Default fallback
+        }
+
+        totalAmount = subtotal + shippingFee;
 
         // Get seller's GCash details
         const sellerApplication = await SellerApplication.findOne({ user: firstProductSellerId });

@@ -315,6 +315,11 @@ const OrdersPage = () => {
                                   <h4 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-2">
                                     {item.product?.name}
                                   </h4>
+                                  {item.variant?.name && (
+                                    <p className="text-xs text-emerald-700">
+                                      Variant: <span className="font-medium">{item.variant.name}</span>
+                                    </p>
+                                  )}
                                   <p className="text-xs text-slate-500">
                                     ₱{item.price.toFixed(2)} each
                                   </p>

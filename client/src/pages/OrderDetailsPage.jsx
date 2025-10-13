@@ -309,6 +309,9 @@ const OrderDetailsPage = () => {
                           {item.product?.name}
                         </h3>
                         <div className="text-gray-600 mt-1">
+                          {item.variant?.name && (
+                            <p className="text-emerald-700">Variant: <span className="font-medium">{item.variant.name}</span></p>
+                          )}
                           <p>Quantity: {item.quantity}</p>
                           <p>Price: ₱{item.price.toFixed(2)} each</p>
                         </div>
@@ -468,7 +471,16 @@ const OrderDetailsPage = () => {
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping:</span>
-                    <span>Free</span>
+                    <div className="text-right">
+                      <span className={order.shippingFee > 0 ? 'text-emerald-700 font-medium' : ''}>
+                        ₱{(order.shippingFee || 0).toFixed(2)}
+                      </span>
+                      {order.shippingDetails?.estimatedDays && (
+                        <p className="text-xs text-gray-500">
+                          {order.shippingDetails.estimatedDays} days · {order.shippingDetails.courierType}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-xl font-bold text-emerald-800">

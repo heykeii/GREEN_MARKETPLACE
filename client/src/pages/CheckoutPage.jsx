@@ -22,6 +22,9 @@ const CheckoutPage = () => {
   const [sellerGcashDetails, setSellerGcashDetails] = useState(null);
   const [receiptVerification, setReceiptVerification] = useState(null);
   const [receiptExtracted, setReceiptExtracted] = useState(null);
+  const [shippingFee, setShippingFee] = useState(0);
+  const [shippingDetails, setShippingDetails] = useState(null);
+  const [loadingShipping, setLoadingShipping] = useState(false);
   
   // Address state
   const [address, setAddress] = useState({
@@ -119,6 +122,46 @@ const CheckoutPage = () => {
       });
     }
   }, []);
+
+  // Calculate shipping when address changes
+  useEffect(() => {
+    const calculateShipping = async () => {
+      if (!address.city || !address.province || cart.length === 0) {
+        setShippingFee(0);
+        setShippingDetails(null);
+        return;
+      }
+
+      setLoadingShipping(true);
+      try {
+        const token = localStorage.getItem('token');
+        const directCheckout = isDirect ? JSON.parse(localStorage.getItem('directCheckout') || 'null') : null;
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/v1/orders/calculate-shipping`,
+          {
+            shippingAddress: address,
+            items: isDirect && directCheckout ? directCheckout.items : undefined
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.data.success) {
+          setShippingFee(response.data.shipping.shippingFee);
+          setShippingDetails(response.data.shipping);
+        }
+      } catch (error) {
+        console.error('Failed to calculate shipping:', error);
+        setShippingFee(50); // Default fallback
+      } finally {
+        setLoadingShipping(false);
+      }
+    };
+
+    // Debounce the calculation
+    const timer = setTimeout(calculateShipping, 800);
+    return () => clearTimeout(timer);
+  }, [address.city, address.province, cart, isDirect]);
 
   const validateAddress = () => {
     const required = ['fullName', 'phone', 'address', 'city', 'province', 'zipCode'];
@@ -400,13 +443,25 @@ const CheckoutPage = () => {
                       <span>₱{total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-600">
-                      <span>Shipping</span>
-                      <span>Free</span>
+                      <span className="flex items-center gap-2">
+                        Shipping
+                        {loadingShipping && <FaSpinner className="animate-spin text-xs" />}
+                      </span>
+                      <div className="text-right">
+                        <span className={shippingFee > 0 ? 'text-emerald-700 font-medium' : ''}>
+                          ₱{shippingFee.toFixed(2)}
+                        </span>
+                        {shippingDetails && (
+                          <p className="text-xs text-gray-500">
+                            {shippingDetails.estimatedDays} days · {shippingDetails.courierType}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg sm:text-xl font-bold text-emerald-800">
                       <span>Total</span>
-                      <span>₱{total.toFixed(2)}</span>
+                      <span>₱{(total + shippingFee).toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -641,7 +696,7 @@ const CheckoutPage = () => {
                                   <ul className="list-disc list-inside text-sm text-red-700 mt-2 space-y-1">
                                     {!receiptVerification.amountMatch && (
                                       <li>
-                                        Amount mismatch: expected ₱{total.toFixed(2)}{receiptExtracted?.amount ? `, found ₱${Number(receiptExtracted.amount).toFixed(2)}` : ''}
+                                        Amount mismatch: expected ₱{(total + shippingFee).toFixed(2)}{receiptExtracted?.amount ? `, found ₱${Number(receiptExtracted.amount).toFixed(2)}` : ''}
                                       </li>
                                     )}
                                     {!receiptVerification.receiverMatch && (
@@ -721,7 +776,7 @@ const CheckoutPage = () => {
                 disabled={loading || cart.length === 0 || (paymentMethod === 'gcash' && !gcashReceipt)}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg font-bold py-3 sm:py-4 rounded-xl shadow-lg transition-all duration-200"
               >
-                {loading ? 'Placing Order...' : `Place Order - ₱${total.toFixed(2)}`}
+                {loading ? 'Placing Order...' : `Place Order - ₱${(total + shippingFee).toFixed(2)}`}
               </Button>
             </div>
           </div>

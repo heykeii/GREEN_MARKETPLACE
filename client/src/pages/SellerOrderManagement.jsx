@@ -355,6 +355,9 @@ const SellerOrderManagement = () => {
                               <p className="font-medium text-sm text-emerald-800 truncate">
                                 {item.product?.name}
                               </p>
+                              {item.variant?.name && (
+                                <p className="text-xs text-emerald-700 truncate">Variant: <span className="font-medium">{item.variant.name}</span></p>
+                              )}
                               <p className="text-xs text-gray-500">
                                 Qty: {item.quantity} × ₱{item.price.toFixed(2)}
                               </p>

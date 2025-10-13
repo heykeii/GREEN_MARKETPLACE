@@ -23,14 +23,15 @@ export const getCart = async (req, res) => {
 
 export const addToCart = async (req, res) => {
   const userId = req.user._id;
-  const { productId, quantity } = req.body;
+  const { productId, quantity, variant } = req.body; // variant: { name, sku, attributes, price }
   let cart = await Cart.findOne({ user: userId });
   if (!cart) cart = new Cart({ user: userId, items: [] });
-  const idx = cart.items.findIndex(i => i.product.toString() === productId);
+  // Consider variant when matching items in cart
+  const idx = cart.items.findIndex(i => i.product.toString() === productId && JSON.stringify(i.variant || {}) === JSON.stringify(variant || {}));
   if (idx > -1) {
     cart.items[idx].quantity += quantity;
   } else {
-    cart.items.push({ product: productId, quantity });
+    cart.items.push({ product: productId, quantity, variant });
   }
   await cart.save();
   res.json({ success: true });

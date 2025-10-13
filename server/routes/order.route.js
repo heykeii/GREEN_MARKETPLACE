@@ -8,6 +8,7 @@ import {
     getAllOrders,
     getSellerOrders,
     cancelOrder,
+    calculateShipping,
     verifyReceiptBeforeOrder
 } from '../controllers/order.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
@@ -18,6 +19,7 @@ const router = express.Router();
 // Customer routes
 router.post('/create', protect, createOrder);
 router.post('/create-direct', protect, createDirectOrder);
+router.post('/calculate-shipping', protect, calculateShipping);
 router.post('/verify-receipt', protect, verifyReceiptBeforeOrder);
 router.get('/my-orders', protect, getUserOrders);
 router.get('/:orderId', protect, getOrderById);

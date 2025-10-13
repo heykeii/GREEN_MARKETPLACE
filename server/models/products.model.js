@@ -88,6 +88,31 @@ const productSchema = new mongoose.Schema({
     details: { type: String } // JSON string of the calculation breakdown
   },
 
+  // AI-Powered Eco Assessment
+  ecoAssessment: {
+    rating: {
+      type: String,
+      enum: ['Low', 'Moderate', 'High'],
+      default: null
+    },
+    summary: {
+      type: String,
+      default: ''
+    },
+    strengths: {
+      type: [String],
+      default: []
+    },
+    recommendations: {
+      type: [String],
+      default: []
+    },
+    assessedAt: {
+      type: Date,
+      default: null
+    }
+  },
+
   seller: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -119,11 +144,6 @@ const productSchema = new mongoose.Schema({
       trim: true
     },
     price: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    quantity: {
       type: Number,
       required: true,
       min: 0
