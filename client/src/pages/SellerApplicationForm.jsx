@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/utils/toast';
-import { CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, AlertCircle, Upload, FileText, Building2, User, Smartphone, QrCode } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const SellerApplicationForm = () => {
@@ -23,7 +23,8 @@ const SellerApplicationForm = () => {
   const [gcashQR, setGcashQR] = useState(null);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading, verified, pending, rejected, none
+  const [status, setStatus] = useState('loading');
+  const [errors, setErrors] = useState({});
 
   const formatGcash = (val) => {
     let digits = String(val || '').replace(/\D/g, '');
@@ -36,7 +37,6 @@ const SellerApplicationForm = () => {
     return '+639' + digits;
   };
 
-
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
     if (!storedUser) {
@@ -46,7 +46,6 @@ const SellerApplicationForm = () => {
     
     setUser(storedUser);
     
-    // Check seller status
     if (storedUser.sellerStatus === 'verified') {
       setStatus('verified');
     } else if (storedUser.sellerStatus === 'pending') {
@@ -58,19 +57,69 @@ const SellerApplicationForm = () => {
     }
   }, []);
 
-  const handleFileChange = (e, setter) => {
-    setter(e.target.files[0]);
+  const handleFileChange = (e, setter, fieldName) => {
+    const file = e.target.files[0];
+    setter(file);
+    
+    // Clear error for this field when a file is selected
+    if (file && errors[fieldName]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!govID1 || !govID2) {
-      toast.error('Please upload both government IDs.');
-      return;
-    }
+    
+    // Clear previous errors
+    setErrors({});
+    
+    // Validate required fields
+    const newErrors = {};
     
     if (!tinDocument) {
-      toast.error('Please upload your TIN document.');
+      newErrors.tinDocument = 'Please select a file.';
+    }
+    
+    if (!govID1) {
+      newErrors.govID1 = 'Please select a file.';
+    }
+    
+    if (!govID2) {
+      newErrors.govID2 = 'Please select a file.';
+    }
+    
+    if (!proofOfAddress) {
+      newErrors.proofOfAddress = 'Please select a file.';
+    }
+    
+    if (!bankProof) {
+      newErrors.bankProof = 'Please select a file.';
+    }
+    
+    if (!gcashQR) {
+      newErrors.gcashQR = 'Please select a file.';
+    }
+    
+    if (sellerType === 'business') {
+      if (!dtiRegistration) {
+        newErrors.dtiRegistration = 'Please select a file.';
+      }
+      if (!businessPermit) {
+        newErrors.businessPermit = 'Please select a file.';
+      }
+      if (!birRegistration) {
+        newErrors.birRegistration = 'Please select a file.';
+      }
+    }
+    
+    // If there are validation errors, set them and return
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Please upload all required documents.');
       return;
     }
     
@@ -102,7 +151,6 @@ const SellerApplicationForm = () => {
         }
       );
       toast.success('Seller application submitted!');
-      // Update user status to pending
       const updatedUser = { ...user, sellerStatus: 'pending' };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -118,13 +166,48 @@ const SellerApplicationForm = () => {
     }
   };
 
-  // Show status messages instead of form
+  const FileUploadField = ({ id, label, onChange, required, icon: Icon, helpText, file, error }) => (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-green-600" />
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </Label>
+      <div className="relative">
+        <Input
+          id={id}
+          name={id}
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={onChange}
+          className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all"
+        />
+        {file && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+            <CheckCircle className="h-4 w-4" />
+            <span className="font-medium">{file.name}</span>
+          </div>
+        )}
+        {error && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+            <AlertCircle className="h-4 w-4" />
+            <span className="font-medium">{error}</span>
+          </div>
+        )}
+      </div>
+      {helpText && <p className="text-xs text-gray-500 mt-1 ml-1">{helpText}</p>}
+    </div>
+  );
+
   if (status === 'loading') {
     return (
       <>
         <Navbar/>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-200 border-t-green-600"></div>
+            <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-t-green-400 animate-ping"></div>
+          </div>
         </div>
       </>
     );
@@ -134,20 +217,23 @@ const SellerApplicationForm = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <Card className="w-full max-w-md text-center">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-600" />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4">
+          <Card className="w-full max-w-lg text-center shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="pt-12 pb-8 px-8">
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-400 rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                  <CheckCircle className="relative h-24 w-24 text-green-600" strokeWidth={1.5} />
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-green-800 mb-2">Already Verified!</h2>
-              <p className="text-gray-600 mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">Already Verified!</h2>
+              <p className="text-gray-600 mb-6 leading-relaxed text-base">
                 Congratulations! You are already a verified seller on Green Marketplace.
               </p>
-              <Badge className="bg-green-600 text-white px-4 py-2 text-lg">
+              <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg">
                 ✓ Verified Seller
               </Badge>
-              <div className="mt-6">
+              <div className="mt-8 pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
                   You can now start selling your products on our platform.
                 </p>
@@ -163,19 +249,28 @@ const SellerApplicationForm = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <Card className="w-full max-w-md text-center">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <Clock className="h-16 w-16 text-yellow-500" />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 p-4">
+          <Card className="w-full max-w-lg text-center shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="pt-12 pb-8 px-8">
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-yellow-400 rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                  <Clock className="relative h-24 w-24 text-yellow-600 animate-pulse" strokeWidth={1.5} />
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-yellow-800 mb-2">Application Pending</h2>
-              <p className="text-gray-600 mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">Application Pending</h2>
+              <p className="text-gray-600 mb-6 leading-relaxed text-base">
                 Your seller application is under review. We will notify you once it has been processed.
               </p>
-              <Badge className="bg-yellow-500 text-white px-4 py-2 text-lg">
+              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-6 py-3 text-base font-semibold shadow-lg">
+                <Clock className="inline h-4 w-4 mr-2" />
                 Pending Review
               </Badge>
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-500">
+                  This typically takes 1-3 business days.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -187,26 +282,29 @@ const SellerApplicationForm = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <Card className="w-full max-w-md text-center">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <XCircle className="h-16 w-16 text-red-600" />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 p-4">
+          <Card className="w-full max-w-lg text-center shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="pt-12 pb-8 px-8">
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-red-400 rounded-full blur-2xl opacity-40"></div>
+                  <XCircle className="relative h-24 w-24 text-red-600" strokeWidth={1.5} />
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-red-800 mb-2">Application Rejected</h2>
-              <p className="text-gray-600 mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">Application Rejected</h2>
+              <p className="text-gray-600 mb-6 leading-relaxed text-base">
                 Sorry, your seller application was rejected. Please review the requirements and try again.
               </p>
-              <Badge className="bg-red-600 text-white px-4 py-2 text-lg">
+              <Badge className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-3 text-base font-semibold shadow-lg mb-6">
                 Rejected
               </Badge>
               <div className="mt-6">
                 <Button
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow"
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-6 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105"
                   onClick={() => {
                     setStatus('none');
                     setSellerType('individual');
-                    setTin('');
+                    setTinDocument(null);
                     setGovID1(null);
                     setGovID2(null);
                     setProofOfAddress(null);
@@ -226,175 +324,242 @@ const SellerApplicationForm = () => {
     );
   }
 
-  // Show the application form for users with no seller status
   return (
     <>
       <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-6 w-6 text-green-600" />
-              Seller Verification Application
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label>Seller Type</Label>
-                <div className="flex gap-4 mt-2">
-                  <label>
-                    <input
-                      type="radio"
-                      name="sellerType"
-                      value="individual"
-                      checked={sellerType === 'individual'}
-                      onChange={() => setSellerType('individual')}
-                    />{' '}
-                    Individual
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="sellerType"
-                      value="business"
-                      checked={sellerType === 'business'}
-                      onChange={() => setSellerType('business')}
-                    />{' '}
-                    Business
-                  </label>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="tinDocument">TIN Document</Label>
-                <Input
-                  id="tinDocument"
-                  name="tinDocument"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={e => handleFileChange(e, setTinDocument)}
-                  required
-                />
-                <p className="text-sm text-gray-500 mt-1">Upload your TIN document (image or PDF)</p>
-              </div>
-              <div>
-                <Label htmlFor="govID1">Government ID 1</Label>
-                <Input
-                  id="govID1"
-                  name="govID1"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={e => handleFileChange(e, setGovID1)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="govID2">Government ID 2</Label>
-                <Input
-                  id="govID2"
-                  name="govID2"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={e => handleFileChange(e, setGovID2)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="proofOfAddress">Proof of Address</Label>
-                <Input
-                  id="proofOfAddress"
-                  name="proofOfAddress"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={e => handleFileChange(e, setProofOfAddress)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="bankProof">Bank Proof</Label>
-                <Input
-                  id="bankProof"
-                  name="bankProof"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={e => handleFileChange(e, setBankProof)}
-                  required
-                />
-              </div>
-              {/* GCash Information */}
-              <div>
-                <Label htmlFor="gcashNumber">GCash Number</Label>
-                <Input
-                  id="gcashNumber"
-                  name="gcashNumber"
-                  value={gcashNumber}
-                  onChange={e => setGcashNumber(formatGcash(e.target.value))}
-                  placeholder="+639XXXXXXXXX"
-                  inputMode="tel"
-                  pattern="^\+639\d{9}$"
-                  title="Use +639XXXXXXXXX (e.g., +639123456789)"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="gcashQR">GCash QR Code</Label>
-                <Input
-                  id="gcashQR"
-                  name="gcashQR"
-                  type="file"
-                  accept="image/*"
-                  onChange={e => handleFileChange(e, setGcashQR)}
-                  required
-                />
-                <p className="text-sm text-gray-500 mt-1">Upload a screenshot of your GCash QR code</p>
-              </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl mb-4 shadow-lg">
+              <AlertCircle className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Seller Verification</h1>
+            <p className="text-gray-600 text-lg">Complete your application to start selling on Green Marketplace</p>
+          </div>
 
-              {sellerType === 'business' && (
-                <>
-                  <div>
-                    <Label htmlFor="dtiRegistration">DTI Registration</Label>
-                    <Input
-                      id="dtiRegistration"
-                      name="dtiRegistration"
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={e => handleFileChange(e, setDtiRegistration)}
+          <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardHeader className="border-b bg-gradient-to-r from-green-50 to-emerald-50 pb-6">
+              <CardTitle className="text-2xl font-bold text-gray-900">Application Form</CardTitle>
+              <p className="text-sm text-gray-600 mt-2">Please provide accurate information and upload required documents</p>
+            </CardHeader>
+            <CardContent className="pt-8 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Seller Type Selection */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-gray-700">Seller Type <span className="text-red-500">*</span></Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className={`relative flex items-center gap-3 p-5 rounded-xl border-2 cursor-pointer transition-all ${sellerType === 'individual' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50'}`}>
+                      <input
+                        type="radio"
+                        name="sellerType"
+                        value="individual"
+                        checked={sellerType === 'individual'}
+                        onChange={() => setSellerType('individual')}
+                        className="w-5 h-5 text-green-600 focus:ring-green-500"
+                      />
+                      <User className={`h-6 w-6 ${sellerType === 'individual' ? 'text-green-600' : 'text-gray-400'}`} />
+                      <div>
+                        <div className={`font-semibold ${sellerType === 'individual' ? 'text-green-900' : 'text-gray-700'}`}>Individual</div>
+                        <div className="text-xs text-gray-500">Personal seller</div>
+                      </div>
+                    </label>
+                    <label className={`relative flex items-center gap-3 p-5 rounded-xl border-2 cursor-pointer transition-all ${sellerType === 'business' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50'}`}>
+                      <input
+                        type="radio"
+                        name="sellerType"
+                        value="business"
+                        checked={sellerType === 'business'}
+                        onChange={() => setSellerType('business')}
+                        className="w-5 h-5 text-green-600 focus:ring-green-500"
+                      />
+                      <Building2 className={`h-6 w-6 ${sellerType === 'business' ? 'text-green-600' : 'text-gray-400'}`} />
+                      <div>
+                        <div className={`font-semibold ${sellerType === 'business' ? 'text-green-900' : 'text-gray-700'}`}>Business</div>
+                        <div className="text-xs text-gray-500">Registered entity</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-8"></div>
+
+                {/* Required Documents Section */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-green-600" />
+                    Required Documents
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FileUploadField
+                      id="tinDocument"
+                      label="TIN Document"
+                      icon={FileText}
+                      onChange={e => handleFileChange(e, setTinDocument, 'tinDocument')}
                       required
+                      helpText="Upload your TIN document (image or PDF)"
+                      file={tinDocument}
+                      error={errors.tinDocument}
+                    />
+                    
+                    <FileUploadField
+                      id="govID1"
+                      label="Government ID 1"
+                      icon={FileText}
+                      onChange={e => handleFileChange(e, setGovID1, 'govID1')}
+                      required
+                      file={govID1}
+                      error={errors.govID1}
+                    />
+                    
+                    <FileUploadField
+                      id="govID2"
+                      label="Government ID 2"
+                      icon={FileText}
+                      onChange={e => handleFileChange(e, setGovID2, 'govID2')}
+                      required
+                      file={govID2}
+                      error={errors.govID2}
+                    />
+                    
+                    <FileUploadField
+                      id="proofOfAddress"
+                      label="Proof of Address"
+                      icon={FileText}
+                      onChange={e => handleFileChange(e, setProofOfAddress, 'proofOfAddress')}
+                      required
+                      file={proofOfAddress}
+                      error={errors.proofOfAddress}
+                    />
+                    
+                    <FileUploadField
+                      id="bankProof"
+                      label="Bank Proof"
+                      icon={FileText}
+                      onChange={e => handleFileChange(e, setBankProof, 'bankProof')}
+                      required
+                      file={bankProof}
+                      error={errors.bankProof}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="businessPermit">Business Permit</Label>
-                    <Input
-                      id="businessPermit"
-                      name="businessPermit"
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={e => handleFileChange(e, setBusinessPermit)}
+                </div>
+
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-8"></div>
+
+                {/* GCash Information Section */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Smartphone className="h-5 w-5 text-green-600" />
+                    GCash Information
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="gcashNumber" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Smartphone className="h-4 w-4 text-green-600" />
+                        GCash Number
+                        <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="gcashNumber"
+                        name="gcashNumber"
+                        value={gcashNumber}
+                        onChange={e => setGcashNumber(formatGcash(e.target.value))}
+                        placeholder="+639XXXXXXXXX"
+                        inputMode="tel"
+                        pattern="^\+639\d{9}$"
+                        title="Use +639XXXXXXXXX (e.g., +639123456789)"
+                        required
+                        className="h-12 text-base border-2 focus:border-green-500 focus:ring-green-500"
+                      />
+                      <p className="text-xs text-gray-500 ml-1">Format: +639XXXXXXXXX</p>
+                    </div>
+                    
+                    <FileUploadField
+                      id="gcashQR"
+                      label="GCash QR Code"
+                      icon={QrCode}
+                      onChange={e => handleFileChange(e, setGcashQR, 'gcashQR')}
                       required
+                      helpText="Upload a screenshot of your GCash QR code"
+                      file={gcashQR}
+                      error={errors.gcashQR}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="birRegistration">BIR Registration</Label>
-                    <Input
-                      id="birRegistration"
-                      name="birRegistration"
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={e => handleFileChange(e, setBirRegistration)}
-                      required
-                    />
-                  </div>
-                </>
-              )}
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit Application'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                </div>
+
+                {sellerType === 'business' && (
+                  <>
+                    <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-8"></div>
+                    
+                    {/* Business Documents Section */}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-green-600" />
+                        Business Documents
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FileUploadField
+                          id="dtiRegistration"
+                          label="DTI Registration"
+                          icon={FileText}
+                          onChange={e => handleFileChange(e, setDtiRegistration, 'dtiRegistration')}
+                          required
+                          file={dtiRegistration}
+                          error={errors.dtiRegistration}
+                        />
+                        
+                        <FileUploadField
+                          id="businessPermit"
+                          label="Business Permit"
+                          icon={FileText}
+                          onChange={e => handleFileChange(e, setBusinessPermit, 'businessPermit')}
+                          required
+                          file={businessPermit}
+                          error={errors.businessPermit}
+                        />
+                        
+                        <FileUploadField
+                          id="birRegistration"
+                          label="BIR Registration"
+                          icon={FileText}
+                          onChange={e => handleFileChange(e, setBirRegistration, 'birRegistration')}
+                          required
+                          file={birRegistration}
+                          error={errors.birRegistration}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="pt-6">
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        Submitting Application...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <Upload className="h-5 w-5" />
+                        Submit Application
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </>
   );
 };
 
-export default SellerApplicationForm; 
+export default SellerApplicationForm;

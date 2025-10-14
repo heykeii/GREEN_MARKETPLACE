@@ -284,4 +284,29 @@ export class NotificationService {
       'high'
     );
   }
+
+  // Campaign verification notifications
+  static async notifyCampaignApproved(creatorUserId, campaign) {
+    await createNotification(
+      creatorUserId,
+      'campaign_approved',
+      'Campaign Approved! 🎉',
+      `Your campaign "${campaign.title}" has been approved and is now live.`,
+      { campaignId: campaign._id },
+      `/campaigns/${campaign._id}`,
+      'high'
+    );
+  }
+
+  static async notifyCampaignRejected(creatorUserId, campaign, reason) {
+    await createNotification(
+      creatorUserId,
+      'campaign_rejected',
+      'Campaign Needs Review ⚠️',
+      `Your campaign "${campaign.title}" was not approved${reason ? `: ${reason}` : ''}. Please review and update your submission.`,
+      { campaignId: campaign._id },
+      `/campaigns/${campaign._id}`,
+      'high'
+    );
+  }
 }

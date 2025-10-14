@@ -27,6 +27,15 @@ const createCampaign = async (req, res) => {
 
     // If files were uploaded, stream them to Cloudinary (max 10)
     if (Array.isArray(req.files) && req.files.length > 0) {
+      // Check if Cloudinary is configured
+      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return res.status(500).json({
+          success: false,
+          message: "Cloudinary configuration missing. Please set up CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.",
+          error: "Missing Cloudinary configuration"
+        });
+      }
+
       const folder = `campaigns/${type || 'general'}`;
       const resourceType = 'image';
 
@@ -48,6 +57,7 @@ const createCampaign = async (req, res) => {
         }
         mediaUrl = mediaUrls[0] || mediaUrl;
       } catch (err) {
+        console.error('Cloudinary upload error:', err);
         return res.status(500).json({
           success: false,
           message: "Failed to upload media",
@@ -67,10 +77,10 @@ const createCampaign = async (req, res) => {
     }
 
     // Enforce required image/media
-    if (!mediaUrl) {
+    if (!mediaUrl && (!Array.isArray(req.files) || req.files.length === 0)) {
       return res.status(400).json({
         success: false,
-        message: "Image is required for creating a campaign"
+        message: "Image is required for creating a campaign. Please upload an image or provide an image URL."
       });
     }
     const campaign = new Campaign({
@@ -357,7 +367,7 @@ const deleteCampaign = async (req, res) => {
 const verifyCampaign = async (req, res) => {
   try {
     const { id } = req.params;
-    const { verified } = req.body;
+    const { verified, reason } = req.body;
 
     const campaign = await Campaign.findByIdAndUpdate(
       id,
@@ -370,6 +380,18 @@ const verifyCampaign = async (req, res) => {
         success: false,
         message: "Campaign not found"
       });
+    }
+
+    // Send notification to campaign creator
+    try {
+      if (verified) {
+        await NotificationService.notifyCampaignApproved(campaign.createdBy._id, campaign);
+      } else {
+        await NotificationService.notifyCampaignRejected(campaign.createdBy._id, campaign, reason);
+      }
+    } catch (notificationError) {
+      console.error('Failed to send campaign verification notification:', notificationError);
+      // Don't fail the verification if notification fails
     }
 
     res.json({
