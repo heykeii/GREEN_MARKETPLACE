@@ -63,14 +63,47 @@ const CheckoutPage = () => {
           const items = await Promise.all(direct.items.map(async (i) => {
             const pr = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/view/${i.productId}`);
             const p = pr.data?.product;
-            return p ? { _id: p._id, name: p.name, price: p.price, quantity: i.quantity, images: p.images || [], image: p.image } : null;
+            if (!p) return null;
+            const chosenVariant = i?.variant
+              || (Number.isInteger(i?.selectedVariant) && Array.isArray(p?.variants)
+                    ? p.variants[i.selectedVariant] : null);
+            const unitPrice = chosenVariant?.price != null ? Number(chosenVariant.price) : p.price;
+            return {
+              _id: p._id,
+              name: p.name,
+              price: unitPrice,
+              quantity: i.quantity,
+              images: p.images || [],
+              image: p.image,
+              variant: chosenVariant ? {
+                name: chosenVariant.name,
+                price: Number(chosenVariant.price),
+                sku: chosenVariant.sku,
+                attributes: chosenVariant.attributes || {}
+              } : undefined
+            };
           }));
           setCart(items.filter(Boolean));
         } else {
           const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setCart(res.data.cart || []);
+          const serverCart = res.data.cart || [];
+          // Merge variant info from localStorage cart if server doesn't include it
+          const localCart = (() => {
+            try { return JSON.parse(localStorage.getItem('cart') || '[]'); } catch { return []; }
+          })();
+          const localVariantById = new Map(localCart.map(ci => [ci._id, ci.variant]));
+          const merged = serverCart.map(item => ({
+            ...item,
+            variant: item.variant || localVariantById.get(item._id) || undefined,
+            price: (item.variant?.price != null
+              ? Number(item.variant.price)
+              : (localVariantById.get(item._id)?.price != null
+                ? Number(localVariantById.get(item._id).price)
+                : item.price))
+          }));
+          setCart(merged);
         }
       } catch (err) {
         console.error('Failed to fetch cart:', err);
@@ -83,7 +116,11 @@ const CheckoutPage = () => {
   }, [navigate, isDirect]);
 
   useEffect(() => {
-    setTotal(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
+    setTotal(cart.reduce((sum, item) => {
+      // Use variant price if variant is selected, otherwise use item price
+      const price = item.variant?.price || item.price;
+      return sum + price * item.quantity;
+    }, 0));
   }, [cart]);
 
   // Fetch seller's GCash details when GCash is selected
@@ -425,11 +462,18 @@ const CheckoutPage = () => {
                       />
                       <div className="flex-1">
                         <h3 className="font-semibold text-emerald-800 text-sm sm:text-base break-words">{item.name}</h3>
-                        <p className="text-gray-600">₱{item.price.toFixed(2)} x {item.quantity}</p>
+                        <p className="text-gray-600">
+                          ₱{(item.variant?.price || item.price).toFixed(2)} x {item.quantity}
+                          {item.variant && (
+                            <span className="ml-2 text-sm text-emerald-600">
+                              ({item.variant.name})
+                            </span>
+                          )}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-emerald-700 text-sm sm:text-base">
-                          ₱{(item.price * item.quantity).toFixed(2)}
+                          ₱{((item.variant?.price || item.price) * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>

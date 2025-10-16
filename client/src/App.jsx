@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 // ToastProvider is mounted at root in main.jsx
 import "./styles/toast.css";
 import ErrorBoundary, { PageErrorBoundary } from "./components/ErrorBoundary";
@@ -49,6 +49,18 @@ import ResetPassword from './pages/ResetPassword';
 import AdminSustainability from './pages/AdminSustainability';
 import Terms from './pages/Terms';
 
+const ScrollToTopOnRouteChange = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+  return null;
+};
+
 const App = () => {
   useEffect(() => {
     // Setup global error handling
@@ -60,6 +72,7 @@ const App = () => {
 
   return (
     <ErrorBoundary>
+      <ScrollToTopOnRouteChange />
       <Routes>
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/login" element={<Login />} />

@@ -215,9 +215,27 @@ const ProductPage = () => {
       toast.error('Out of stock');
       return;
     }
+
+    // Create variant payload if a variant is selected
+    const variantPayload = (() => {
+      if (!Array.isArray(product.variants) || product.variants.length === 0 || selectedVariantIndex === null) return undefined;
+      const v = product.variants[selectedVariantIndex];
+      return {
+        name: v?.name,
+        sku: v?.sku,
+        attributes: v?.attributes || {},
+        price: typeof v?.price === 'number' ? v.price : parseFloat(v?.price || 0)
+      };
+    })();
+
     // Stash direct checkout payload and go to checkout page
     const direct = {
-      items: [{ productId: product._id, quantity: Math.max(1, quantity) }],
+      items: [{ 
+        productId: product._id, 
+        quantity: Math.max(1, quantity),
+        variant: variantPayload,
+        selectedVariant: selectedVariantIndex
+      }],
       createdAt: Date.now()
     };
     localStorage.setItem('directCheckout', JSON.stringify(direct));

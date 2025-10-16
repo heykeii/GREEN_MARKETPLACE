@@ -25,14 +25,10 @@ const CreateCampaign = () => {
     endDate: '',
     image: '',
     goal: '',
-    featuredBusinesses: [],
     objectives: []
   });
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
-  const [businessSearch, setBusinessSearch] = useState('');
-  const [availableBusinesses, setAvailableBusinesses] = useState([]);
-  const [searchingBusinesses, setSearchingBusinesses] = useState(false);
 
   useEffect(() => {
     if (formData.type === 'community' && (!formData.objectives || formData.objectives.length === 0)) {
@@ -52,40 +48,7 @@ const CreateCampaign = () => {
     }));
   };
 
-  const searchBusinesses = async (query) => {
-    if (!query || query.length < 2) {
-      setAvailableBusinesses([]);
-      return;
-    }
-
-    try {
-      setSearchingBusinesses(true);
-      const response = await axios.get(`/api/v1/users/sellers?search=${encodeURIComponent(query)}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.data.success) {
-        setAvailableBusinesses(response.data.sellers || []);
-      }
-    } catch (error) {
-      console.error('Error searching businesses:', error);
-    } finally {
-      setSearchingBusinesses(false);
-    }
-  };
-
-  const addBusiness = (business) => {
-    if (!formData.featuredBusinesses.find(b => b._id === business._id)) {
-      setFormData(prev => ({
-        ...prev,
-        featuredBusinesses: [...prev.featuredBusinesses, business]
-      }));
-    }
-    setBusinessSearch('');
-    setAvailableBusinesses([]);
-  };
+  // Featured businesses removed for promotional campaigns
 
   const handleObjectiveChange = (index, value) => {
     setFormData(prev => {
@@ -114,12 +77,7 @@ const CreateCampaign = () => {
     });
   };
 
-  const removeBusiness = (businessId) => {
-    setFormData(prev => ({
-      ...prev,
-      featuredBusinesses: prev.featuredBusinesses.filter(b => b._id !== businessId)
-    }));
-  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -149,7 +107,6 @@ const CreateCampaign = () => {
         if (formData.startDate) form.append('startDate', formData.startDate);
         if (formData.endDate) form.append('endDate', formData.endDate);
         if (formData.goal) form.append('goal', String(parseInt(formData.goal)));
-        form.append('featuredBusinesses', JSON.stringify(formData.featuredBusinesses.map(b => b._id)));
         if (formData.type === 'community' && formData.objectives?.length) {
           formData.objectives
             .map(o => (o || '').trim())
@@ -169,7 +126,6 @@ const CreateCampaign = () => {
         const submitData = {
           ...formData,
           goal: formData.goal ? parseInt(formData.goal) : undefined,
-          featuredBusinesses: formData.featuredBusinesses.map(b => b._id),
           startDate: formData.startDate || undefined,
           endDate: formData.endDate || undefined,
           objectives: formData.type === 'community' 
@@ -561,80 +517,7 @@ const CreateCampaign = () => {
                   </div>
                 )}
 
-                {/* Promotional Campaign Specific Fields */}
-                {formData.type === 'promotional' && (
-                  <div className="space-y-4 bg-gradient-to-br from-purple-50/50 to-pink-50/30 rounded-xl p-6 border border-purple-100">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-1 w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-                      <h3 className="text-lg font-semibold text-gray-800">Featured Businesses</h3>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="relative">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Search & Add Businesses
-                        </Label>
-                        <Input
-                          value={businessSearch}
-                          onChange={(e) => {
-                            setBusinessSearch(e.target.value);
-                            searchBusinesses(e.target.value);
-                          }}
-                          placeholder="Type to search eco-businesses..."
-                          className="border-gray-200 focus:border-purple-500 focus:ring-purple-500 h-11"
-                        />
-                        {availableBusinesses.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-10 max-h-64 overflow-y-auto">
-                            {availableBusinesses.map((business) => (
-                              <button
-                                key={business._id}
-                                type="button"
-                                onClick={() => addBusiness(business)}
-                                className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-200 border-b last:border-b-0 group"
-                              >
-                                <div className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors">{business.businessName || business.name}</div>
-                                <div className="text-sm text-gray-500 mt-1">{business.email}</div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {formData.featuredBusinesses.length > 0 && (
-                        <div className="space-y-3 mt-4">
-                          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-purple-600" />
-                            Selected Businesses ({formData.featuredBusinesses.length})
-                          </Label>
-                          <div className="grid gap-3">
-                            {formData.featuredBusinesses.map((business) => (
-                              <div key={business._id} className="flex items-center justify-between bg-white border border-purple-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 group">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                                    {(business.businessName || business.name).charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="font-medium text-gray-900 truncate">{business.businessName || business.name}</div>
-                                    <div className="text-sm text-gray-500 truncate">{business.email}</div>
-                                  </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeBusiness(business._id)}
-                                  className="ml-2 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Promotional Campaign business-selection removed per request */}
 
                 {/* Admin Verification Notice */}
                 <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-6">

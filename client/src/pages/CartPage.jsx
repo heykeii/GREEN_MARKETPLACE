@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,28 @@ import { toast } from '@/utils/toast';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Footer from '@/components/Footer';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CartPage = () => {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
+  const [productDetails, setProductDetails] = useState({});
 
   const navigate = useNavigate();
+
+  const fetchProductDetails = useCallback(async (productId) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/view/${productId}`);
+      if (response.data?.product) {
+        setProductDetails(prev => ({
+          ...prev,
+          [productId]: response.data.product
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+    }
+  }, []);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -28,8 +44,11 @@ const CartPage = () => {
             headers: { Authorization: `Bearer ${token}` },
             signal: controller.signal
           });
-          setCart(res.data.cart || []);
-          localStorage.setItem('cart', JSON.stringify(res.data.cart || []));
+          const cartItems = res.data.cart || [];
+          setCart(cartItems);
+          // Fetch product details for items to get variant information
+          cartItems.forEach(item => fetchProductDetails(item._id));
+          localStorage.setItem('cart', JSON.stringify(cartItems));
         } catch (err) {
           if (err.name === 'CanceledError') return;
           console.error('Fetch cart error:', err);
@@ -47,7 +66,11 @@ const CartPage = () => {
   }, []);
 
   useEffect(() => {
-    setTotal(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
+    setTotal(cart.reduce((sum, item) => {
+      // Use variant price if variant is selected, otherwise use item price
+      const price = item.variant?.price || item.price;
+      return sum + price * item.quantity;
+    }, 0));
   }, [cart]);
 
   const updateCart = async (newCart, action, productId) => {
@@ -88,6 +111,47 @@ const CartPage = () => {
     updateCart(newCart, 'update', newCart[idx]._id);
   };
 
+  const handleVariantChange = async (idx, variantIdx) => {
+    const newCart = [...cart];
+    const item = newCart[idx];
+    const product = productDetails[item._id];
+    
+    if (product?.variants?.[variantIdx]) {
+      const selectedVariant = product.variants[variantIdx];
+      item.variant = {
+        name: selectedVariant.name,
+        price: parseFloat(selectedVariant.price),
+        sku: selectedVariant.sku,
+        attributes: selectedVariant.attributes || {}
+      };
+      item.selectedVariant = variantIdx;
+      
+      setCart(newCart);
+      localStorage.setItem('cart', JSON.stringify(newCart));
+      localStorage.setItem('lastCartUpdate', Date.now().toString());
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+      // Update on server
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const token = localStorage.getItem('token');
+      
+      if (user && token) {
+        try {
+          await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/cart/update`, {
+            productId: item._id,
+            quantity: item.quantity,
+            variant: item.variant
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (err) {
+          console.error('Update cart error:', err);
+        }
+      }
+    }
+  };
+
+
   const handleRemove = (idx) => {
     const productId = cart[idx]._id;
     const newCart = cart.filter((_, i) => i !== idx);
@@ -98,6 +162,17 @@ const CartPage = () => {
   const handleCheckout = () => {
     if (cart.length === 0) {
       toast.error('Your cart is empty');
+      return;
+    }
+    
+    // Check if any product with variants doesn't have a variant selected
+    const hasUnselectedVariants = cart.some((item, idx) => {
+      const product = productDetails[item._id];
+      return product?.variants?.length > 0 && !item.variant;
+    });
+    
+    if (hasUnselectedVariants) {
+      toast.error('Please select a variant for all products before checkout');
       return;
     }
     
@@ -139,7 +214,41 @@ const CartPage = () => {
                     />
                     <div className="flex-1 w-full">
                       <h2 className="text-lg sm:text-xl font-semibold text-emerald-800 break-words">{item.name}</h2>
-                      <div className="text-gray-500 text-sm">₱{item.price.toFixed(2)} x</div>
+                      
+                      {/* Show variant selector if product has variants and no variant selected yet */}
+                      {productDetails[item._id]?.variants?.length > 0 && !item.variant ? (
+                        <div className="mt-2 mb-3">
+                          <Select
+                            value={item.selectedVariant?.toString()}
+                            onValueChange={(value) => handleVariantChange(idx, parseInt(value))}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="Select variant" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {productDetails[item._id].variants.map((variant, vidx) => (
+                                <SelectItem key={vidx} value={vidx.toString()}>
+                                  {variant.name} - ₱{parseFloat(variant.price).toFixed(2)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : item.variant ? (
+                        /* Display selected variant info */
+                        <div className="text-sm text-emerald-600 font-medium mt-1">
+                          Variant: {item.variant.name}
+                          {item.variant.attributes && Object.keys(item.variant.attributes).length > 0 && (
+                            <span className="text-gray-500 ml-2">
+                              ({Object.entries(item.variant.attributes).map(([k, v]) => `${k}: ${v}`).join(', ')})
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
+                      
+                      <div className="text-gray-500 text-sm mt-1">
+                        ₱{(item.variant?.price || item.price).toFixed(2)} x
+                      </div>
                       <div className="flex items-center gap-3 mt-2">
                         <Input
                           type="number"
@@ -149,7 +258,7 @@ const CartPage = () => {
                           className="w-20 border-gray-300 rounded-lg shadow-sm"
                         />
                         <span className="text-gray-800 font-semibold text-md">
-                          = ₱{(item.price * item.quantity).toFixed(2)}
+                          = ₱{((item.variant?.price || item.price) * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     </div>
