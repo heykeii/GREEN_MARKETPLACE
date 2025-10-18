@@ -353,6 +353,52 @@ export const toggleProductAvailability = async (req, res) => {
   }
 };
 
+// Update product quantity by the seller
+export const updateProductQuantity = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+    
+    if (quantity === undefined || quantity < 0) {
+      return errorResponse(res, 400, 'Valid quantity is required (must be >= 0).');
+    }
+    
+    const product = await Product.findOne({ _id: productId, seller: req.user._id });
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found or not authorized.');
+    }
+    
+    product.quantity = parseInt(quantity);
+    
+    // If quantity is 0, mark as unavailable
+    if (quantity === 0) {
+      product.isAvailable = false;
+    } else if (quantity > 0 && !product.isAvailable) {
+      // If quantity is added back and product was unavailable, make it available again
+      product.isAvailable = true;
+    }
+    
+    try {
+      await product.save();
+    } catch (dbError) {
+      return errorResponse(res, 500, 'Failed to update product quantity.', dbError.message);
+    }
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Product quantity updated successfully.', 
+      product: {
+        _id: product._id,
+        name: product.name,
+        quantity: product.quantity,
+        isAvailable: product.isAvailable
+      }
+    });
+  } catch (error) {
+    return errorResponse(res, 500, 'Failed to update product quantity.', error.message);
+  }
+};
+
 
 //Public Marketplace Product controller
 
@@ -360,7 +406,7 @@ export const toggleProductAvailability = async (req, res) => {
 export const getAllApprovedProducts = async (req, res) => {
   try {
     const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-    const filter = { status: 'approved', isAvailable: true };
+    const filter = { status: 'approved', isAvailable: true, quantity: { $gt: 0 } };
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -395,7 +441,7 @@ export const getProductById = async (req, res) => {
     if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
       return errorResponse(res, 400, 'Invalid product ID');
     }
-    const product = await Product.findOne({ _id: productId, status: 'approved', isAvailable: true });
+    const product = await Product.findOne({ _id: productId, status: 'approved', isAvailable: true, quantity: { $gt: 0 } });
     if (!product) {
       return errorResponse(res, 404, 'Product not found or unavailable');
     }
@@ -415,6 +461,7 @@ export const searchProducts = async (req, res) => {
     const filter = {
       status: 'approved',
       isAvailable: true,
+      quantity: { $gt: 0 },
       $or: [
         { name: { $regex: q, $options: 'i' } },
         { description: { $regex: q, $options: 'i' } }
@@ -448,7 +495,7 @@ export const searchProducts = async (req, res) => {
 export const filterProducts = async (req, res) => {
   try {
     const { category, minPrice, maxPrice, tags, materialsUsed, page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-    const filter = { status: 'approved', isAvailable: true };
+    const filter = { status: 'approved', isAvailable: true, quantity: { $gt: 0 } };
     if (category) filter.category = category;
     if (minPrice || maxPrice) {
       filter.price = {};
@@ -497,7 +544,7 @@ export const getRelatedProducts = async (req, res) => {
     if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
       return errorResponse(res, 400, 'Invalid product ID');
     }
-    const product = await Product.findOne({ _id: productId, status: 'approved', isAvailable: true });
+    const product = await Product.findOne({ _id: productId, status: 'approved', isAvailable: true, quantity: { $gt: 0 } });
     if (!product) {
       return errorResponse(res, 404, 'Product not found or unavailable');
     }
@@ -505,6 +552,7 @@ export const getRelatedProducts = async (req, res) => {
       _id: { $ne: product._id },
       status: 'approved',
       isAvailable: true,
+      quantity: { $gt: 0 },
       $or: [
         { category: product.category },
         { tags: { $in: product.tags || [] } }
@@ -527,7 +575,12 @@ export const getProductsBySellerPublic = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Seller ID is required' });
     }
 
-    const products = await Product.find({ seller: sellerId })
+    const products = await Product.find({ 
+      seller: sellerId, 
+      status: 'approved', 
+      isAvailable: true, 
+      quantity: { $gt: 0 } 
+    })
       .select('name images price category quantity createdAt')
       .sort({ createdAt: -1 });
 

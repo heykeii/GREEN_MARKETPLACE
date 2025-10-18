@@ -11,12 +11,10 @@ import Navbar from '@/components/Navbar';
 
 const SellerApplicationForm = () => {
   const [sellerType, setSellerType] = useState('individual');
-  const [tinDocument, setTinDocument] = useState(null);
   const [govID1, setGovID1] = useState(null);
   const [govID2, setGovID2] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
   const [bankProof, setBankProof] = useState(null);
-  const [dtiRegistration, setDtiRegistration] = useState(null);
   const [businessPermit, setBusinessPermit] = useState(null);
   const [birRegistration, setBirRegistration] = useState(null);
   const [gcashNumber, setGcashNumber] = useState('');
@@ -80,10 +78,6 @@ const SellerApplicationForm = () => {
     // Validate required fields
     const newErrors = {};
     
-    if (!tinDocument) {
-      newErrors.tinDocument = 'Please select a file.';
-    }
-    
     if (!govID1) {
       newErrors.govID1 = 'Please select a file.';
     }
@@ -105,9 +99,6 @@ const SellerApplicationForm = () => {
     }
     
     if (sellerType === 'business') {
-      if (!dtiRegistration) {
-        newErrors.dtiRegistration = 'Please select a file.';
-      }
       if (!businessPermit) {
         newErrors.businessPermit = 'Please select a file.';
       }
@@ -126,7 +117,6 @@ const SellerApplicationForm = () => {
     setLoading(true);
     const formData = new FormData();
     formData.append('sellerType', sellerType);
-    if (tinDocument) formData.append('tinDocument', tinDocument);
     formData.append('govIDs', govID1);
     formData.append('govIDs', govID2);
     if (proofOfAddress) formData.append('proofOfAddress', proofOfAddress);
@@ -134,7 +124,6 @@ const SellerApplicationForm = () => {
     formData.append('gcashNumber', gcashNumber);
     if (gcashQR) formData.append('gcashQR', gcashQR);
     if (sellerType === 'business') {
-      if (dtiRegistration) formData.append('dtiRegistration', dtiRegistration);
       if (businessPermit) formData.append('businessPermit', businessPermit);
       if (birRegistration) formData.append('birRegistration', birRegistration);
     }
@@ -304,12 +293,10 @@ const SellerApplicationForm = () => {
                   onClick={() => {
                     setStatus('none');
                     setSellerType('individual');
-                    setTinDocument(null);
                     setGovID1(null);
                     setGovID2(null);
                     setProofOfAddress(null);
                     setBankProof(null);
-                    setDtiRegistration(null);
                     setBusinessPermit(null);
                     setBirRegistration(null);
                   }}
@@ -391,17 +378,6 @@ const SellerApplicationForm = () => {
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FileUploadField
-                      id="tinDocument"
-                      label="TIN Document"
-                      icon={FileText}
-                      onChange={e => handleFileChange(e, setTinDocument, 'tinDocument')}
-                      required
-                      helpText="Upload your TIN document (image or PDF)"
-                      file={tinDocument}
-                      error={errors.tinDocument}
-                    />
-                    
                     <FileUploadField
                       id="govID1"
                       label="Government ID 1"
@@ -500,16 +476,6 @@ const SellerApplicationForm = () => {
                       </h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FileUploadField
-                          id="dtiRegistration"
-                          label="DTI Registration"
-                          icon={FileText}
-                          onChange={e => handleFileChange(e, setDtiRegistration, 'dtiRegistration')}
-                          required
-                          file={dtiRegistration}
-                          error={errors.dtiRegistration}
-                        />
-                        
                         <FileUploadField
                           id="businessPermit"
                           label="Business Permit"

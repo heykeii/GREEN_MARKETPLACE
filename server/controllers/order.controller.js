@@ -624,13 +624,17 @@ export const getSellerOrders = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        // Filter items to only show seller's products
-        const filteredOrders = orders.map(order => ({
-            ...order.toObject(),
-            items: order.items.filter(item => 
-                productIds.some(id => id.toString() === item.product._id.toString())
-            )
-        }));
+        // Filter items to only show seller's products (guard against null populated products)
+        const productIdSet = new Set(productIds.map(id => id.toString()));
+        const filteredOrders = orders
+            .map(order => {
+                const items = (order.items || []).filter(item => (
+                    item.product && productIdSet.has(item.product._id.toString())
+                ));
+                return { ...order.toObject(), items };
+            })
+            // Optionally exclude orders that end up with no items for this seller
+            .filter(order => Array.isArray(order.items) && order.items.length > 0);
 
         const totalOrders = await Order.countDocuments(filter);
 

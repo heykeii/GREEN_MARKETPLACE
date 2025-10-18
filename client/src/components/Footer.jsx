@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import logo from '@/assets/logo.png';
 
 const Footer = forwardRef((props, ref) => (
   <footer id="site-footer" ref={ref} className="relative bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-600 text-white overflow-hidden">
@@ -14,11 +15,7 @@ const Footer = forwardRef((props, ref) => (
         {/* Brand section */}
         <div className="lg:col-span-2">
           <div className="flex items-center mb-4 sm:mb-6">
-            <div className="w-10 h-10 bg-emerald-400 rounded-xl flex items-center justify-center mr-3">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" className="text-emerald-800">
-                <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2M6.5 18.5L7.5 21.5L10.5 20.5L7.5 19.5L6.5 18.5Z"/>
-              </svg>
-            </div>
+           
             <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
               Green Marketplace
             </h2>

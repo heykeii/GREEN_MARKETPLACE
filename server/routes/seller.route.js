@@ -34,11 +34,9 @@ router.get('/analytics-basic', protect, getSellerAnalytics);
 // Seller verification routes
 router.post('/verify', protect, upload.fields([
   { name: 'govIDs', maxCount: 2 },
-  { name: 'tinDocument', maxCount: 1 },
   { name: 'proofOfAddress', maxCount: 1 },
   { name: 'bankProof', maxCount: 1 },
   { name: 'gcashQR', maxCount: 1 },
-  { name: 'dtiRegistration', maxCount: 1 },
   { name: 'businessPermit', maxCount: 1 },
   { name: 'birRegistration', maxCount: 1 }
 ]), submitSellerVerification);

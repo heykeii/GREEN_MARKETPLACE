@@ -627,16 +627,27 @@ const ProductPage = () => {
                   <span className="text-sm sm:text-lg text-gray-500">per unit</span>
                 </div>
 
-                {/* Stock Status */}
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${
-                    product.quantity > 10 ? 'bg-green-500' : 
-                    product.quantity > 0 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}></div>
-                  <span className="text-sm text-gray-600">
-                    {product.quantity > 10 ? 'In Stock' : 
-                     product.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
-                  </span>
+                {/* Stock Information */}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-emerald-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full ${
+                      product.quantity > 10 ? 'bg-green-500' : 
+                      product.quantity > 0 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}></div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {product.quantity > 10 ? 'In Stock' : 
+                         product.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
+                      </span>
+                      <p className="text-xs text-gray-500">
+                        {product.quantity > 0 ? `${product.quantity} units available` : 'No units available'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-gray-900">{product.quantity}</div>
+                    <div className="text-xs text-gray-500">units</div>
+                  </div>
                 </div>
               </div>
 
@@ -922,6 +933,9 @@ const ProductPage = () => {
                         +
                       </Button>
                     </div>
+                    <span className="text-sm text-gray-500">
+                      Max: {product.quantity} units
+                    </span>
                   </div>
 
                   <div className="flex gap-3 sm:gap-4">

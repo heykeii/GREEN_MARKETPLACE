@@ -16,12 +16,10 @@ const sellerApplicationSchema = new mongoose.Schema({
 
   documents: {
     govIDs: [{ type: String, required: true }], // URLs to 2 government IDs
-    tinDocument: { type: String, required: true },
     proofOfAddress: { type: String, required: true },
     bankProof: { type: String, required: true }, // Screenshot or account details
 
     // For business type only
-    dtiRegistration: { type: String }, // file URL
     businessPermit: { type: String },
     birRegistration: { type: String }
   },

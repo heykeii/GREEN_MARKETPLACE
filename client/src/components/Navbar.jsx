@@ -17,6 +17,7 @@ import { FaUser, FaSignOutAlt, FaUserTie, FaStore, FaSearch, FaBars, FaTimes, Fa
 import { Sprout } from 'lucide-react';
 import { FaEnvelope } from 'react-icons/fa';
 import NotificationIcon from './NotificationIcon';
+import logo from '@/assets/logo.png';
 
 const Navbar = ({ onProductsClick, onAboutClick }) => {
   const navigate = useNavigate();
@@ -178,10 +179,11 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <FaLeaf className="text-2xl text-emerald-600" />
-            <span className="text-xl font-semibold text-emerald-600">
-              Green Marketplace
-            </span>
+            <img 
+              src={logo} 
+              alt="Green Marketplace" 
+              className="h-8 w-auto"
+            />
           </div>
 
           {/* Desktop Navigation */}
@@ -613,9 +615,11 @@ export const AdminNavbar = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Admin Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/admin')} title="Go to Admin Dashboard">
-            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
-              <FaLeaf className="text-white text-sm" />
-            </div>
+            <img 
+              src={logo} 
+              alt="Green Marketplace" 
+              className="h-8 w-auto"
+            />
             <div>
               <div className="text-xl font-bold text-white">Green Marketplace</div>
               <div className="text-xs text-emerald-400 font-medium">Admin Panel</div>

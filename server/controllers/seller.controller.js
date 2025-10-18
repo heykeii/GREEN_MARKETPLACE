@@ -62,9 +62,9 @@ export const submitSellerVerification = async (req, res) => {
       });
     }
 
-    if (!files.proofOfAddress || !files.bankProof || !files.gcashQR || !files.tinDocument) {
+    if (!files.proofOfAddress || !files.bankProof || !files.gcashQR) {
       return res.status(400).json({ 
-        message: 'Proof of address, bank proof, GCash QR code, and TIN document are required.' 
+        message: 'Proof of address, bank proof, and GCash QR code are required.' 
       });
     }
 
@@ -104,20 +104,16 @@ export const submitSellerVerification = async (req, res) => {
     console.log('Uploading GCash QR...');
     const gcashQR = await uploadFile(files.gcashQR[0]);
 
-    console.log('Uploading TIN document...');
-    const tinDocument = await uploadFile(files.tinDocument[0]);
-
     // Business-specific documents
-    let dtiRegistration, businessPermit, birRegistration;
+    let businessPermit, birRegistration;
     if (sellerType === 'business') {
-      if (!files.dtiRegistration || !files.businessPermit || !files.birRegistration) {
+      if (!files.businessPermit || !files.birRegistration) {
         return res.status(400).json({ 
-          message: 'Business documents (DTI Registration, Business Permit, BIR Registration) are required for business sellers.' 
+          message: 'Business documents (Business Permit, BIR Registration) are required for business sellers.' 
         });
       }
       
       console.log('Uploading business documents...');
-      dtiRegistration = await uploadFile(files.dtiRegistration[0]);
       businessPermit = await uploadFile(files.businessPermit[0]);
       birRegistration = await uploadFile(files.birRegistration[0]);
     }
@@ -125,11 +121,9 @@ export const submitSellerVerification = async (req, res) => {
     // Prepare documents object
     const documents = {
       govIDs,
-      tinDocument,
       proofOfAddress,
       bankProof,
       ...(sellerType === 'business' && {
-        dtiRegistration,
         businessPermit,
         birRegistration,
       })

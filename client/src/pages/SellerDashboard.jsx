@@ -24,6 +24,9 @@ const SellerDashboard = () => {
   const [activeTab, setActiveTab] = useState('approved');
   const [showEditForm, setShowEditForm] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
+  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [restockProduct, setRestockProduct] = useState(null);
+  const [restockQuantity, setRestockQuantity] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -457,6 +460,40 @@ const SellerDashboard = () => {
     }
   };
 
+  const handleRestockProduct = (product) => {
+    setRestockProduct(product);
+    setRestockQuantity('');
+    setShowRestockModal(true);
+  };
+
+  const handleRestockSubmit = async (e) => {
+    e.preventDefault();
+    if (!restockQuantity || parseInt(restockQuantity) <= 0) {
+      toast.error('Please enter a valid quantity.');
+      return;
+    }
+    
+    setProcessing(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/products/update-quantity/${restockProduct._id}`, {
+        quantity: parseInt(restockQuantity)
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      toast.success(`Product restocked with ${restockQuantity} units!`);
+      setShowRestockModal(false);
+      setRestockProduct(null);
+      setRestockQuantity('');
+      fetchProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to restock product.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const removeImage = (index, isNew = false) => {
     if (isNew) {
       setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
@@ -502,18 +539,26 @@ const SellerDashboard = () => {
     }
   };
 
-  const ProductCard = ({ product, status }) => (
-    <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white border-0 shadow-lg ${
-      status === 'pending' ? 'ring-2 ring-amber-200' : 'ring-2 ring-emerald-200'
-    }`}>
-      <div className="absolute top-3 right-3 z-10">
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
-          status === 'pending' ? 'bg-amber-100/90 text-amber-800 border border-amber-200' : 'bg-emerald-100/90 text-emerald-800 border border-emerald-200'
-        }`}>
-          {status === 'pending' ? <FaClock className="mr-1.5 h-3 w-3" /> : <FaCheck className="mr-1.5 h-3 w-3" />}
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </span>
-      </div>
+  const ProductCard = ({ product, status }) => {
+    const isOutOfStock = product.quantity === 0;
+    const isLowStock = product.quantity > 0 && product.quantity <= 10;
+    
+    return (
+      <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white border-0 shadow-lg ${
+        status === 'pending' ? 'ring-2 ring-amber-200' : 
+        isOutOfStock ? 'ring-2 ring-red-200' : 'ring-2 ring-emerald-200'
+      }`}>
+        <div className="absolute top-3 right-3 z-10">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
+            status === 'pending' ? 'bg-amber-100/90 text-amber-800 border border-amber-200' : 
+            isOutOfStock ? 'bg-red-100/90 text-red-800 border border-red-200' : 'bg-emerald-100/90 text-emerald-800 border border-emerald-200'
+          }`}>
+            {status === 'pending' ? <FaClock className="mr-1.5 h-3 w-3" /> : 
+             isOutOfStock ? <FaTimes className="mr-1.5 h-3 w-3" /> : <FaCheck className="mr-1.5 h-3 w-3" />}
+            {status === 'pending' ? 'Pending' : 
+             isOutOfStock ? 'Inactive' : 'Active'}
+          </span>
+        </div>
       
       <CardContent className="p-0">
         {/* Product Images */}
@@ -562,15 +607,21 @@ const SellerDashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-bold text-emerald-600">₱{product.price}</span>
-              {product.quantity < 10 && (
+              {isOutOfStock ? (
                 <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                  Out of Stock
+                </span>
+              ) : isLowStock ? (
+                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">
                   Low Stock
                 </span>
-              )}
+              ) : null}
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">Stock</div>
-              <div className="font-semibold text-gray-800">{product.quantity} units</div>
+              <div className={`font-semibold ${isOutOfStock ? 'text-red-600' : 'text-gray-800'}`}>
+                {product.quantity} units
+              </div>
             </div>
           </div>
 
@@ -602,49 +653,70 @@ const SellerDashboard = () => {
                 <FaEdit className="mr-2 h-4 w-4" />
                 Edit
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
-                onClick={() => handleDeleteProduct(product._id)}
-                disabled={processing}
-              >
-                <FaTrash className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
+              {isOutOfStock ? (
+                <Button
+                  size="sm"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg"
+                  onClick={() => handleRestockProduct(product)}
+                  disabled={processing}
+                >
+                  <FaPlus className="mr-2 h-4 w-4" />
+                  Restock
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
+                  onClick={() => handleDeleteProduct(product._id)}
+                  disabled={processing}
+                >
+                  <FaTrash className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              )}
             </div>
           )}
         </div>
       </CardContent>
     </Card>
   );
+  };
 
-  const ProductListItem = ({ product, status }) => (
-    <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg bg-white border-0 shadow-sm ${
-      status === 'pending' ? 'ring-1 ring-amber-200' : 'ring-1 ring-emerald-200'
-    }`}>
-      <CardContent className="p-4">
-        <div className="flex items-center space-x-4">
-          {/* Product Image */}
-          <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden">
-              {product.images && product.images.length > 0 && (
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-              )}
+  const ProductListItem = ({ product, status }) => {
+    const isOutOfStock = product.quantity === 0;
+    const isLowStock = product.quantity > 0 && product.quantity <= 10;
+    
+    return (
+      <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg bg-white border-0 shadow-sm ${
+        status === 'pending' ? 'ring-1 ring-amber-200' : 
+        isOutOfStock ? 'ring-1 ring-red-200' : 'ring-1 ring-emerald-200'
+      }`}>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-4">
+            {/* Product Image */}
+            <div className="relative flex-shrink-0">
+              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden">
+                {product.images && product.images.length > 0 && (
+                  <img
+                    src={product.images[0]}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                )}
+              </div>
+              <div className="absolute -top-2 -right-2">
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                  status === 'pending' ? 'bg-amber-100 text-amber-800' : 
+                  isOutOfStock ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {status === 'pending' ? <FaClock className="mr-1 h-3 w-3" /> : 
+                   isOutOfStock ? <FaTimes className="mr-1 h-3 w-3" /> : <FaCheck className="mr-1 h-3 w-3" />}
+                  {status === 'pending' ? 'Pending' : 
+                   isOutOfStock ? 'Inactive' : 'Active'}
+                </span>
+              </div>
             </div>
-            <div className="absolute -top-2 -right-2">
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-              }`}>
-                {status === 'pending' ? <FaClock className="mr-1 h-3 w-3" /> : <FaCheck className="mr-1 h-3 w-3" />}
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
-            </div>
-          </div>
 
           {/* Product Info */}
           <div className="flex-1 min-w-0">
@@ -663,11 +735,15 @@ const SellerDashboard = () => {
               <div className="flex items-center space-x-3 ml-4">
                 <div className="text-right">
                   <div className="text-2xl font-bold text-emerald-600">₱{product.price}</div>
-                  {product.quantity < 10 && (
+                  {isOutOfStock ? (
                     <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                      Out of Stock
+                    </span>
+                  ) : isLowStock ? (
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">
                       Low Stock
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 {status === 'approved' && (
                   <div className="flex flex-col gap-2">
@@ -679,15 +755,26 @@ const SellerDashboard = () => {
                     >
                       <FaEdit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-red-200 text-red-600 hover:bg-red-50 px-4"
-                      onClick={() => handleDeleteProduct(product._id)}
-                      disabled={processing}
-                    >
-                      <FaTrash className="h-4 w-4" />
-                    </Button>
+                    {isOutOfStock ? (
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                        onClick={() => handleRestockProduct(product)}
+                        disabled={processing}
+                      >
+                        <FaPlus className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-200 text-red-600 hover:bg-red-50 px-4"
+                        onClick={() => handleDeleteProduct(product._id)}
+                        disabled={processing}
+                      >
+                        <FaTrash className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -697,6 +784,8 @@ const SellerDashboard = () => {
       </CardContent>
     </Card>
   );
+
+  };
 
   const ImageUploadSection = ({ images, previews, onImageChange, onRemove, onClearAll, isEdit = false, maxImages = 10 }) => {
     const isRequired = !isEdit && (!images || images.length === 0);
@@ -1877,6 +1966,94 @@ const SellerDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Restock Modal */}
+      {showRestockModal && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-emerald-50/80 via-emerald-100/80 to-teal-50/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowRestockModal(false)}
+        >
+          <div 
+            className="bg-white rounded-lg max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Restock Product</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRestockModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="h-5 w-5" />
+                </Button>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  {restockProduct?.images && restockProduct.images.length > 0 && (
+                    <img
+                      src={restockProduct.images[0]}
+                      alt={restockProduct.name}
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{restockProduct?.name}</h3>
+                    <p className="text-sm text-gray-600">Current stock: {restockProduct?.quantity} units</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleRestockSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="restockQuantity">New Quantity</Label>
+                  <Input
+                    id="restockQuantity"
+                    type="number"
+                    min="1"
+                    value={restockQuantity}
+                    onChange={(e) => setRestockQuantity(e.target.value)}
+                    placeholder="Enter new quantity"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This will replace the current quantity and make the product available again.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowRestockModal(false)}
+                    className="flex-1"
+                    disabled={processing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    disabled={processing}
+                  >
+                    {processing ? (
+                      <>
+                        <FaSpinner className="mr-2 h-4 w-4 animate-spin" />
+                        Restocking...
+                      </>
+                    ) : (
+                      'Restock Product'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );

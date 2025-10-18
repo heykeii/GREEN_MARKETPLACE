@@ -8,6 +8,7 @@ import {
   updateProduct,
   deleteProduct,
   toggleProductAvailability,
+  updateProductQuantity,
   getAllApprovedProducts,
   getProductById,
   searchProducts,
@@ -32,6 +33,7 @@ router.get('/my-products', protect, sellerOnly, getProductsBySeller);
 router.patch('/update/:productId', protect, sellerOnly, upload.array('images', 10), updateProduct);
 router.delete('/delete/:productId', protect, sellerOnly, deleteProduct);
 router.patch('/toggle-availability/:productId', protect, sellerOnly, toggleProductAvailability);
+router.patch('/update-quantity/:productId', protect, sellerOnly, updateProductQuantity);
 
 // Sustainability scoring routes
 router.post('/sustainability/preview', protect, sellerOnly, calculateSustainabilityPreview);
