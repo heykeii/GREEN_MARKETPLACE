@@ -19,6 +19,13 @@ const SellerApplicationForm = () => {
   const [birRegistration, setBirRegistration] = useState(null);
   const [gcashNumber, setGcashNumber] = useState('');
   const [gcashQR, setGcashQR] = useState(null);
+  const [businessName, setBusinessName] = useState('');
+  const [businessAddress, setBusinessAddress] = useState({
+    street: '',
+    city: '',
+    province: '',
+    zipCode: ''
+  });
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -105,6 +112,21 @@ const SellerApplicationForm = () => {
       if (!birRegistration) {
         newErrors.birRegistration = 'Please select a file.';
       }
+      if (!businessName.trim()) {
+        newErrors.businessName = 'Business name is required.';
+      }
+      if (!businessAddress.street.trim()) {
+        newErrors.businessAddressStreet = 'Street address is required.';
+      }
+      if (!businessAddress.city.trim()) {
+        newErrors.businessAddressCity = 'City is required.';
+      }
+      if (!businessAddress.province.trim()) {
+        newErrors.businessAddressProvince = 'Province is required.';
+      }
+      if (!businessAddress.zipCode.trim()) {
+        newErrors.businessAddressZipCode = 'ZIP code is required.';
+      }
     }
     
     // If there are validation errors, set them and return
@@ -126,6 +148,11 @@ const SellerApplicationForm = () => {
     if (sellerType === 'business') {
       if (businessPermit) formData.append('businessPermit', businessPermit);
       if (birRegistration) formData.append('birRegistration', birRegistration);
+      formData.append('businessName', businessName);
+      formData.append('businessAddress[street]', businessAddress.street);
+      formData.append('businessAddress[city]', businessAddress.city);
+      formData.append('businessAddress[province]', businessAddress.province);
+      formData.append('businessAddress[zipCode]', businessAddress.zipCode);
     }
 
     try {
@@ -466,6 +493,86 @@ const SellerApplicationForm = () => {
 
                 {sellerType === 'business' && (
                   <>
+                    <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-8"></div>
+                    
+                    {/* Business Information Section */}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-green-600" />
+                        Business Information
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="businessName" className="text-sm font-semibold text-gray-700">
+                            Business Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="businessName"
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            className={`mt-1 ${errors.businessName ? 'border-red-500' : ''}`}
+                            placeholder="Enter your business name"
+                          />
+                          {errors.businessName && (
+                            <p className="mt-1 text-sm text-red-500">{errors.businessName}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-4">
+                          <Label className="text-sm font-semibold text-gray-700">
+                            Business Address <span className="text-red-500">*</span>
+                          </Label>
+                          <div>
+                            <Input
+                              value={businessAddress.street}
+                              onChange={(e) => setBusinessAddress(prev => ({ ...prev, street: e.target.value }))}
+                              className={`mt-1 ${errors.businessAddressStreet ? 'border-red-500' : ''}`}
+                              placeholder="Street address"
+                            />
+                            {errors.businessAddressStreet && (
+                              <p className="mt-1 text-sm text-red-500">{errors.businessAddressStreet}</p>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <Input
+                                value={businessAddress.city}
+                                onChange={(e) => setBusinessAddress(prev => ({ ...prev, city: e.target.value }))}
+                                className={`mt-1 ${errors.businessAddressCity ? 'border-red-500' : ''}`}
+                                placeholder="City"
+                              />
+                              {errors.businessAddressCity && (
+                                <p className="mt-1 text-sm text-red-500">{errors.businessAddressCity}</p>
+                              )}
+                            </div>
+                            <div>
+                              <Input
+                                value={businessAddress.province}
+                                onChange={(e) => setBusinessAddress(prev => ({ ...prev, province: e.target.value }))}
+                                className={`mt-1 ${errors.businessAddressProvince ? 'border-red-500' : ''}`}
+                                placeholder="Province"
+                              />
+                              {errors.businessAddressProvince && (
+                                <p className="mt-1 text-sm text-red-500">{errors.businessAddressProvince}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <Input
+                              value={businessAddress.zipCode}
+                              onChange={(e) => setBusinessAddress(prev => ({ ...prev, zipCode: e.target.value }))}
+                              className={`mt-1 ${errors.businessAddressZipCode ? 'border-red-500' : ''}`}
+                              placeholder="ZIP Code"
+                            />
+                            {errors.businessAddressZipCode && (
+                              <p className="mt-1 text-sm text-red-500">{errors.businessAddressZipCode}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-8"></div>
                     
                     {/* Business Documents Section */}

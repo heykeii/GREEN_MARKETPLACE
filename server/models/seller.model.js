@@ -14,6 +14,36 @@ const sellerApplicationSchema = new mongoose.Schema({
     required: true
   },
 
+  businessInfo: {
+    businessName: {
+      type: String,
+      trim: true,
+      required: function() { return this.sellerType === 'business'; }
+    },
+    businessAddress: {
+      street: {
+        type: String,
+        trim: true,
+        required: function() { return this.sellerType === 'business'; }
+      },
+      city: {
+        type: String,
+        trim: true,
+        required: function() { return this.sellerType === 'business'; }
+      },
+      province: {
+        type: String,
+        trim: true,
+        required: function() { return this.sellerType === 'business'; }
+      },
+      zipCode: {
+        type: String,
+        trim: true,
+        required: function() { return this.sellerType === 'business'; }
+      }
+    }
+  },
+
   documents: {
     govIDs: [{ type: String, required: true }], // URLs to 2 government IDs
     proofOfAddress: { type: String, required: true },

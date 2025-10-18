@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import SellerApplication from "../models/seller.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Resend } from "resend";
@@ -664,13 +665,33 @@ export const getUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Include seller info for verified sellers (business name/address)
+    let sellerInfo = null;
+    if (user.isSeller && user.sellerStatus === 'verified') {
+      try {
+        const sellerApplication = await SellerApplication.findOne({ user: userId }).select('sellerType businessInfo');
+        if (sellerApplication) {
+          sellerInfo = {
+            type: sellerApplication.sellerType,
+            ...(sellerApplication.businessInfo && {
+              businessName: sellerApplication.businessInfo.businessName,
+              businessAddress: sellerApplication.businessInfo.businessAddress
+            })
+          };
+        }
+      } catch (e) {
+        // swallow and continue without sellerInfo
+      }
+    }
+
     const followerCount = user.followers?.length || 0;
     const followingCount = user.following?.length || 0;
     res.status(200).json({ 
       user: {
         ...user.toObject(),
         followerCount,
-        followingCount
+        followingCount,
+        ...(sellerInfo && { sellerInfo })
       }
     });
   } catch (error) {
@@ -687,6 +708,21 @@ export const getProfile = async (req, res) => {
     const user = await User.findById(userId).select(
       'firstName lastName email avatar bio location contactNumber socialLinks isSeller sellerStatus role createdAt updatedAt followers following'
     );
+
+    // If user is a seller, get their seller application info
+    let sellerInfo = null;
+    if (user.isSeller && user.sellerStatus === 'verified') {
+      const sellerApplication = await SellerApplication.findOne({ user: userId }).select('sellerType businessInfo');
+      if (sellerApplication) {
+        sellerInfo = {
+          type: sellerApplication.sellerType,
+          ...(sellerApplication.businessInfo && {
+            businessName: sellerApplication.businessInfo.businessName,
+            businessAddress: sellerApplication.businessInfo.businessAddress
+          })
+        };
+      }
+    }
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -707,7 +743,7 @@ export const getProfile = async (req, res) => {
     const isFollowing = authUserId ? (user.followers || []).map(String).includes(authUserId) : false;
     const profile = user.toObject();
     delete profile.password;
-    res.status(200).json({ profile: { ...profile, followerCount, followingCount, isFollowing } });
+    res.status(200).json({ profile: { ...profile, followerCount, followingCount, isFollowing, ...(sellerInfo && { sellerInfo }) } });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Failed to get user profile' });

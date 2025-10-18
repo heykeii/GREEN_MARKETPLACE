@@ -6,7 +6,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { joinConversation, onMessage, onMessagesSeen, onMessageSeen, emitTyping, markMessageAsSeen } from '@/lib/socket';
 import MessageStatus from '@/components/MessageStatus';
 import Avatar from '@/components/Avatar';
-import { FaShoppingCart, FaTimes, FaQuestion } from 'react-icons/fa';
+import { FaShoppingCart, FaTimes, FaQuestion, FaPaperPlane, FaImage, FaSmile, FaEllipsisV, FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
 
 const ChatView = () => {
   const { conversationId } = useParams();
@@ -17,9 +17,11 @@ const ChatView = () => {
   const [conversation, setConversation] = useState(null);
   const [showProductCard, setShowProductCard] = useState(true);
   const [attachProductNext, setAttachProductNext] = useState(false);
+  const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const listRef = useRef(null);
   const seenIdsRef = useRef(new Set());
   const messageRefs = useRef(new Map());
+  const inputRef = useRef(null);
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
   const location = useLocation();
   const me = useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), []);
@@ -33,7 +35,6 @@ const ChatView = () => {
       if (res.ok) {
         const data = await res.json();
         const msgs = data.messages || [];
-        // seed dedupe set
         const setIds = new Set();
         msgs.forEach(m => m && m._id && setIds.add(m._id));
         seenIdsRef.current = setIds;
@@ -54,24 +55,21 @@ const ChatView = () => {
         if (id && seenIdsRef.current.has(id)) return;
         if (id) seenIdsRef.current.add(id);
         
-        // Check if this message replaces an optimistic message from the same sender with similar content
         setMessages(prev => {
           const newMessage = payload.message;
           const optimisticIndex = prev.findIndex(msg => 
             msg.isOptimistic && 
             msg.sender?._id === newMessage.sender?._id && 
             msg.content === newMessage.content &&
-            Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 10000 // within 10 seconds
+            Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 10000
           );
           
           if (optimisticIndex >= 0) {
-            // Replace the optimistic message with the real one
             const updated = [...prev];
             seenIdsRef.current.delete(updated[optimisticIndex]._id);
             updated[optimisticIndex] = newMessage;
             return updated;
           } else {
-            // Add new message normally
             return [...prev, newMessage];
           }
         });
@@ -85,7 +83,6 @@ const ChatView = () => {
     };
     onMessage(handler);
     
-    // Handle messages seen event (when other user reads messages)
     const seenHandler = (payload) => {
       if (payload?.conversationId === conversationId) {
         setMessages(prev => prev.map(msg => {
@@ -98,7 +95,6 @@ const ChatView = () => {
     };
     onMessagesSeen(seenHandler);
     
-    // Handle individual message seen event
     const messageSeenHandler = (payload) => {
       if (payload?.conversationId === conversationId) {
         setMessages(prev => prev.map(msg => {
@@ -111,7 +107,6 @@ const ChatView = () => {
     };
     onMessageSeen(messageSeenHandler);
     
-    // mark conversation as read when opening
     const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
     fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/conversations/${conversationId}/mark-read`, {
       method: 'PATCH',
@@ -119,7 +114,6 @@ const ChatView = () => {
     }).catch(()=>{});
   }, [conversationId, me?._id]);
 
-  // Intersection observer to mark messages as seen when they come into view
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -128,7 +122,6 @@ const ChatView = () => {
             const messageId = entry.target.dataset.messageId;
             const message = messages.find(m => m._id === messageId);
             
-            // Mark as seen if it's a message sent to us and not already seen
             if (message && message.recipient?._id === me?._id && !message.isRead && !message.isOptimistic) {
               markMessageAsSeen(messageId);
             }
@@ -138,7 +131,6 @@ const ChatView = () => {
       { threshold: 0.5 }
     );
 
-    // Observe all message elements
     messageRefs.current.forEach((ref) => {
       if (ref) observer.observe(ref);
     });
@@ -146,11 +138,11 @@ const ChatView = () => {
     return () => observer.disconnect();
   }, [messages, me?._id]);
 
-  // Hide product prompts if directed by query param (e.g., seller contacting customer)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('hideProductPrompts') === '1') {
       setShowProductCard(false);
+      setShowQuickQuestions(false);
     }
   }, [location.search]);
 
@@ -170,7 +162,6 @@ const ChatView = () => {
     return lastId;
   }, [messages, me?._id]);
 
-  // Determine the other user in the conversation robustly
   const otherUser = useMemo(() => {
     const myId = me?._id;
     let list = [];
@@ -195,27 +186,23 @@ const ChatView = () => {
       body.attachments = [{ type: 'product', url: conversation.product._id }];
     }
 
-    // Create optimistic message for immediate UI update
     const optimisticMessage = {
-      _id: `temp-${Date.now()}`, // temporary ID
+      _id: `temp-${Date.now()}`,
       conversation: conversationId,
       sender: me,
       content: content,
       attachments: body.attachments || [],
       createdAt: new Date().toISOString(),
-      isOptimistic: true // flag to identify optimistic messages
+      isOptimistic: true
     };
 
-    // Clear input and add optimistic message immediately
     setText('');
     setAttachProductNext(false);
     emitTyping(conversationId, false);
     
-    // Add optimistic message to UI immediately
     setMessages(prev => [...prev, optimisticMessage]);
     seenIdsRef.current.add(optimisticMessage._id);
     
-    // Scroll to bottom of messages container
     setTimeout(() => {
       if (listRef.current) {
         listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -233,34 +220,24 @@ const ChatView = () => {
         const data = await res.json();
         const realMessage = data.message;
         
-        // Replace optimistic message with real one
         setMessages(prev => prev.map(msg => 
           msg._id === optimisticMessage._id ? realMessage : msg
         ));
         
-        // Update seen IDs
         seenIdsRef.current.delete(optimisticMessage._id);
         seenIdsRef.current.add(realMessage._id);
       } else {
-        // Remove optimistic message on error
         setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
         seenIdsRef.current.delete(optimisticMessage._id);
-        
-        // Restore the text input
         setText(content);
         if (body.attachments) setAttachProductNext(true);
-        
         console.error('Failed to send message');
       }
     } catch (error) {
-      // Remove optimistic message on error
       setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
       seenIdsRef.current.delete(optimisticMessage._id);
-      
-      // Restore the text input
       setText(content);
       if (body.attachments) setAttachProductNext(true);
-      
       console.error('Error sending message:', error);
     }
   };
@@ -268,6 +245,8 @@ const ChatView = () => {
   const askProduct = (question) => {
     setText(question);
     setAttachProductNext(true);
+    setShowQuickQuestions(false);
+    inputRef.current?.focus();
   };
 
   const ProductCard = () => {
@@ -275,30 +254,41 @@ const ChatView = () => {
 
     const product = conversation.product;
     return (
-      <div className="bg-white border border-emerald-200 rounded-xl p-4 mb-4 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
-            <img
-              src={product.images?.[0] || '/default-product.png'}
-              alt={product.name}
-              className="w-16 h-16 object-cover rounded-lg border"
-              onError={(e) => { e.currentTarget.src = '/default-product.png'; }}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-emerald-700 font-semibold">₱{product.price?.toLocaleString()}</p>
-              {product.category && <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">{product.category}</span>}
-            </div>
+      <div className="bg-gradient-to-br from-white to-emerald-50/30 border border-emerald-100 rounded-2xl p-4 mb-4 shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Product Discussion</span>
           </div>
           <button
             onClick={() => setShowProductCard(false)}
-            className="text-gray-400 hover:text-gray-600 p-1"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
             title="Hide"
           >
-            <FaTimes className="w-4 h-4" />
+            <FaTimes className="w-3.5 h-3.5" />
           </button>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0 relative group">
+            <img
+              src={product.images?.[0] || '/default-product.png'}
+              alt={product.name}
+              className="w-20 h-20 object-cover rounded-xl border-2 border-white shadow-md group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => { e.currentTarget.src = '/default-product.png'; }}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 rounded-xl transition-colors"></div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 truncate text-lg mb-1">{product.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-lg text-emerald-600 font-bold">₱{product.price?.toLocaleString()}</p>
+              {product.category && (
+                <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium border border-emerald-200">
+                  {product.category}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -308,22 +298,36 @@ const ChatView = () => {
     if (!conversation?.product) return null;
     const p = conversation.product;
     return (
-      <div className={`mt-2 border rounded-lg ${isMe ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white'} overflow-hidden`}> 
-        <div className="flex items-center gap-3 p-2">
-          <img
-            src={p.images?.[0] || '/default-product.png'}
-            alt={p.name}
-            className="w-12 h-12 rounded-md object-cover border"
-            onError={(e)=>{ e.currentTarget.src='/default-product.png'; }}
-          />
+      <div className={`mt-2 border-2 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg ${
+        isMe 
+          ? 'border-emerald-200 bg-white/90' 
+          : 'border-gray-200 bg-white shadow-sm'
+      }`}> 
+        <div className="flex items-center gap-3 p-3">
+          <div className="relative group">
+            <img
+              src={p.images?.[0] || '/default-product.png'}
+              alt={p.name}
+              className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow group-hover:scale-105 transition-transform"
+              onError={(e)=>{ e.currentTarget.src='/default-product.png'; }}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 rounded-lg transition-colors"></div>
+          </div>
           <div className="flex-1 min-w-0">
-            <div className={`text-sm font-medium truncate ${isMe ? 'text-emerald-800' : 'text-gray-900'}`}>{p.name}</div>
-            <div className={`text-xs ${isMe ? 'text-emerald-700' : 'text-gray-600'}`}>₱{p.price?.toLocaleString()}</div>
+            <div className={`text-sm font-semibold truncate ${isMe ? 'text-gray-900' : 'text-gray-900'}`}>
+              {p.name}
+            </div>
+            <div className={`text-sm font-bold ${isMe ? 'text-emerald-600' : 'text-emerald-600'}`}>
+              ₱{p.price?.toLocaleString()}
+            </div>
           </div>
           <Button
             size="sm"
-            variant="outline"
-            className={isMe ? 'border-emerald-300 text-emerald-700' : 'border-gray-300 text-gray-700'}
+            className={`rounded-lg font-semibold shadow-sm hover:shadow-md transition-all ${
+              isMe 
+                ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-0' 
+                : 'bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200'
+            }`}
             onClick={()=>navigate(`/product/${p._id || ''}`)}
           >
             View
@@ -333,37 +337,43 @@ const ChatView = () => {
     );
   };
 
-  const AskProductButton = () => {
-    if (!conversation?.product) return null;
+  const QuickQuestions = () => {
+    if (!conversation?.product || !showQuickQuestions) return null;
 
     const quickQuestions = [
-      "Hi! I'm interested in this product. Can you tell me more about it?",
-      "Is this product still available?",
-      "What are the shipping options?",
-      "Do you have any discounts available?",
-      "Can I see more photos of this product?"
+      { text: "Hi! I'm interested in this product. Can you tell me more about it?", icon: "💬" },
+      { text: "Is this product still available?", icon: "✅" },
+      { text: "What are the shipping options?", icon: "📦" },
+      { text: "Do you have any discounts available?", icon: "🏷️" },
+      { text: "Can I see more photos of this product?", icon: "📸" }
     ];
 
     return (
-      <div className="mb-4 space-y-3">
-        <Button
-          onClick={() => askProduct(quickQuestions[0])}
-          className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 text-lg font-semibold rounded-lg"
+      <div className="mb-6 space-y-3 animate-fade-in">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent"></div>
+          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider px-3">Quick Actions</span>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent"></div>
+        </div>
+        
+        <button
+          onClick={() => askProduct(quickQuestions[0].text)}
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-4 px-6 text-base font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-3 group"
         >
-          <FaQuestion className="mr-2 h-5 w-5" />
-          Ask Product
-        </Button>
+          <span className="text-2xl group-hover:scale-110 transition-transform">{quickQuestions[0].icon}</span>
+          <span>Ask About This Product</span>
+        </button>
         
         <div className="grid grid-cols-1 gap-2">
           {quickQuestions.slice(1).map((question, index) => (
-            <Button
+            <button
               key={index}
-              onClick={() => askProduct(question)}
-              variant="outline"
-              className="text-sm py-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+              onClick={() => askProduct(question.text)}
+              className="text-sm py-3 px-4 text-left text-gray-700 bg-white hover:bg-emerald-50 border-2 border-gray-200 hover:border-emerald-300 rounded-xl transition-all duration-200 flex items-center gap-3 group hover:shadow-md"
             >
-              {question}
-            </Button>
+              <span className="text-lg group-hover:scale-110 transition-transform">{question.icon}</span>
+              <span className="flex-1">{question.text}</span>
+            </button>
           ))}
         </div>
       </div>
@@ -373,134 +383,272 @@ const ChatView = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen pt-24 px-3 sm:px-4 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50">
-        <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur rounded-xl shadow-md overflow-hidden border border-emerald-100">
-          {/* Header */}
-          <div className="px-3 sm:px-4 py-3 border-b bg-gradient-to-r from-white to-emerald-50 flex items-center gap-3">
-            <div className="flex-shrink-0">
+      <div className="min-h-screen pt-20 pb-4 px-3 sm:px-4 bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/50">
+        <div className="max-w-4xl mx-auto h-[calc(100vh-7rem)] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+          {/* Modern Header */}
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-white via-emerald-50/20 to-white backdrop-blur-xl flex items-center gap-3 shadow-sm">
+            <button 
+              onClick={() => navigate(-1)}
+              className="lg:hidden text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full p-2 transition-all"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+            
+            <div className="flex-shrink-0 relative">
               <img
                 src={otherUser?.avatar || '/default-avatar.svg'}
                 onError={(e)=>{ e.currentTarget.src='/default-avatar.svg'; }}
                 alt="avatar"
-                className="w-9 h-9 rounded-full border"
+                className="w-12 h-12 rounded-full border-3 border-white shadow-lg ring-2 ring-emerald-100 cursor-pointer hover:ring-emerald-300 transition-all"
+                onClick={() => otherUser?._id && navigate(`/profile/${otherUser._id}`)}
               />
+              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
             </div>
-            <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-semibold text-emerald-700 truncate">
+            
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate flex items-center gap-2">
                 {otherUser ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || otherUser.name || 'Conversation' : 'Conversation'}
               </h2>
               {conversation?.product && (
-                <div className="text-xs text-gray-500 truncate">Regarding: {conversation.product?.name}</div>
+                <div className="text-xs text-gray-500 truncate flex items-center gap-1.5">
+                  <FaShoppingCart className="w-3 h-3 text-emerald-500" />
+                  <span>{conversation.product?.name}</span>
+                </div>
               )}
             </div>
-            {otherUser?._id && (
-              <div className="ml-auto">
-                <Button variant="outline" size="sm" onClick={()=>navigate(`/profile/${otherUser._id}`)}>View profile</Button>
-              </div>
-            )}
+            
+            <div className="flex items-center gap-2">
+              {otherUser?._id && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="hidden sm:flex rounded-xl font-semibold border-2 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                  onClick={()=>navigate(`/profile/${otherUser._id}`)}
+                >
+                  View Profile
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="h-[70vh] flex flex-col">
-            <div ref={listRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3">
-              {showProductCard && <ProductCard />}
-              {showProductCard && <AskProductButton />}
-              {loading ? (
-                <div className="text-center text-gray-500">Loading...</div>
-              ) : messages.length === 0 ? (
-                <div className="text-center text-gray-500">Say hello 👋</div>
-              ) : (
-                messages.map((m) => {
-                  const isMe = m.sender?._id === me?._id;
-                  const avatar = m.sender?.avatar && m.sender.avatar !== 'null' && m.sender.avatar.trim() !== '' ? m.sender.avatar : '/default-avatar.svg';
-                  const displayName = `${m.sender?.firstName || ''} ${m.sender?.lastName || ''}`.trim();
-                  
-                  // Create ref for intersection observer
-                  const messageRef = (el) => {
-                    if (el) {
-                      messageRefs.current.set(m._id, el);
-                    } else {
-                      messageRefs.current.delete(m._id);
-                    }
-                  };
-                  
-                  return (
-                    <div 
-                      key={m._id} 
-                      ref={messageRef}
-                      data-message-id={m._id}
-                      className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'}`}
-                    >
-                      {!isMe && (
-                        <Avatar 
-                          src={m.sender?.avatar} 
-                          alt="avatar" 
-                          className="w-8 h-8 rounded-full border mr-2"
-                          onClick={() => navigate(`/profile/${m.sender?._id}`)}
-                          title={displayName}
-                        />
-                      )}
-                      <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}> 
-                        <div className={`text-[11px] mb-1 ${isMe ? 'text-emerald-700' : 'text-gray-500'}`}>{displayName || (isMe ? 'You' : 'User')}</div>
-                        <div className={`w-full px-3 py-2 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'} ${m.isOptimistic ? 'opacity-70' : ''}`}>
-                          <div className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</div>
-                          {Array.isArray(m.attachments) && m.attachments.some(att => att?.type === 'product') && (
-                            <InlineProductAttachment isMe={isMe} />
-                          )}
-                          <div className={`text-[10px] mt-1 flex items-center gap-1 ${isMe ? 'text-emerald-100' : 'text-gray-500'}`}>
-                            <span>{new Date(m.createdAt).toLocaleTimeString()}</span>
-                            {m.isOptimistic && isMe && (
-                              <span className="animate-pulse">•••</span>
-                            )}
-                          </div>
-                          <MessageStatus 
-                            message={m}
-                            isOwnMessage={isMe}
-                            isLastReadOwnMessage={m._id === lastReadOwnMessageId}
-                            recipientAvatar={otherUser?.avatar}
+
+          {/* Messages Container */}
+          <div ref={listRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gradient-to-br from-slate-50/30 to-white custom-scrollbar">
+            {showProductCard && <ProductCard />}
+            {showQuickQuestions && <QuickQuestions />}
+            
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                <p className="text-gray-500 font-medium">Loading messages...</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-4xl">👋</span>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-gray-700 mb-1">Start the conversation</p>
+                  <p className="text-sm text-gray-500">Send a message to begin chatting</p>
+                </div>
+              </div>
+            ) : (
+              messages.map((m, idx) => {
+                const isMe = m.sender?._id === me?._id;
+                const avatar = m.sender?.avatar && m.sender.avatar !== 'null' && m.sender.avatar.trim() !== '' ? m.sender.avatar : '/default-avatar.svg';
+                const displayName = `${m.sender?.firstName || ''} ${m.sender?.lastName || ''}`.trim();
+                const showAvatar = idx === 0 || messages[idx - 1]?.sender?._id !== m.sender?._id;
+                
+                const messageRef = (el) => {
+                  if (el) {
+                    messageRefs.current.set(m._id, el);
+                  } else {
+                    messageRefs.current.delete(m._id);
+                  }
+                };
+                
+                return (
+                  <div 
+                    key={m._id} 
+                    ref={messageRef}
+                    data-message-id={m._id}
+                    className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'} animate-slide-up`}
+                  >
+                    {!isMe && (
+                      <div className="flex-shrink-0 mb-1">
+                        {showAvatar ? (
+                          <Avatar 
+                            src={m.sender?.avatar} 
+                            alt="avatar" 
+                            className="w-8 h-8 rounded-full border-2 border-white shadow-md cursor-pointer hover:scale-110 transition-transform"
+                            onClick={() => navigate(`/profile/${m.sender?._id}`)}
+                            title={displayName}
                           />
+                        ) : (
+                          <div className="w-8 h-8"></div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className={`max-w-[75%] sm:max-w-[65%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}> 
+                      {showAvatar && !isMe && (
+                        <div className="text-xs font-semibold text-gray-600 px-1">{displayName || 'User'}</div>
+                      )}
+                      
+                      <div className={`group relative px-4 py-3 rounded-3xl shadow-md hover:shadow-lg transition-all duration-200 ${
+                        isMe 
+                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-br-md' 
+                          : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
+                      } ${m.isOptimistic ? 'opacity-70' : ''}`}>
+                        <div className="whitespace-pre-wrap break-words leading-relaxed text-[15px]">
+                          {m.content}
+                        </div>
+                        
+                        {Array.isArray(m.attachments) && m.attachments.some(att => att?.type === 'product') && (
+                          <InlineProductAttachment isMe={isMe} />
+                        )}
+                        
+                        <div className={`text-[10px] mt-2 flex items-center gap-1.5 ${
+                          isMe ? 'text-emerald-100' : 'text-gray-500'
+                        }`}>
+                          <span className="font-medium">
+                            {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {m.isOptimistic && isMe && (
+                            <span className="animate-pulse flex gap-0.5">
+                              <span>•</span><span>•</span><span>•</span>
+                            </span>
+                          )}
+                          {!m.isOptimistic && isMe && (
+                            <MessageStatus 
+                              message={m}
+                              isOwnMessage={isMe}
+                              isLastReadOwnMessage={m._id === lastReadOwnMessageId}
+                              recipientAvatar={otherUser?.avatar}
+                            />
+                          )}
                         </div>
                       </div>
-                      {isMe && (
-                        <Avatar 
-                          src={m.sender?.avatar} 
-                          alt="avatar" 
-                          className="w-8 h-8 rounded-full border ml-2"
-                          onClick={() => navigate(`/profile/${m.sender?._id}`)}
-                          title={displayName}
-                        />
-                      )}
                     </div>
-                  );
-                })
-              )}
-            </div>
-            <form onSubmit={sendMessage} className="border-t bg-white/70 backdrop-blur px-3 py-3 flex flex-col gap-3">
-              <div className="flex gap-2">
+                    
+                    {isMe && (
+                      <div className="flex-shrink-0 mb-1">
+                        {showAvatar ? (
+                          <Avatar 
+                            src={m.sender?.avatar} 
+                            alt="avatar" 
+                            className="w-8 h-8 rounded-full border-2 border-emerald-200 shadow-md cursor-pointer hover:scale-110 transition-transform"
+                            onClick={() => navigate(`/profile/${m.sender?._id}`)}
+                            title={displayName}
+                          />
+                        ) : (
+                          <div className="w-8 h-8"></div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Modern Input Area */}
+          <div className="border-t border-gray-100 bg-white/95 backdrop-blur-xl px-4 sm:px-6 py-4">
+            {conversation?.product && attachProductNext && (
+              <div className="mb-3 flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border-l-4 border-emerald-500 rounded-lg">
+                <FaCheckCircle className="text-emerald-600 w-4 h-4 flex-shrink-0" />
+                <span className="text-sm text-emerald-800 font-medium flex-1">Product card will be attached</span>
+                <button 
+                  onClick={() => setAttachProductNext(false)}
+                  className="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded-full p-1 transition-colors"
+                >
+                  <FaTimes className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            
+            <form onSubmit={sendMessage} className="flex items-end gap-3">
+              <div className="flex-1 relative">
                 <input
+                  ref={inputRef}
                   value={text}
                   onChange={(e)=>{ setText(e.target.value); emitTyping(conversationId, true); }}
                   onBlur={()=>emitTyping(conversationId, false)}
-                  className="flex-1 border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-full px-3 sm:px-4 py-2 outline-none shadow-sm"
-                  placeholder="Type a message"
+                  className="w-full border-2 border-gray-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 rounded-3xl px-5 py-3.5 pr-12 outline-none shadow-sm hover:shadow-md transition-all text-[15px] bg-gray-50 focus:bg-white"
+                  placeholder="Type your message..."
                 />
-                <Button type="submit" className="rounded-full px-4 sm:px-5">Send</Button>
               </div>
-              {conversation?.product && (
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500 flex items-center gap-2">
-                    <input type="checkbox" checked={attachProductNext} onChange={(e)=>setAttachProductNext(e.target.checked)} />
-                    Attach product card with this message
-                  </label>
-                </div>
-              )}
+              
+              <Button 
+                type="submit" 
+                disabled={!text.trim()}
+                className="rounded-2xl px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+              >
+                <FaPaperPlane className="w-4 h-4" />
+                <span className="hidden sm:inline">Send</span>
+              </Button>
             </form>
+            
+            {conversation?.product && !attachProductNext && (
+              <div className="mt-3 flex items-center justify-center">
+                <button
+                  onClick={() => setAttachProductNext(true)}
+                  className="text-xs text-gray-500 hover:text-emerald-600 font-medium px-4 py-2 rounded-full hover:bg-emerald-50 transition-all flex items-center gap-2"
+                >
+                  <FaShoppingCart className="w-3 h-3" />
+                  <span>Attach product to message</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
       <Footer />
+      
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
+        }
+        
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+      `}</style>
     </>
   );
 };
 
 export default ChatView;
-
-

@@ -109,14 +109,11 @@ const Register = () => {
                         <div className="relative z-10">
                             {/* Logo/Icon */}
                             <div className="flex justify-center mb-8">
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl blur-lg opacity-60 animate-pulse"></div>
-                                    <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-4 shadow-xl">
-                                        <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                    </div>
-                                </div>
+                                <img 
+                                    src="/src/assets/logo.png" 
+                                    alt="Green Marketplace Logo" 
+                                    className="h-40 w-40 object-contain"
+                                />
                             </div>
 
                             {/* Header */}

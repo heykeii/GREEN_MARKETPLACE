@@ -409,12 +409,28 @@ const Profile = () => {
                       
                       {/* Seller Badge */}
                       {user.sellerStatus === 'verified' && (
-                        <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-md">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          Verified Seller
-                        </Badge>
+                        <>
+                          <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-md">
+                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Verified Seller
+                          </Badge>
+
+                          {/* Business Information */}
+                          {user.sellerInfo?.type === 'business' && (
+                            <div className="mt-6 space-y-4 bg-green-50 rounded-xl p-4">
+                              <div className="text-center">
+                                <h3 className="text-lg font-semibold text-green-800">{user.sellerInfo.businessName}</h3>
+                                <div className="mt-2 text-sm text-green-700">
+                                  <p>{user.sellerInfo.businessAddress.street}</p>
+                                  <p>{user.sellerInfo.businessAddress.city}, {user.sellerInfo.businessAddress.province}</p>
+                                  <p>{user.sellerInfo.businessAddress.zipCode}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       {/* Badges Display */}

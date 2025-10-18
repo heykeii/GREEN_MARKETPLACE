@@ -278,6 +278,29 @@ const AdminSellerVerification = () => {
                   </div>
                 )}
 
+                {application.sellerType === 'business' && application.businessInfo?.businessName && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Business Name:</p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {application.businessInfo.businessName}
+                    </p>
+                  </div>
+                )}
+
+                {application.sellerType === 'business' && application.businessInfo?.businessAddress && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Business Address:</p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {[
+                        application.businessInfo.businessAddress.street,
+                        application.businessInfo.businessAddress.city,
+                        application.businessInfo.businessAddress.province,
+                        application.businessInfo.businessAddress.zipCode
+                      ].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                )}
+
                 {application.user?.contactNumber && (
                   <div>
                     <p className="text-sm font-medium text-gray-700">Contact Number:</p>

@@ -131,6 +131,19 @@ export const submitSellerVerification = async (req, res) => {
 
     console.log('Saving seller application...');
     
+    // Extract business info from request body
+    const { businessName, businessAddress } = req.body;
+
+    // Validate business info if seller type is business
+    if (sellerType === 'business') {
+      if (!businessName) {
+        return res.status(400).json({ message: 'Business name is required for business sellers.' });
+      }
+      if (!businessAddress || !businessAddress.street || !businessAddress.city || !businessAddress.province || !businessAddress.zipCode) {
+        return res.status(400).json({ message: 'Complete business address is required for business sellers.' });
+      }
+    }
+
     // Save application
     const application = await SellerApplication.findOneAndUpdate(
       { user: userId },
@@ -143,6 +156,12 @@ export const submitSellerVerification = async (req, res) => {
           qrCode: gcashQR
         },
         status: 'pending',
+        ...(sellerType === 'business' && {
+          businessInfo: {
+            businessName,
+            businessAddress
+          }
+        })
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
