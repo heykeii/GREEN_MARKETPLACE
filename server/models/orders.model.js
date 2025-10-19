@@ -44,6 +44,22 @@ const orderSchema = new mongoose.Schema({
         enum: ['pending', 'paid', 'failed'],
         default: 'pending'
     },
+
+    // Admin commission tracking
+    commission: {
+        isPaid: { type: Boolean, default: false },
+        paidAt: { type: Date },
+        paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        amount: { type: Number, default: 0 },
+        receipt: { type: String }, // Receipt image URL
+        receiptStatus: { 
+            type: String, 
+            enum: ['not_uploaded', 'uploaded', 'verified', 'rejected'],
+            default: 'not_uploaded'
+        },
+        receiptUploadedAt: { type: Date },
+        receiptRejectionReason: { type: String }
+    },
     
     // GCash receipt tracking
     gcashReceiptStatus: {

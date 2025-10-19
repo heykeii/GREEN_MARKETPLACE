@@ -16,7 +16,11 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaCalendar,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaEye,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock
 } from 'react-icons/fa';
 
 const AdminOrderRecords = () => {
@@ -75,6 +79,59 @@ const AdminOrderRecords = () => {
 
   const toggleOrderExpansion = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const markCommissionPaid = async (orderId) => {
+    try {
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/api/v1/admin/order-records/${orderId}/commission-paid`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Commission marked as paid');
+      // refresh list
+      await fetchOrderRecords();
+      setExpandedOrder(orderId);
+    } catch (error) {
+      console.error('Failed to mark commission paid', error);
+      toast.error(error.response?.data?.message || 'Failed to mark as paid');
+    }
+  };
+
+  const getReceiptStatusBadge = (receiptStatus) => {
+    const statusConfig = {
+      not_uploaded: { 
+        color: 'bg-gray-100 text-gray-700', 
+        text: 'No Receipt', 
+        icon: FaClock 
+      },
+      uploaded: { 
+        color: 'bg-blue-100 text-blue-700', 
+        text: 'Receipt Uploaded', 
+        icon: FaCheckCircle 
+      },
+      verified: { 
+        color: 'bg-green-100 text-green-700', 
+        text: 'Verified', 
+        icon: FaCheckCircle 
+      },
+      rejected: { 
+        color: 'bg-red-100 text-red-700', 
+        text: 'Rejected', 
+        icon: FaTimesCircle 
+      }
+    };
+
+    const config = statusConfig[receiptStatus] || statusConfig.not_uploaded;
+    const IconComponent = config.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${config.color}`}>
+        <IconComponent className="text-xs" />
+        {config.text}
+      </span>
+    );
   };
 
   return (
@@ -163,11 +220,8 @@ const AdminOrderRecords = () => {
                     className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                   >
                     {/* Order Header */}
-                    <div
-                      className="bg-gray-50 p-4 cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => toggleOrderExpansion(order._id)}
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="bg-gray-50 p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 cursor-pointer" onClick={() => toggleOrderExpansion(order._id)}>
                         <div>
                           <p className="text-xs text-gray-500">Order Number</p>
                           <p className="font-semibold text-emerald-600">{order.orderNumber}</p>
@@ -192,7 +246,17 @@ const AdminOrderRecords = () => {
                         </div>
                         <div>
                           <p className="text-xs text-gray-500">Admin Commission</p>
-                          <p className="font-bold text-emerald-600">₱{order.adminCommission.toLocaleString()}</p>
+                          <div className="flex flex-col gap-1">
+                            <p className="font-bold text-emerald-600">₱{order.adminCommission.toLocaleString()}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {getReceiptStatusBadge(order?.commission?.receiptStatus)}
+                              {order?.commission?.isPaid ? (
+                                <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">Paid</span>
+                              ) : order?.commission?.receiptStatus === 'uploaded' ? (
+                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); markCommissionPaid(order._id); }}>Mark as Paid</Button>
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -319,6 +383,57 @@ const AdminOrderRecords = () => {
                             </p>
                           </div>
                         </div>
+
+                        {/* Commission Receipt */}
+                        {order?.commission?.receipt && (
+                          <div className="mb-6">
+                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <FaReceipt className="text-purple-600" />
+                              Commission Receipt
+                            </h4>
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <div className="flex items-start gap-4">
+                                <div className="border rounded-lg p-2 bg-white">
+                                  <img 
+                                    src={order.commission.receipt} 
+                                    alt="Commission Receipt" 
+                                    className="w-32 h-32 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                    onClick={() => window.open(order.commission.receipt, '_blank')}
+                                  />
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-700">Status:</span>
+                                    {getReceiptStatusBadge(order.commission.receiptStatus)}
+                                  </div>
+                                  {order.commission.receiptUploadedAt && (
+                                    <p className="text-sm text-gray-600">
+                                      <span className="font-medium">Uploaded:</span>{' '}
+                                      {formatDate(order.commission.receiptUploadedAt)}
+                                    </p>
+                                  )}
+                                  {order.commission.receiptRejectionReason && (
+                                    <div className="bg-red-50 border border-red-200 rounded p-2">
+                                      <p className="text-xs text-red-700">
+                                        <span className="font-semibold">Rejection Reason:</span>{' '}
+                                        {order.commission.receiptRejectionReason}
+                                      </p>
+                                    </div>
+                                  )}
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => window.open(order.commission.receipt, '_blank')}
+                                    className="mt-2"
+                                  >
+                                    <FaEye className="mr-2" />
+                                    View Full Size
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Summary */}
                         <div className="border-t pt-4">

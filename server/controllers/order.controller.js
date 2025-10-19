@@ -7,6 +7,49 @@ import User from '../models/user.model.js';
 import { NotificationService } from '../utils/notificationService.js';
 import { BadgeService } from '../utils/badgeService.js';
 import ShippingService from '../services/shipping.service.js';
+import cloudinary from '../utils/cloudinary.js';
+import multer from 'multer';
+
+// Multer setup for commission receipt uploads
+const storage = multer.memoryStorage();
+export const uploadCommissionReceipt = multer({ 
+    storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        // Accept only image files
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    }
+});
+
+// Helper function to upload commission receipt to Cloudinary
+const uploadCommissionReceiptToCloudinary = async (fileBuffer, filename) => {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+            {
+                folder: 'commission_receipts',
+                resource_type: 'image',
+                transformation: [
+                    { width: 1200, height: 1600, crop: 'limit' },
+                    { quality: 'auto:good' }
+                ]
+            },
+            (error, result) => {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    reject(error);
+                } else {
+                    resolve(result.secure_url);
+                }
+            }
+        ).end(fileBuffer);
+    });
+};
 
 // Create a new order from cart
 export const createOrder = async (req, res) => {
@@ -974,6 +1017,150 @@ export const verifyReceiptBeforeOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to validate order for receipt verification',
+            error: error.message
+        });
+    }
+};
+
+// Upload commission receipt (seller pays admin)
+export const submitCommissionReceipt = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        const sellerId = req.user._id;
+
+        // Validate required fields
+        if (!orderId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Order ID is required'
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Receipt image is required'
+            });
+        }
+
+        // Find and validate order
+        const order = await Order.findById(orderId).populate('items.product');
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Verify order belongs to the seller (check if any product in order belongs to seller)
+        const sellerProducts = order.items.filter(item => 
+            item.product.seller.toString() === sellerId.toString()
+        );
+
+        if (sellerProducts.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to upload receipt for this order'
+            });
+        }
+
+        // Check if order is completed or ready
+        if (!['completed', 'ready'].includes(order.status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Commission can only be paid for completed or ready orders'
+            });
+        }
+
+        // Check if order payment is confirmed
+        if (order.paymentStatus !== 'paid') {
+            return res.status(400).json({
+                success: false,
+                message: 'Order payment must be confirmed before paying commission'
+            });
+        }
+
+        // Check if receipt already uploaded for this order
+        if (order.commission?.receipt) {
+            return res.status(400).json({
+                success: false,
+                message: 'Commission receipt has already been uploaded for this order'
+            });
+        }
+
+        // Upload receipt image to Cloudinary
+        console.log('Uploading commission receipt image to Cloudinary...');
+        const receiptImageUrl = await uploadCommissionReceiptToCloudinary(
+            req.file.buffer, 
+            `commission_receipt_${orderId}_${Date.now()}`
+        );
+
+        // Calculate commission
+        const COMMISSION_PER_ITEM = 5;
+        const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+        const commissionAmount = totalQuantity * COMMISSION_PER_ITEM;
+
+        // Update order with commission receipt
+        order.commission = {
+            ...order.commission,
+            receipt: receiptImageUrl,
+            receiptStatus: 'uploaded',
+            receiptUploadedAt: new Date(),
+            amount: commissionAmount
+        };
+
+        await order.save();
+
+        // Send notification to admin
+        try {
+            const admins = await User.find({ role: 'admin' });
+            for (const admin of admins) {
+                await NotificationService.createNotification({
+                    user: admin._id,
+                    type: 'commission_receipt_uploaded',
+                    title: 'New Commission Receipt',
+                    message: `Seller has uploaded commission receipt for order #${order.orderNumber}`,
+                    link: `/admin/order-records`,
+                    relatedOrder: order._id
+                });
+            }
+        } catch (notificationError) {
+            console.error('Failed to send notification to admin:', notificationError);
+            // Don't fail the receipt upload if notification fails
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Commission receipt uploaded successfully! Admin will review and verify.',
+            receipt: {
+                receiptUrl: receiptImageUrl,
+                status: 'uploaded',
+                uploadedAt: order.commission.receiptUploadedAt,
+                amount: commissionAmount
+            }
+        });
+
+    } catch (error) {
+        console.error('Upload commission receipt error:', error);
+        
+        // Handle specific errors
+        if (error.message.includes('Only image files are allowed')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Only image files are allowed'
+            });
+        }
+        
+        if (error.message.includes('File too large')) {
+            return res.status(400).json({
+                success: false,
+                message: 'File size exceeds 10MB limit'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Failed to process commission receipt upload',
             error: error.message
         });
     }

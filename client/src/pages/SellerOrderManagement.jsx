@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { FaBox, FaEye, FaEdit, FaCalendar, FaMoneyBillWave, FaUser, FaSearch, FaEnvelope } from 'react-icons/fa';
+import { FaBox, FaEye, FaEdit, FaCalendar, FaMoneyBillWave, FaUser, FaSearch, FaEnvelope, FaSpinner, FaUpload } from 'react-icons/fa';
 import { toast } from '@/utils/toast';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
@@ -25,6 +26,14 @@ const SellerOrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(null);
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [payOrder, setPayOrder] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const COMMISSION_PER_ITEM = 5; // pesos per item
+  const GCASH_NUMBER = '09667462937'; // Admin GCash number
 
   const navigate = useNavigate();
 
@@ -182,6 +191,85 @@ const SellerOrderManagement = () => {
       case 'confirmed': return 'Mark as Ready';
       case 'ready': return 'Mark as Completed';
       default: return 'Update Status';
+    }
+  };
+
+  const calculateCommissionForOrder = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const totalQty = order.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    return totalQty * COMMISSION_PER_ITEM;
+  };
+
+  const openPayCommissionDialog = (order) => {
+    setPayOrder(order);
+    setPayDialogOpen(true);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File size must be less than 10MB');
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleUploadReceipt = async () => {
+    if (!selectedFile || !payOrder) {
+      toast.error('Please select a receipt image');
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('receipt', selectedFile);
+      formData.append('orderId', payOrder._id);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/v1/orders/seller/commission-receipt`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        toast.success('Commission receipt uploaded successfully! Admin will review it.');
+        setPayDialogOpen(false);
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        
+        // Refresh orders list
+        const controller = new AbortController();
+        await fetchOrders(currentPage, token, controller.signal);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload receipt');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -377,6 +465,9 @@ const SellerOrderManagement = () => {
                           <span className="text-sm text-gray-600">
                             <strong>Status:</strong> {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
                           </span>
+                          <span className="text-sm text-gray-700">
+                            <strong>Admin Commission:</strong> ₱{calculateCommissionForOrder(order).toFixed(2)}
+                          </span>
                           {order.shippingAddress && (
                             <span className="text-sm text-gray-600">
                               <strong>Ship to:</strong> {order.shippingAddress.city}, {order.shippingAddress.province}
@@ -385,6 +476,18 @@ const SellerOrderManagement = () => {
                         </div>
                         
                         <div className="flex gap-2">
+                          {(['completed', 'ready'].includes(order.status)) && order.paymentStatus === 'paid' && !(order.commission && order.commission.isPaid) && (
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => openPayCommissionDialog(order)}
+                            >
+                              Pay Commission
+                            </Button>
+                          )}
+                          {order?.commission?.isPaid && (
+                            <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700 self-center">Commission Paid</span>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
@@ -468,6 +571,124 @@ const SellerOrderManagement = () => {
         </div>
       </div>
       <Footer />
+
+      {/* Pay Commission Dialog */}
+      <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Pay Admin Commission</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+            {/* Order Info */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">
+                Order <strong className="text-gray-900">#{payOrder?.orderNumber}</strong>
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Amount due: <span className="font-bold text-emerald-700 text-lg">₱{(payOrder ? calculateCommissionForOrder(payOrder) : 0).toFixed(2)}</span>
+              </p>
+            </div>
+
+            {/* GCash Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <FaMoneyBillWave className="text-blue-600" />
+                Payment Instructions
+              </h4>
+              <p className="text-sm text-blue-800">
+                Please pay the commission to this GCash number:
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <code className="bg-white px-3 py-2 rounded border border-blue-300 text-blue-900 font-bold text-lg">
+                  {GCASH_NUMBER}
+                </code>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(GCASH_NUMBER);
+                    toast.success('GCash number copied!');
+                  }}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Copy
+                </Button>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="commission-receipt-file" className="text-sm font-medium text-gray-700">
+                  Upload GCash Receipt Screenshot *
+                </Label>
+                <Input
+                  id="commission-receipt-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="mt-1"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Supported formats: JPG, PNG, GIF (max 10MB)
+                </p>
+              </div>
+
+              {/* Preview */}
+              {previewUrl && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Preview</Label>
+                  <div className="mt-1 border rounded-lg p-2 bg-gray-50">
+                    <img 
+                      src={previewUrl} 
+                      alt="Receipt Preview" 
+                      className="max-w-full max-h-48 mx-auto rounded"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Tips */}
+              <div className="text-xs text-gray-500 space-y-1 bg-gray-50 p-3 rounded">
+                <p className="font-semibold text-gray-700">💡 Tips for a clear receipt:</p>
+                <p>• Make sure the receipt shows the complete transaction details</p>
+                <p>• Include reference number, amount, and recipient information</p>
+                <p>• Ensure the image is clear and readable</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex-shrink-0 gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setPayDialogOpen(false);
+                setSelectedFile(null);
+                setPreviewUrl(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUploadReceipt}
+              disabled={!selectedFile || uploading}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {uploading ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <FaUpload className="mr-2" />
+                  Submit Receipt
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -9,7 +9,9 @@ import {
     getSellerOrders,
     cancelOrder,
     calculateShipping,
-    verifyReceiptBeforeOrder
+    verifyReceiptBeforeOrder,
+    submitCommissionReceipt,
+    uploadCommissionReceipt
 } from '../controllers/order.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
@@ -28,6 +30,7 @@ router.put('/:orderId/cancel', protect, cancelOrder);
 // Seller routes
 router.get('/seller/orders', protect, getSellerOrders);
 router.put('/seller/:orderId/status', protect, updateOrderStatus);
+router.post('/seller/commission-receipt', protect, uploadCommissionReceipt.single('receipt'), submitCommissionReceipt);
 
 // Admin routes
 router.get('/admin/all', protect, isAdmin, getAllOrders);

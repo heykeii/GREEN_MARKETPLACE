@@ -608,7 +608,17 @@ export const getAdminOrderRecords = async (req, res) => {
         paymentStatus: order.paymentStatus,
         paymentMethod: order.paymentMethod,
         createdAt: order.createdAt,
-        shippingAddress: order.shippingAddress
+        shippingAddress: order.shippingAddress,
+        commission: {
+          isPaid: order?.commission?.isPaid || false,
+          paidAt: order?.commission?.paidAt || null,
+          paidBy: order?.commission?.paidBy || null,
+          amount: order?.commission?.amount || adminCommission,
+          receipt: order?.commission?.receipt || null,
+          receiptStatus: order?.commission?.receiptStatus || 'not_uploaded',
+          receiptUploadedAt: order?.commission?.receiptUploadedAt || null,
+          receiptRejectionReason: order?.commission?.receiptRejectionReason || null
+        }
       };
     }));
 
@@ -636,6 +646,42 @@ export const getAdminOrderRecords = async (req, res) => {
       message: 'Failed to fetch order records',
       error: error.message
     });
+  }
+};
+
+// Mark an order's admin commission as paid (admin only)
+export const markOrderCommissionPaid = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const COMMISSION_PER_ITEM = 5; // must match getAdminOrderRecords
+
+    const order = await Order.findById(orderId).populate('items.product', 'name images price seller');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Calculate commission based on quantities
+    const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    const adminCommission = totalQuantity * COMMISSION_PER_ITEM;
+
+    order.commission = {
+      isPaid: true,
+      paidAt: new Date(),
+      paidBy: req.user?._id,
+      amount: adminCommission
+    };
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: 'Commission marked as paid',
+      commission: order.commission
+    });
+  } catch (error) {
+    console.error('Mark commission paid error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to mark commission as paid' });
   }
 };
 
