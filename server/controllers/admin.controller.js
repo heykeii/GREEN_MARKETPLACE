@@ -541,6 +541,104 @@ export const rejectProduct = async (req, res) => {
   }
 };
 
+// Get all completed orders with commission tracking (admin only)
+export const getAdminOrderRecords = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    
+    const COMMISSION_PER_ITEM = 5; // 5 pesos per item quantity
+
+    // Get all completed orders with payment status 'paid'
+    const orders = await Order.find({
+      status: { $in: ['completed', 'ready'] },
+      paymentStatus: 'paid'
+    })
+      .populate('items.product', 'name images price seller')
+      .populate('customer', 'firstName lastName email avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalOrders = await Order.countDocuments({
+      status: { $in: ['completed', 'ready'] },
+      paymentStatus: 'paid'
+    });
+
+    // Process orders to calculate commission and get seller info
+    const ordersWithCommission = await Promise.all(orders.map(async (order) => {
+      let totalQuantity = 0;
+      let totalOrderAmount = 0;
+      const sellersInOrder = new Set();
+      
+      // Calculate total quantity and amount, get sellers
+      for (const item of order.items) {
+        totalQuantity += item.quantity;
+        totalOrderAmount += item.price * item.quantity;
+        
+        if (item.product && item.product.seller) {
+          sellersInOrder.add(item.product.seller.toString());
+        }
+      }
+      
+      // Get seller details
+      const sellerIds = Array.from(sellersInOrder);
+      const sellers = await User.find({ _id: { $in: sellerIds } }).select('firstName lastName email avatar');
+      
+      // Calculate commission
+      const adminCommission = totalQuantity * COMMISSION_PER_ITEM;
+      
+      return {
+        _id: order._id,
+        orderNumber: order.orderNumber,
+        customer: order.customer,
+        sellers: sellers,
+        items: order.items.map(item => ({
+          product: item.product,
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.price * item.quantity
+        })),
+        totalQuantity,
+        totalOrderAmount,
+        adminCommission,
+        shippingFee: order.shippingFee || 0,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        shippingAddress: order.shippingAddress
+      };
+    }));
+
+    // Calculate total commission for all orders
+    const totalCommission = ordersWithCommission.reduce((sum, order) => sum + order.adminCommission, 0);
+
+    res.json({
+      success: true,
+      orders: ordersWithCommission,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalOrders / limit),
+        totalOrders,
+        hasNext: page < Math.ceil(totalOrders / limit),
+        hasPrev: page > 1
+      },
+      commissionRate: COMMISSION_PER_ITEM,
+      totalCommissionAllOrders: Math.round(totalCommission * 100) / 100
+    });
+
+  } catch (error) {
+    console.error('Get admin order records error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order records',
+      error: error.message
+    });
+  }
+};
+
 // Permanently delete a user by admin
 export const deleteUserByAdmin = async (req, res) => {
   try {

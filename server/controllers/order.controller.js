@@ -500,10 +500,19 @@ export const updateOrderStatus = async (req, res) => {
         // Store old status for notification
         const oldStatus = order.status;
 
-        // Update the order status
+        // Prepare update object
+        const updateData = { status };
+        
+        // When order is marked as completed, also mark payment as paid
+        // This ensures analytics accurately track completed orders
+        if (status === 'completed') {
+            updateData.paymentStatus = 'paid';
+        }
+
+        // Update the order status (and payment status if needed)
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
-            { status },
+            updateData,
             { new: true }
         ).populate('items.product', 'name images price')
         .populate('customer', 'firstName lastName email');
@@ -532,6 +541,31 @@ export const updateOrderStatus = async (req, res) => {
             } catch (badgeError) {
                 console.error('Failed to update purchase count and check badges:', badgeError);
                 // Don't fail the status update if badge tracking fails
+            }
+        }
+
+        // Emit real-time analytics update to seller when order status changes
+        // This ensures seller dashboard analytics refresh automatically
+        if (status === 'completed' || status === 'ready') {
+            try {
+                const { getIO } = await import('../utils/socket.js');
+                const io = getIO();
+                if (io && order.items && order.items.length > 0) {
+                    // Get seller ID from the first product
+                    const sellerProduct = await Product.findById(order.items[0].product._id).select('seller');
+                    if (sellerProduct && sellerProduct.seller) {
+                        io.to(sellerProduct.seller.toString()).emit('seller_analytics_updated', {
+                            reason: 'order_status_changed',
+                            orderId: order._id,
+                            status: status,
+                            oldStatus: oldStatus
+                        });
+                        console.log(`Analytics update emitted to seller ${sellerProduct.seller}`);
+                    }
+                }
+            } catch (socketError) {
+                console.error('Failed to emit analytics update:', socketError);
+                // Don't fail the status update if socket emission fails
             }
         }
 

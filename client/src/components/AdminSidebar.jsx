@@ -76,6 +76,12 @@ const AdminSidebar = ({ collapsed, setCollapsed, isMobile = false, mobileOpen = 
       count: counts.feedback
     },
     {
+      icon: ShoppingBag,
+      label: 'Order Records',
+      path: '/admin/order-records',
+      color: 'text-purple-500'
+    },
+    {
       icon: FileText,
       label: 'Sustainability',
       path: '/admin/sustainability',

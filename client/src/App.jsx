@@ -12,6 +12,7 @@ import Homepage from "./pages/Homepage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./components/AdminLogin";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
+import AdminOrderRecords from "./pages/AdminOrderRecords";
 import SellerApplicationForm from "./pages/SellerApplicationForm";
 import Profile from "./pages/Profile";
 import SellerDashboard from './pages/SellerDashboard';
@@ -177,6 +178,14 @@ const App = () => {
           element={
             <ProtectedAdminRoute>
               <AdminFeedback />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route 
+          path="/admin/order-records" 
+          element={
+            <ProtectedAdminRoute>
+              <AdminOrderRecords />
             </ProtectedAdminRoute>
           }
         />

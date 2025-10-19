@@ -1,7 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import { isAdmin } from '../middleware/admin.middleware.js';
-import { getAdminStats, getSellerApplications, getSellerApplicationById, getAllUsers, getPendingProducts, approveProduct, rejectProduct, getApprovedProducts, getRejectedProducts, deleteUserByAdmin, getAllCampaigns, getPendingCampaigns, verifyCampaign, deleteCampaignByAdmin, adminCalculateSustainabilityScore, batchRecalculateSustainabilityScores } from '../controllers/admin.controller.js';
+import { getAdminStats, getSellerApplications, getSellerApplicationById, getAllUsers, getPendingProducts, approveProduct, rejectProduct, getApprovedProducts, getRejectedProducts, deleteUserByAdmin, getAllCampaigns, getPendingCampaigns, verifyCampaign, deleteCampaignByAdmin, adminCalculateSustainabilityScore, batchRecalculateSustainabilityScores, getAdminOrderRecords } from '../controllers/admin.controller.js';
 import { getProfile } from '../controllers/user.controller.js';
 
 const router = express.Router();
@@ -42,5 +42,8 @@ router.get('/campaigns', getAllCampaigns);
 router.get('/campaigns/pending', getPendingCampaigns);
 router.patch('/campaigns/verify/:campaignId', verifyCampaign);
 router.delete('/campaigns/:campaignId', deleteCampaignByAdmin);
+
+// Order records and commission tracking
+router.get('/order-records', getAdminOrderRecords);
 
 export default router; 

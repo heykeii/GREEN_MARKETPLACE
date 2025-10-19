@@ -138,7 +138,7 @@ const SellerDashboard = () => {
     fetchAnalytics();
     fetchGcashDetails();
 
-    // Listen for real-time analytics updates (e.g., when products are deleted)
+    // Listen for real-time analytics updates (e.g., when products are deleted or orders are completed)
     const cleanup = onSellerAnalyticsUpdated((data) => {
       console.log('Analytics update received:', data);
       if (data.reason === 'product_deleted') {
@@ -147,6 +147,15 @@ const SellerDashboard = () => {
         // Add a small delay to ensure database is updated
         setTimeout(() => {
           fetchAnalytics(true);
+        }, 500);
+      } else if (data.reason === 'order_status_changed') {
+        console.log('Order status changed, refreshing analytics...', data);
+        // Refresh analytics when order is completed or ready
+        // Add a small delay to ensure database is updated
+        setTimeout(() => {
+          fetchAnalytics(true);
+          // Also refresh products to update inventory if needed
+          fetchProducts();
         }, 500);
       }
     });
@@ -342,7 +351,17 @@ const SellerDashboard = () => {
   // Fetch analytics when timeframe changes
   useEffect(() => {
     if (user && user.isSeller && user.sellerStatus === 'verified') {
+      // Initial fetch
       fetchAnalytics();
+
+      // Set up periodic refresh every 5 minutes
+      const refreshInterval = setInterval(() => {
+        console.log('Auto-refreshing analytics data...');
+        fetchAnalytics(true); // Force refresh to bypass cache
+      }, 5 * 60 * 1000);
+
+      // Cleanup interval on unmount
+      return () => clearInterval(refreshInterval);
     } else {
       console.log('User not eligible for analytics:', {
         hasUser: !!user,
@@ -1045,6 +1064,144 @@ const SellerDashboard = () => {
     );
   };
 
+  const YearlySalesChart = () => {
+    const labels = (analyticsData.salesData?.yearly || []).map(d => d.date);
+    const revenue = (analyticsData.salesData?.yearly || []).map(d => d.revenue || 0);
+    const orders = (analyticsData.salesData?.yearly || []).map(d => d.orders || 0);
+    
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: 'Revenue (₱)',
+          data: revenue,
+          backgroundColor: 'rgba(16, 185, 129, 0.6)',
+          borderColor: 'rgba(16, 185, 129, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Orders',
+          data: orders,
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: false,
+          yAxisID: 'y1'
+        }
+      ]
+    };
+    
+    const options = {
+      responsive: true,
+      plugins: {
+        legend: { 
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            padding: 20
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: function(context) {
+              if (context.datasetIndex === 0) {
+                return `Revenue: ₱${context.parsed.y.toLocaleString()}`;
+              } else {
+                return `Orders: ${context.parsed.y}`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Month'
+          },
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Revenue (₱)'
+          },
+          ticks: {
+            callback: function(value) {
+              return '₱' + value.toLocaleString();
+            }
+          },
+          grid: {
+            color: 'rgba(16, 185, 129, 0.1)'
+          }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Orders'
+          },
+          grid: {
+            drawOnChartArea: false,
+            color: 'rgba(59, 130, 246, 0.1)'
+          }
+        }
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false
+      }
+    };
+    
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FaCalendarAlt className="text-emerald-600" />
+            Yearly Sales Trend (Last 12 Months)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Line data={data} options={options} height={100} />
+          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-emerald-50 p-3 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                <span className="font-medium text-emerald-700">Total Revenue</span>
+              </div>
+              <div className="text-emerald-900 font-bold text-lg">
+                ₱{revenue.reduce((sum, val) => sum + val, 0).toLocaleString()}
+              </div>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="font-medium text-blue-700">Total Orders</span>
+              </div>
+              <div className="text-blue-900 font-bold text-lg">
+                {orders.reduce((sum, val) => sum + val, 0)}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const TopProductsChart = () => {
     const top = (analyticsData.topProducts || []).slice(0, 5);
     if (top.length === 0) return null;
@@ -1064,70 +1221,6 @@ const SellerDashboard = () => {
     );
   };
 
-  const ConversionFunnelChart = () => {
-    const convRate = Math.max(0, Number(analyticsData.overview?.conversionRate || 0));
-    const totalOrders = Math.max(0, Number(analyticsData.overview?.totalOrders || 0));
-    // Derive an estimated number of visits from orders and conversion rate if available; otherwise default to 1000
-    const visits = convRate > 0 && totalOrders > 0 ? Math.max(totalOrders, Math.round(totalOrders / (convRate / 100))) : 1000;
-    const orderRate = convRate / 100; // 0-1
-    // Provide easy-to-understand intermediate stage estimates (adjusted to always be > orders)
-    let viewsRate = 0.65;
-    let cartsRate = 0.40;
-    if (orderRate >= cartsRate) cartsRate = Math.min(0.9, orderRate + 0.05);
-    if (cartsRate >= viewsRate) viewsRate = Math.min(0.95, cartsRate + 0.10);
-
-    const views = Math.round(visits * viewsRate);
-    const carts = Math.round(visits * cartsRate);
-    const orders = Math.round(visits * orderRate);
-
-    const data = {
-      labels: ['Site Visits', 'Product Views', 'Added to Cart', 'Orders (Actual)'],
-      datasets: [
-        {
-          label: 'Users',
-          data: [visits, views, carts, orders],
-          backgroundColor: ['#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8']
-        }
-      ]
-    };
-    const options = {
-      indexAxis: 'y',
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const value = Number(ctx.raw || 0);
-              const pct = visits > 0 ? ((value / visits) * 100).toFixed(1) : '0.0';
-              return `${value.toLocaleString()} users (${pct}%)`;
-            }
-          }
-        }
-      },
-      scales: { x: { beginAtZero: true, max: visits } }
-    };
-    return (
-      <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg">Conversion Funnel</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Bar data={data} options={options} height={100} />
-          <div className="text-xs text-gray-600 mt-3 space-y-1">
-            <div><strong>How to read:</strong> Each bar shows how many users reached the step, relative to total site visits.</div>
-            <div>Orders are computed from your actual conversion rate ({convRate}%). Product Views and Add to Cart are estimated placeholders you can refine later.</div>
-            <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-gray-700">
-              <div>Site Visits: <strong>{visits.toLocaleString()}</strong> (100%)</div>
-              <div>Product Views: <strong>{views.toLocaleString()}</strong> ({Math.round(viewsRate * 100)}%)</div>
-              <div>Added to Cart: <strong>{carts.toLocaleString()}</strong> ({Math.round(cartsRate * 100)}%)</div>
-              <div>Orders: <strong>{orders.toLocaleString()}</strong> ({convRate}%)</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   const TopProductsSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
@@ -1251,6 +1344,125 @@ const SellerDashboard = () => {
       </CardContent>
     </Card>
   );
+
+  const MostFrequentBuyerSection = () => {
+    const topFrequentBuyers = analyticsData.customerInsights?.topFrequentBuyers || [];
+    
+    if (topFrequentBuyers.length === 0) {
+      return (
+        <Card className="glass-card border-0 shadow-xl mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FaUsers className="text-emerald-600" />
+              Top Frequent Buyers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaUsers className="text-gray-400 text-2xl" />
+              </div>
+              <p className="text-gray-500 text-lg">No customers yet</p>
+              <p className="text-gray-400 text-sm">Start selling to see your most frequent buyers</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="glass-card border-0 shadow-xl mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FaUsers className="text-emerald-600" />
+            Top Frequent Buyers
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {topFrequentBuyers.map((buyer, index) => (
+              <div key={buyer.customer._id} className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4">
+                <div className="flex items-center gap-4">
+                  {/* Rank Badge */}
+                  <div className="flex-shrink-0">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                      index === 0 ? 'bg-yellow-500' : 
+                      index === 1 ? 'bg-gray-400' : 
+                      index === 2 ? 'bg-orange-500' : 'bg-emerald-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                  </div>
+
+                  {/* Customer Avatar */}
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                      {buyer.customer.avatar ? (
+                        <img
+                          src={buyer.customer.avatar}
+                          alt={`${buyer.customer.firstName} ${buyer.customer.lastName}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center">
+                          <span className="text-emerald-600 font-bold text-sm">
+                            {buyer.customer.firstName?.charAt(0)}{buyer.customer.lastName?.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Crown icon for #1 buyer */}
+                    {index === 0 && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <FaStar className="text-yellow-600 text-xs" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-gray-800 truncate">
+                      {buyer.customer.firstName} {buyer.customer.lastName}
+                    </h3>
+                    <p className="text-gray-600 text-sm truncate">{buyer.customer.email}</p>
+                    
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-3 mt-2">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-emerald-600">{buyer.orderCount}</div>
+                        <div className="text-xs text-gray-500">Orders</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">{buyer.totalQuantities}</div>
+                        <div className="text-xs text-gray-500">Items</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-purple-600">₱{buyer.totalSpent.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Spent</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="flex-shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => navigate(`/profile/${buyer.customer._id}`)}
+                    >
+                      <FaEye className="mr-1 h-3 w-3" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const InventoryMetricsSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
@@ -1645,7 +1857,10 @@ const SellerDashboard = () => {
                     <TopProductsChart />
                   </div>
 
-                  <ConversionFunnelChart />
+                  {/* Yearly Sales Chart - Full Width */}
+                  <div className="grid grid-cols-1 gap-6">
+                    <YearlySalesChart />
+                  </div>
 
                   {/* Top Products */}
                   <TopProductsSection />
@@ -1655,6 +1870,9 @@ const SellerDashboard = () => {
 
                   {/* Customer Insights */}
                   <CustomerInsightsSection />
+
+                  {/* Most Frequent Buyer */}
+                  <MostFrequentBuyerSection />
 
                   {/* Inventory Metrics */}
                   <InventoryMetricsSection />

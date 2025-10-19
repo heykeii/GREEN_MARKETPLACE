@@ -354,11 +354,13 @@ export const getSellerAnalytics = async (req, res) => {
     
     if (productIds.length > 0) {
       try {
-        // Current period orders - only include completed/paid orders for accurate revenue
+        // Current period orders - include completed/ready orders with paid status
+        // Note: 'ready' status means order is ready for pickup/delivery (should count as revenue)
+        // 'completed' status means order is fully delivered and completed
         currentOrders = await Order.find({
           'items.product': { $in: productIds },
           createdAt: { $gte: startDate },
-          status: { $in: ['completed', 'delivered'] },
+          status: { $in: ['completed', 'ready'] },
           paymentStatus: 'paid'
         }).populate('items.product customer');
 
@@ -366,26 +368,33 @@ export const getSellerAnalytics = async (req, res) => {
         previousOrders = await Order.find({
           'items.product': { $in: productIds },
           createdAt: { $gte: previousStartDate, $lt: startDate },
-          status: { $in: ['completed', 'delivered'] },
+          status: { $in: ['completed', 'ready'] },
           paymentStatus: 'paid'
         }).populate('items.product customer');
 
         console.log('Found current orders:', currentOrders.length);
         console.log('Found previous orders:', previousOrders.length);
+        console.log('Current orders details:', currentOrders.map(o => ({
+          id: o._id,
+          status: o.status,
+          paymentStatus: o.paymentStatus,
+          totalAmount: o.totalAmount
+        })));
       } catch (orderError) {
         console.error('Error fetching orders:', orderError);
       }
     }
 
-    // Get all orders for lifetime metrics - only completed/paid orders
+    // Get all orders for lifetime metrics - only completed/ready/paid orders
     let allOrders = [];
     if (productIds.length > 0) {
       try {
         allOrders = await Order.find({
           'items.product': { $in: productIds },
-          status: { $in: ['completed', 'delivered'] },
+          status: { $in: ['completed', 'ready'] },
           paymentStatus: 'paid'
         }).populate('items.product customer');
+        console.log('Found all orders (lifetime):', allOrders.length);
       } catch (error) {
         console.error('Error fetching all orders:', error);
       }
@@ -471,6 +480,54 @@ export const getSellerAnalytics = async (req, res) => {
 
     // Calculate repeat customers
     const repeatCustomers = Object.values(customerOrders).filter(orders => orders.length > 1).length;
+
+    // Calculate top 5 frequent buyers
+    let topFrequentBuyers = [];
+    if (Object.keys(customerOrders).length > 0) {
+      // Find customers with most orders
+      const customerOrderCounts = Object.entries(customerOrders).map(([customerId, orders]) => ({
+        customerId,
+        orderCount: orders.length,
+        orderIds: orders
+      }));
+      
+      // Sort by order count and get top 5
+      const topCustomers = customerOrderCounts.sort((a, b) => b.orderCount - a.orderCount).slice(0, 5);
+      
+      // Get customer details and calculate metrics for each
+      for (const topCustomer of topCustomers) {
+        const customer = await User.findById(topCustomer.customerId).select('firstName lastName avatar email');
+        if (customer) {
+          // Calculate total quantities purchased by this customer
+          let totalQuantities = 0;
+          let totalSpent = 0;
+          
+          allOrders.forEach(order => {
+            if (order.customer._id.toString() === topCustomer.customerId) {
+              order.items.forEach(item => {
+                if (productIds.some(id => id.toString() === item.product._id.toString())) {
+                  totalQuantities += item.quantity;
+                  totalSpent += item.price * item.quantity;
+                }
+              });
+            }
+          });
+          
+          topFrequentBuyers.push({
+            customer: {
+              _id: customer._id,
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              avatar: customer.avatar,
+              email: customer.email
+            },
+            orderCount: topCustomer.orderCount,
+            totalQuantities,
+            totalSpent: Math.round(totalSpent * 100) / 100
+          });
+        }
+      }
+    }
 
     // Calculate inventory metrics
     const lowStockItems = products.filter(p => Number(p.quantity) < 10 && Number(p.quantity) > 0).length;
@@ -623,18 +680,64 @@ export const getSellerAnalytics = async (req, res) => {
     // Generate realistic sales data based on actual orders
     const generateSalesData = (type) => {
       const data = [];
-      const periods = type === 'daily' ? 30 : type === 'weekly' ? 12 : 6;
-      const periodMs = type === 'daily' ? 24 * 60 * 60 * 1000 : type === 'weekly' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+      let periods, periodMs, ordersToCheck;
       
+      if (type === 'daily') {
+        periods = 30;
+        periodMs = 24 * 60 * 60 * 1000;
+        ordersToCheck = allOrders; // Use all orders for daily data
+      } else if (type === 'weekly') {
+        periods = 12;
+        periodMs = 7 * 24 * 60 * 60 * 1000;
+        ordersToCheck = allOrders; // Use all orders for weekly data
+      } else if (type === 'monthly') {
+        periods = 6;
+        periodMs = 30 * 24 * 60 * 60 * 1000;
+        ordersToCheck = allOrders; // Use all orders for monthly data
+      } else if (type === 'yearly') {
+        periods = 12; // Last 12 months
+        ordersToCheck = allOrders; // Use all orders for yearly data
+        
+        // Generate proper month-based periods for yearly data
+        for (let i = 0; i < periods; i++) {
+          const currentDate = new Date(now);
+          const periodStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - (periods - i - 1), 1);
+          const periodEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() - (periods - i - 2), 1);
+          
+          let periodRevenue = 0;
+          let periodOrders = 0;
+          
+          ordersToCheck.forEach(order => {
+            const orderDate = new Date(order.createdAt);
+            if (orderDate >= periodStart && orderDate < periodEnd) {
+              order.items.forEach(item => {
+                if (productIds.some(id => id.toString() === item.product._id.toString())) {
+                  periodRevenue += item.price * item.quantity;
+                  periodOrders++;
+                }
+              });
+            }
+          });
+          
+          const dateLabel = periodStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          
+          data.push({
+            date: dateLabel,
+            revenue: Math.round(periodRevenue * 100) / 100,
+            orders: periodOrders
+          });
+        }
+        
+        return data; // Return early for yearly data
+      }
+      
+      // Handle other chart types (daily, weekly, monthly)
       for (let i = 0; i < periods; i++) {
         const periodStart = new Date(now.getTime() - (periods - i) * periodMs);
         const periodEnd = new Date(now.getTime() - (periods - i - 1) * periodMs);
         
         let periodRevenue = 0;
         let periodOrders = 0;
-        
-        // Use all orders (not just current period) for better historical data
-        const ordersToCheck = type === 'daily' ? allOrders : currentOrders;
         
         ordersToCheck.forEach(order => {
           const orderDate = new Date(order.createdAt);
@@ -648,8 +751,10 @@ export const getSellerAnalytics = async (req, res) => {
           }
         });
         
+        const dateLabel = periodStart.toISOString().split('T')[0];
+        
         data.push({
-          date: periodStart.toISOString().split('T')[0],
+          date: dateLabel,
           revenue: Math.round(periodRevenue * 100) / 100,
           orders: periodOrders
         });
@@ -671,7 +776,8 @@ export const getSellerAnalytics = async (req, res) => {
       salesData: {
         daily: generateSalesData('daily'),
         weekly: generateSalesData('weekly'),
-        monthly: generateSalesData('monthly')
+        monthly: generateSalesData('monthly'),
+        yearly: generateSalesData('yearly')
       },
       topProducts,
       categoryPerformance,
@@ -679,7 +785,8 @@ export const getSellerAnalytics = async (req, res) => {
         totalCustomers: customerSet.size,
         repeatCustomers: repeatCustomers,
         averageOrderValue: Math.round((currentOrders.length > 0 ? totalOrderValue / currentOrders.length : 0) * 100) / 100,
-        customerSatisfaction: Math.round(reviewStats.customerSatisfaction * 10) / 10
+        customerSatisfaction: Math.round(reviewStats.customerSatisfaction * 10) / 10,
+        topFrequentBuyers
       },
       inventoryMetrics: {
         lowStockItems,
