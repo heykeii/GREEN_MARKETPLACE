@@ -31,6 +31,7 @@ const campaignSchema = new mongoose.Schema({
 
   status: { type: String, enum: ["active", "upcoming", "completed"], default: "upcoming" },
   verified: { type: Boolean, default: false }, // ✅ Admin verification required
+  rejectionMessage: { type: String }, // Admin rejection reason
 }, { timestamps: true });
 
 export default mongoose.model("Campaign", campaignSchema);

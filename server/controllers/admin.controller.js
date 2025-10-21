@@ -869,8 +869,13 @@ export const verifyCampaign = async (req, res) => {
     }
 
     campaign.verified = verified;
-    if (rejectionMessage) {
-      campaign.rejectionMessage = rejectionMessage;
+    
+    // When rejecting, always set a rejection message (even if empty) to distinguish from pending
+    if (!verified) {
+      campaign.rejectionMessage = rejectionMessage || 'Campaign rejected by admin';
+    } else {
+      // When approving, clear any previous rejection message
+      campaign.rejectionMessage = undefined;
     }
 
     await campaign.save();
