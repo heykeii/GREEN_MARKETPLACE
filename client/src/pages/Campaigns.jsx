@@ -522,7 +522,7 @@ const Campaigns = () => {
       if (filters.type) params.append('type', filters.type);
       if (filters.status) params.append('status', filters.status);
       
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/campaigns?${params.toString()}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/campaigns?${params.toString()}`);
       if (response.data.success) {
         let filteredCampaigns = response.data.campaigns;
         

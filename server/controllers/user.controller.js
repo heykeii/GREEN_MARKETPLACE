@@ -175,6 +175,11 @@ const sendVerificationEmail = async (email, firstName, verificationToken) => {
 
 // Verify Google token
 const verifyGoogleToken = async (token) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    console.error("GOOGLE_CLIENT_ID is not configured");
+    throw new Error("Google OAuth is not configured");
+  }
+
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
@@ -183,7 +188,13 @@ const verifyGoogleToken = async (token) => {
     return ticket.getPayload();
   } catch (error) {
     console.error("Google token verification error:", error);
-    throw new Error("Invalid Google token");
+    if (error.message.includes('Token used too late')) {
+      throw new Error("Login session expired. Please try again.");
+    } else if (error.message.includes('Invalid token')) {
+      throw new Error("Invalid Google credentials. Please try again.");
+    } else {
+      throw new Error("Failed to verify Google credentials. Please try again.");
+    }
   }
 };
 
@@ -245,7 +256,7 @@ export const googleLogin = async (req, res) => {
         googleId,
         googleEmail: email,
         avatar,
-        isVerified: false, // Google users must still verify email
+        isVerified: true, // Google users are already verified by Google
         verificationToken,
         password: crypto.randomBytes(32).toString("hex"), // Random password for Google users
       });

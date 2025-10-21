@@ -48,9 +48,15 @@ const GoogleLogin = ({ onSuccess, onError }) => {
     }, []);
 
     const handleCredentialResponse = async (response) => {
+        let appError = null;
         try {
             setIsLoading(true);
             console.log('Google login response:', response);
+            
+            if (!response.credential) {
+                toast.error('Failed to get Google credentials. Please try again.');
+                return;
+            }
             
             // Send the token to backend using direct axios call to avoid interceptor issues
             const result = await axios.post(
@@ -61,6 +67,7 @@ const GoogleLogin = ({ onSuccess, onError }) => {
                         'Content-Type': 'application/json',
                     },
                     timeout: 30000,
+                    withCredentials: true
                 }
             );
 
@@ -111,18 +118,24 @@ const GoogleLogin = ({ onSuccess, onError }) => {
                 return;
             }
             
-            // Parse the error using enhanced error handling for other cases
-            const appError = parseApiError(error);
-            console.error('Parsed app error:', appError);
-            
-            // Handle other error cases
-            if (appError.type === 'NETWORK_ERROR') {
-                showErrorToast(appError, 'Unable to connect to the server. Please check your internet connection and try again.');
-            } else if (appError.type === 'AUTHENTICATION_ERROR') {
-                showErrorToast(appError, 'Google authentication failed. Please try again or use a different sign-in method.');
+            // Check if there's a specific error message from the server
+            const serverMessage = error.response?.data?.message;
+            if (serverMessage) {
+                toast.error(serverMessage);
             } else {
-                // Show error toast with enhanced error handling
-                showErrorToast(appError, 'Google login failed. Please try again.');
+                // Parse the error using enhanced error handling for other cases
+                const appError = parseApiError(error);
+                console.error('Parsed app error:', appError);
+                
+                // Handle other error cases
+                if (appError.type === 'NETWORK_ERROR') {
+                    showErrorToast(appError, 'Unable to connect to the server. Please check your internet connection and try again.');
+                } else if (appError.type === 'AUTHENTICATION_ERROR') {
+                    showErrorToast(appError, 'Google authentication failed. Please try again or use a different sign-in method.');
+                } else {
+                    // Show error toast with enhanced error handling
+                    showErrorToast(appError, 'Google login failed. Please try again.');
+                }
             }
             
             if (onError) {

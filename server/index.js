@@ -63,6 +63,17 @@ app.use(
   helmet({
     crossOriginOpenerPolicy: false,
     crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        "default-src": ["'self'"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://accounts.google.com", "https://*.gstatic.com"],
+        "frame-src": ["'self'", "https://accounts.google.com"],
+        "connect-src": ["'self'", "https://accounts.google.com", ...allowedOrigins],
+        "img-src": ["'self'", "data:", "https:", "http:"],
+        "style-src": ["'self'", "'unsafe-inline'", "https:", "http:"],
+        "font-src": ["'self'", "https:", "http:", "data:"],
+      },
+    },
   })
 );
 app.use(compression()); // Compress responses
@@ -82,7 +93,7 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/chat", chatRoutes);
-app.use("/api/campaigns", campaignRoutes);
+app.use("/api/v1/campaigns", campaignRoutes);
 app.use("/api/v1/announcements", announcementRoutes);
 app.use("/api/v1/payment-receipts", paymentReceiptRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);

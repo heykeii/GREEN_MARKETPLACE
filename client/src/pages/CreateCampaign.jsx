@@ -116,7 +116,7 @@ const CreateCampaign = () => {
         }
         mediaFiles.slice(0,10).forEach((file) => form.append('media', file));
 
-        response = await axios.post('/api/campaigns/create', form, {
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/create`, form, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'multipart/form-data'
@@ -132,7 +132,7 @@ const CreateCampaign = () => {
             ? formData.objectives?.map(o => (o || '').trim()).filter(Boolean)
             : undefined
         };
-        response = await axios.post('/api/campaigns/create', submitData, {
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/create`, submitData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
