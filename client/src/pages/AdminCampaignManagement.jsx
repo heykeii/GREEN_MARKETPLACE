@@ -23,6 +23,7 @@ const AdminCampaignManagement = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [rejectionMessage, setRejectionMessage] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -77,8 +78,6 @@ const AdminCampaignManagement = () => {
       toast.error('Failed to update campaign status');
     } finally {
       setActionLoading(false);
-      setRejectionMessage('');
-      setSelectedCampaign(null);
     }
   };
 
@@ -141,8 +140,9 @@ const AdminCampaignManagement = () => {
     });
   };
 
-  const pendingCampaigns = campaigns.filter(c => !c.verified);
+  const pendingCampaigns = campaigns.filter(c => !c.verified && !c.rejectionMessage);
   const verifiedCampaigns = campaigns.filter(c => c.verified);
+  const rejectedCampaigns = campaigns.filter(c => !c.verified && c.rejectionMessage);
 
   const CampaignCard = ({ campaign, showActions = true }) => (
     <Card className="mb-4">
@@ -156,8 +156,19 @@ const AdminCampaignManagement = () => {
               <Badge className={getStatusColor(campaign.status)}>
                 {campaign.status?.charAt(0).toUpperCase() + campaign.status?.slice(1)}
               </Badge>
-              <Badge className={campaign.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                {campaign.verified ? 'Verified' : 'Pending'}
+              <Badge className={
+                campaign.verified 
+                  ? 'bg-green-100 text-green-800' 
+                  : campaign.rejectionMessage 
+                    ? 'bg-red-100 text-red-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+              }>
+                {campaign.verified 
+                  ? 'Verified' 
+                  : campaign.rejectionMessage 
+                    ? 'Rejected' 
+                    : 'Pending'
+                }
               </Badge>
             </div>
             
@@ -165,6 +176,14 @@ const AdminCampaignManagement = () => {
             
             {campaign.description && (
               <p className="text-gray-600 mb-3 line-clamp-2">{campaign.description}</p>
+            )}
+            
+            {campaign.rejectionMessage && (
+              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  <strong>Rejection Reason:</strong> {campaign.rejectionMessage}
+                </p>
+              </div>
             )}
             
             <div className="flex items-center space-x-4 text-sm text-gray-500">
@@ -274,50 +293,19 @@ const AdminCampaignManagement = () => {
                   Approve
                 </Button>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedCampaign(campaign)}
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Reject
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Reject Campaign</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <p className="text-gray-600">
-                        Are you sure you want to reject "{campaign.title}"?
-                      </p>
-                      <div>
-                        <Label htmlFor="rejection-message">Rejection Message (Optional)</Label>
-                        <Textarea
-                          id="rejection-message"
-                          value={rejectionMessage}
-                          onChange={(e) => setRejectionMessage(e.target.value)}
-                          placeholder="Provide feedback to the campaign creator..."
-                        />
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={() => setSelectedCampaign(null)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => handleVerifyCampaign(campaign._id, false, rejectionMessage)}
-                          disabled={actionLoading}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          Reject Campaign
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCampaign(campaign);
+                    setRejectionMessage('');
+                    setIsRejectDialogOpen(true);
+                  }}
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject
+                </Button>
               </>
             )}
 
@@ -384,6 +372,7 @@ const AdminCampaignManagement = () => {
                 <SelectItem value="all">All Verification</SelectItem>
                 <SelectItem value="true">Verified</SelectItem>
                 <SelectItem value="false">Pending</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
 
@@ -407,6 +396,9 @@ const AdminCampaignManagement = () => {
           </TabsTrigger>
           <TabsTrigger value="verified">
             Verified Campaigns ({verifiedCampaigns.length})
+          </TabsTrigger>
+          <TabsTrigger value="rejected">
+            Rejected Campaigns ({rejectedCampaigns.length})
           </TabsTrigger>
           <TabsTrigger value="all">
             All Campaigns ({campaigns.length})
@@ -469,6 +461,34 @@ const AdminCampaignManagement = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="rejected">
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <Card key={index} className="animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : rejectedCampaigns.length > 0 ? (
+            rejectedCampaigns.map(campaign => (
+              <CampaignCard key={campaign._id} campaign={campaign} showActions={false} />
+            ))
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <XCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Rejected Campaigns</h3>
+                <p className="text-gray-500">No campaigns have been rejected yet.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         <TabsContent value="all">
           {loading ? (
             <div className="space-y-4">
@@ -498,6 +518,58 @@ const AdminCampaignManagement = () => {
         </TabsContent>
       </Tabs>
     </div>
+
+    {/* Rejection Dialog */}
+    {selectedCampaign && (
+      <Dialog open={isRejectDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsRejectDialogOpen(false);
+          setRejectionMessage('');
+        }
+      }}>
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Reject Campaign</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Are you sure you want to reject "{selectedCampaign.title}"?
+            </p>
+            <div>
+              <Label htmlFor="rejection-message">Rejection Message (Optional)</Label>
+              <Textarea
+                id="rejection-message"
+                value={rejectionMessage}
+                onChange={(e) => setRejectionMessage(e.target.value)}
+                placeholder="Provide feedback to the campaign creator..."
+                className="mt-2"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsRejectDialogOpen(false);
+                  setRejectionMessage('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  handleVerifyCampaign(selectedCampaign._id, false, rejectionMessage);
+                  setIsRejectDialogOpen(false);
+                }}
+                disabled={actionLoading}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Reject Campaign
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
     </AdminLayout>
   );
 };

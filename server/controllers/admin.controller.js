@@ -766,7 +766,17 @@ export const getAllCampaigns = async (req, res) => {
     const filter = {};
     if (type) filter.type = type;
     if (status) filter.status = status;
-    if (verified !== undefined) filter.verified = verified === 'true';
+    if (verified !== undefined) {
+      if (verified === 'true') {
+        filter.verified = true;
+      } else if (verified === 'false') {
+        filter.verified = false;
+        filter.rejectionMessage = { $exists: false }; // Pending campaigns
+      } else if (verified === 'rejected') {
+        filter.verified = false;
+        filter.rejectionMessage = { $exists: true }; // Rejected campaigns
+      }
+    }
 
     // Build sort object
     const sort = {};
@@ -810,7 +820,10 @@ export const getAllCampaigns = async (req, res) => {
 export const getPendingCampaigns = async (req, res) => {
   try {
     const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-    const filter = { verified: false };
+    const filter = { 
+      verified: false,
+      rejectionMessage: { $exists: false }  // Only get campaigns that haven't been rejected
+    };
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
