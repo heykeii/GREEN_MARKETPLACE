@@ -57,6 +57,9 @@ export const createOrder = async (req, res) => {
         const userId = req.user._id;
         const { paymentMethod, notes, shippingAddress, items: selectedItems } = req.body;
 
+        console.log('Creating order for user:', userId);
+        console.log('Selected items received:', JSON.stringify(selectedItems, null, 2));
+
         // Validate shipping address
         if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || 
             !shippingAddress.address || !shippingAddress.city || !shippingAddress.province || 
@@ -94,10 +97,12 @@ export const createOrder = async (req, res) => {
                     si => si.productId.toString() === cartItem.product._id.toString()
                 );
                 if (selectedItem) {
+                    // Create a new object with updated quantity and variant
                     return {
-                        ...cartItem,
+                        product: cartItem.product,
                         quantity: selectedItem.quantity || cartItem.quantity,
-                        variant: selectedItem.variant || cartItem.variant
+                        variant: selectedItem.variant || cartItem.variant,
+                        _id: cartItem._id
                     };
                 }
                 return cartItem;
@@ -289,10 +294,12 @@ export const createOrder = async (req, res) => {
 
     } catch (error) {
         console.error('Create order error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({
             success: false,
             message: 'Failed to create order',
-            error: error.message
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };

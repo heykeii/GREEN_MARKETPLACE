@@ -410,10 +410,14 @@ const CheckoutPage = () => {
       }
     } catch (error) {
       console.error('Place order error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       if (error.response?.status === 401) {
         navigate('/login');
       } else {
-        toast.error(error.response?.data?.message || 'Failed to place order');
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to place order';
+        toast.error(errorMessage);
+        console.error('Full error details:', error.response?.data);
       }
     } finally {
       setLoading(false);
