@@ -85,25 +85,42 @@ const CheckoutPage = () => {
           }));
           setCart(items.filter(Boolean));
         } else {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const serverCart = res.data.cart || [];
-          // Merge variant info from localStorage cart if server doesn't include it
-          const localCart = (() => {
-            try { return JSON.parse(localStorage.getItem('cart') || '[]'); } catch { return []; }
-          })();
-          const localVariantById = new Map(localCart.map(ci => [ci._id, ci.variant]));
-          const merged = serverCart.map(item => ({
-            ...item,
-            variant: item.variant || localVariantById.get(item._id) || undefined,
-            price: (item.variant?.price != null
-              ? Number(item.variant.price)
-              : (localVariantById.get(item._id)?.price != null
-                ? Number(localVariantById.get(item._id).price)
-                : item.price))
-          }));
-          setCart(merged);
+          // Check if there are selected cart items from the cart page
+          const selectedCartItems = localStorage.getItem('selectedCartItems');
+          
+          if (selectedCartItems) {
+            // Use only the selected items from cart page
+            const selected = JSON.parse(selectedCartItems);
+            if (!selected || selected.length === 0) {
+              toast.error('No items selected for checkout');
+              navigate('/cart');
+              return;
+            }
+            setCart(selected);
+            // Clear the selected items after loading
+            localStorage.removeItem('selectedCartItems');
+          } else {
+            // Fallback: fetch all cart items (for backward compatibility)
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/cart`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const serverCart = res.data.cart || [];
+            // Merge variant info from localStorage cart if server doesn't include it
+            const localCart = (() => {
+              try { return JSON.parse(localStorage.getItem('cart') || '[]'); } catch { return []; }
+            })();
+            const localVariantById = new Map(localCart.map(ci => [ci._id, ci.variant]));
+            const merged = serverCart.map(item => ({
+              ...item,
+              variant: item.variant || localVariantById.get(item._id) || undefined,
+              price: (item.variant?.price != null
+                ? Number(item.variant.price)
+                : (localVariantById.get(item._id)?.price != null
+                  ? Number(localVariantById.get(item._id).price)
+                  : item.price))
+            }));
+            setCart(merged);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch cart:', err);
@@ -348,7 +365,13 @@ const CheckoutPage = () => {
       } : {
         paymentMethod,
         notes,
-        shippingAddress: address
+        shippingAddress: address,
+        // Send the cart items (which are already the selected ones from cart page)
+        items: cart.map(item => ({
+          productId: item._id,
+          quantity: item.quantity,
+          variant: item.variant
+        }))
       };
 
       // Add verified receipt data if available

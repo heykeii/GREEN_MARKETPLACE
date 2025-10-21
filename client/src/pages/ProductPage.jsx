@@ -1038,16 +1038,6 @@ const ProductPage = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="materialsUsed" className="text-sm font-semibold text-gray-700 mb-2 block">Materials Used (non-editable)</Label>
-                <Input
-                  id="materialsUsed"
-                  value={editForm.materialsUsed}
-                  disabled
-                  className="w-full bg-gray-100 cursor-not-allowed"
-                  title="Materials used cannot be changed after product creation"
-                />
-              </div>
 
               
 

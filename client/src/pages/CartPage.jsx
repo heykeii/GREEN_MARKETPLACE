@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const CartPage = () => {
   const [cart, setCart] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(new Set());
   const [total, setTotal] = useState(0);
   const [productDetails, setProductDetails] = useState({});
 
@@ -49,6 +50,8 @@ const CartPage = () => {
           // Fetch product details for items to get variant information
           cartItems.forEach(item => fetchProductDetails(item._id));
           localStorage.setItem('cart', JSON.stringify(cartItems));
+          // Select all items by default
+          setSelectedItems(new Set(cartItems.map(item => item._id)));
         } catch (err) {
           if (err.name === 'CanceledError') return;
           console.error('Fetch cart error:', err);
@@ -57,6 +60,8 @@ const CartPage = () => {
       } else {
         const stored = JSON.parse(localStorage.getItem('cart') || '[]');
         setCart(stored);
+        // Select all items by default
+        setSelectedItems(new Set(stored.map(item => item._id)));
       }
     };
     
@@ -66,12 +71,13 @@ const CartPage = () => {
   }, []);
 
   useEffect(() => {
+    // Calculate total only for selected items
     setTotal(cart.reduce((sum, item) => {
-      // Use variant price if variant is selected, otherwise use item price
+      if (!selectedItems.has(item._id)) return sum;
       const price = item.variant?.price || item.price;
       return sum + price * item.quantity;
     }, 0));
-  }, [cart]);
+  }, [cart, selectedItems]);
 
   const updateCart = async (newCart, action, productId) => {
     setCart(newCart);
@@ -151,28 +157,58 @@ const CartPage = () => {
     }
   };
 
-
   const handleRemove = (idx) => {
     const productId = cart[idx]._id;
     const newCart = cart.filter((_, i) => i !== idx);
+    // Remove from selected items
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(productId);
+      return newSet;
+    });
     updateCart(newCart, 'remove', productId);
     toast.info('Removed from cart');
   };
 
+  const handleToggleItem = (itemId) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === cart.length) {
+      // Deselect all
+      setSelectedItems(new Set());
+    } else {
+      // Select all
+      setSelectedItems(new Set(cart.map(item => item._id)));
+    }
+  };
+
   const handleCheckout = () => {
-    if (cart.length === 0) {
-      toast.error('Your cart is empty');
+    if (selectedItems.size === 0) {
+      toast.error('Please select at least one item to checkout');
       return;
     }
     
-    // Check if any product with variants doesn't have a variant selected
-    const hasUnselectedVariants = cart.some((item, idx) => {
+    // Filter only selected items
+    const selectedCartItems = cart.filter(item => selectedItems.has(item._id));
+    
+    // Check if any selected product with variants doesn't have a variant selected
+    const hasUnselectedVariants = selectedCartItems.some((item) => {
       const product = productDetails[item._id];
       return product?.variants?.length > 0 && !item.variant;
     });
     
     if (hasUnselectedVariants) {
-      toast.error('Please select a variant for all products before checkout');
+      toast.error('Please select a variant for all selected products before checkout');
       return;
     }
     
@@ -185,8 +221,14 @@ const CartPage = () => {
       return;
     }
     
+    // Save selected items to localStorage for checkout page
+    localStorage.setItem('selectedCartItems', JSON.stringify(selectedCartItems));
+    
     navigate('/checkout');
   };
+
+  const selectedCount = selectedItems.size;
+  const allSelected = cart.length > 0 && selectedItems.size === cart.length;
 
   return (
     <>
@@ -202,11 +244,36 @@ const CartPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
               {/* Cart Items */}
               <div className="md:col-span-2 space-y-4 sm:space-y-6">
+                {/* Select All Header */}
+                <div className="bg-white shadow-md rounded-2xl p-4 flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={handleSelectAll}
+                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="font-semibold text-gray-700">
+                    Select All ({selectedCount} of {cart.length} selected)
+                  </span>
+                </div>
+
                 {cart.map((item, idx) => (
                   <div
                     key={item._id}
-                    className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 bg-white shadow-md rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-shadow"
+                    className={`flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 bg-white shadow-md rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-all ${
+                      selectedItems.has(item._id) ? 'ring-2 ring-emerald-500' : ''
+                    }`}
                   >
+                    {/* Checkbox */}
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.has(item._id)}
+                        onChange={() => handleToggleItem(item._id)}
+                        className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer mt-1"
+                      />
+                    </div>
+
                     <img
                       src={item.images?.[0]}
                       alt={item.name}
@@ -277,6 +344,10 @@ const CartPage = () => {
               <div className="bg-white/90 backdrop-blur-md border border-gray-100 rounded-3xl shadow-xl p-6 sm:p-8 h-fit">
                 <h2 className="text-xl sm:text-2xl font-bold text-emerald-700 mb-4 sm:mb-6">Order Summary</h2>
                 <div className="flex justify-between text-base sm:text-lg text-gray-700 font-medium mb-2">
+                  <span>Selected Items</span>
+                  <span>{selectedCount}</span>
+                </div>
+                <div className="flex justify-between text-base sm:text-lg text-gray-700 font-medium mb-2">
                   <span>Subtotal</span>
                   <span>₱{total.toFixed(2)}</span>
                 </div>
@@ -286,11 +357,17 @@ const CartPage = () => {
                   <span>₱{total.toFixed(2)}</span>
                 </div>
                 <Button
-                  className="w-full mt-4 sm:mt-6 bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg font-bold py-3 rounded-xl shadow-lg"
+                  className="w-full mt-4 sm:mt-6 bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg font-bold py-3 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleCheckout}
+                  disabled={selectedCount === 0}
                 >
-                  Proceed to Checkout
+                  Proceed to Checkout ({selectedCount})
                 </Button>
+                {selectedCount === 0 && (
+                  <p className="text-sm text-gray-500 text-center mt-2">
+                    Please select at least one item
+                  </p>
+                )}
               </div>
             </div>
           )}

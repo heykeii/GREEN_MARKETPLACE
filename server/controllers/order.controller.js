@@ -55,7 +55,7 @@ const uploadCommissionReceiptToCloudinary = async (fileBuffer, filename) => {
 export const createOrder = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { paymentMethod, notes, shippingAddress } = req.body;
+        const { paymentMethod, notes, shippingAddress, items: selectedItems } = req.body;
 
         // Validate shipping address
         if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || 
@@ -77,13 +77,40 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        // Filter out invalid items and calculate totals
-        const validItems = cart.items.filter(item => item.product && item.product.isAvailable);
+        let validItems;
+        
+        // If selected items are provided, filter cart to only include those items
+        if (selectedItems && Array.isArray(selectedItems) && selectedItems.length > 0) {
+            const selectedProductIds = selectedItems.map(item => item.productId.toString());
+            validItems = cart.items.filter(item => 
+                item.product && 
+                item.product.isAvailable && 
+                selectedProductIds.includes(item.product._id.toString())
+            );
+            
+            // Update quantities and variants from selected items
+            validItems = validItems.map(cartItem => {
+                const selectedItem = selectedItems.find(
+                    si => si.productId.toString() === cartItem.product._id.toString()
+                );
+                if (selectedItem) {
+                    return {
+                        ...cartItem,
+                        quantity: selectedItem.quantity || cartItem.quantity,
+                        variant: selectedItem.variant || cartItem.variant
+                    };
+                }
+                return cartItem;
+            });
+        } else {
+            // Fallback: use all cart items (for backward compatibility)
+            validItems = cart.items.filter(item => item.product && item.product.isAvailable);
+        }
         
         if (validItems.length === 0) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'No valid items in cart' 
+                message: 'No valid items selected for checkout' 
             });
         }
 
@@ -211,11 +238,27 @@ export const createOrder = async (req, res) => {
             );
         }
 
-        // Clear user's cart
-        await Cart.findOneAndUpdate(
-            { user: userId },
-            { $set: { items: [] } }
-        );
+        // Remove only the ordered items from cart
+        if (selectedItems && Array.isArray(selectedItems) && selectedItems.length > 0) {
+            // Remove only selected items
+            const orderedProductIds = validItems.map(item => item.product._id.toString());
+            await Cart.findOneAndUpdate(
+                { user: userId },
+                { 
+                    $pull: { 
+                        items: { 
+                            product: { $in: orderedProductIds.map(id => id) } 
+                        } 
+                    } 
+                }
+            );
+        } else {
+            // Clear entire cart (for backward compatibility)
+            await Cart.findOneAndUpdate(
+                { user: userId },
+                { $set: { items: [] } }
+            );
+        }
 
         // Populate order for response
         await order.populate('items.product');

@@ -72,8 +72,6 @@ const SellerDashboard = () => {
     category: '',
     origin: '',
     productionMethod: '',
-    materialsUsed: '',
-    tags: '',
     images: [],
     externalUrls: [{ platform: '', url: '' }]
   });
@@ -396,8 +394,6 @@ const SellerDashboard = () => {
       category: product.category,
       origin: product.origin || '',
       productionMethod: product.productionMethod || '',
-      materialsUsed: product.materialsUsed.join(', '),
-      tags: product.tags ? product.tags.join(', ') : '',
       images: product.images || [],
       editImages: [],
       externalUrls: product.externalUrls || [{ platform: '', url: '' }]
@@ -1996,17 +1992,6 @@ const SellerDashboard = () => {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="materialsUsed">Materials Used (non-editable)</Label>
-                  <Input
-                    id="materialsUsed"
-                    name="materialsUsed"
-                    value={form.materialsUsed}
-                    disabled
-                    className="bg-gray-100 cursor-not-allowed"
-                    title="Materials used cannot be changed after product creation"
-                  />
-                </div>
 
                 
 
