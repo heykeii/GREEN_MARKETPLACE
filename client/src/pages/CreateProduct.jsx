@@ -21,7 +21,6 @@ const CreateProduct = () => {
     origin: '',
     productionMethod: '',
     materialsUsed: '',
-    tags: '',
     images: [],
     externalUrls: [{ platform: '', url: '' }],
     variants: []
@@ -69,7 +68,6 @@ const CreateProduct = () => {
       formData.append('origin', form.origin);
       formData.append('productionMethod', form.productionMethod);
       form.materialsUsed.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('materialsUsed', val));
-      form.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('tags', val));
       form.images.forEach(img => formData.append('images', img));
       // Add external URLs
       const validUrls = form.externalUrls.filter(url => url.platform.trim() && url.url.trim());
@@ -419,18 +417,6 @@ const CreateProduct = () => {
                         value={form.materialsUsed}
                         onChange={handleInputChange}
                         placeholder="e.g., Recycled wood, Organic cotton, Bamboo"
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="tags" className="text-sm font-medium text-gray-700">Tags</Label>
-                      <Input
-                        id="tags"
-                        name="tags"
-                        type="text"
-                        value={form.tags}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Handmade, Unique, Eco-Friendly, Sustainable"
                         className="w-full"
                       />
                     </div>

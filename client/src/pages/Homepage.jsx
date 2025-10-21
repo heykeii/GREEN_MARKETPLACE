@@ -57,11 +57,11 @@ const Homepage = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-16 sm:pt-20">{/* offset fixed navbar height on mobile */}
       <Navbar onProductsClick={handleScrollToProducts} onAboutClick={handleAboutClick} />
       
       {/* Hero Section - Enhanced with modern gradients and animations */}
-      <section className="relative min-h-[90vh] sm:min-h-screen flex items-center justify-center px-3 sm:px-4 bg-gradient-to-br from-slate-900 via-emerald-900 to-teal-800 overflow-hidden">
+      <section className="relative min-h-[88vh] sm:min-h-screen flex items-center justify-center px-4 sm:px-6 bg-gradient-to-br from-slate-900 via-emerald-900 to-teal-800 overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl animate-pulse" />
@@ -88,24 +88,20 @@ const Homepage = () => {
         {/* Hero content */}
         <div className={`relative z-10 text-center max-w-5xl mx-auto transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           {/* Premium badge */}
-          <div className="inline-flex items-center gap-2 bg-emerald-500/20 backdrop-blur-sm border border-emerald-400/30 rounded-full px-4 sm:px-6 py-1.5 sm:py-2 mb-6 sm:mb-8">
-            <FaStar className="text-yellow-400 text-sm" />
-            <span className="text-emerald-100 text-sm font-medium">Launching Soon - Join the Movement</span>
-          </div>
-
-          <h1 className="text-4xl xs:text-5xl md:text-7xl lg:text-8xl font-black text-white mb-4 sm:mb-6 leading-[1.05]">
+         
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-3 sm:mb-6 leading-tight">
             Shop
             <span className="block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
               Sustainably
             </span>
           </h1>
           
-          <p className="text-base sm:text-lg md:text-2xl text-emerald-100/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light leading-relaxed px-2">
+          <p className="text-base sm:text-lg md:text-xl text-emerald-100/90 mb-6 sm:mb-12 max-w-3xl mx-auto font-light leading-relaxed px-2">
             Discover premium eco-friendly products from verified sustainable brands. 
             <span className="block mt-2 text-teal-200">Transform your lifestyle. Protect our planet.</span>
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 sm:mb-16">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-10 sm:mb-16">
             <Button 
               className="group relative bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-8 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-emerald-500/25" 
               onClick={handleScrollToProducts}
@@ -124,7 +120,7 @@ const Homepage = () => {
           </div>
 
           {/* Value propositions instead of fake stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto px-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-5xl mx-auto px-2">
             {values.map((value, idx) => (
               <div key={idx} className="group bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all duration-300 border border-white/10">
                 <div className="flex flex-col items-center text-center">

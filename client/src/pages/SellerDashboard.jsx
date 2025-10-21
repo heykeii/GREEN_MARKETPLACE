@@ -430,8 +430,8 @@ const SellerDashboard = () => {
       formData.append('category', form.category);
       formData.append('origin', form.origin);
       formData.append('productionMethod', form.productionMethod);
-      form.materialsUsed.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('materialsUsed', val));
-      form.tags.split(',').map(s => s.trim()).filter(Boolean).forEach(val => formData.append('tags', val));
+      // Do not submit materialsUsed on edit to keep it immutable after creation
+      // Do not update tags via edit modal (field removed)
       // External URLs
       const validUrls = (form.externalUrls || []).filter(u => u.platform?.trim() && u.url?.trim());
       if (validUrls.length > 0) {
@@ -1997,26 +1997,18 @@ const SellerDashboard = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="materialsUsed">Materials Used (comma-separated)</Label>
+                  <Label htmlFor="materialsUsed">Materials Used (non-editable)</Label>
                   <Input
                     id="materialsUsed"
                     name="materialsUsed"
                     value={form.materialsUsed}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Organic cotton, Recycled plastic, Bamboo"
+                    disabled
+                    className="bg-gray-100 cursor-not-allowed"
+                    title="Materials used cannot be changed after product creation"
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="tags">Tags (comma-separated)</Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={form.tags}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Eco-friendly, Sustainable, Organic"
-                  />
-                </div>
+                
 
                 {/* External URLs Section */}
                 <div className="space-y-3">

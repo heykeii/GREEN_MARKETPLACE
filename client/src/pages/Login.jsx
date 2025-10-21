@@ -6,6 +6,7 @@ import GoogleLogin from '../components/GoogleLogin';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/Footer';
+import logo from '@/assets/logo.png';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -81,7 +82,7 @@ const Login = () => {
                             {/* Logo/Icon */}
                             <div className="flex justify-center mb-8">
                                 <img 
-                                    src="/src/assets/logo.png" 
+                                    src={logo} 
                                     alt="Green Marketplace Logo" 
                                     className="h-40 w-40 object-contain"
                                 />

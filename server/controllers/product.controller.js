@@ -253,9 +253,10 @@ export const updateProduct = async (req, res) => {
     product.images = allImages;
 
     // Update other fields
+    // Disallow updating materialsUsed via standard update endpoint
     const updatableFields = [
       'name', 'description', 'price', 'quantity', 'category',
-      'origin', 'productionMethod', 'materialsUsed', 'tags'
+      'origin', 'productionMethod', 'tags'
     ];
     updatableFields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -263,8 +264,8 @@ export const updateProduct = async (req, res) => {
       }
     });
 
-    // Recalculate sustainability score if materialsUsed has changed
-    if (req.body.materialsUsed !== undefined) {
+    // Ignore materialsUsed in this endpoint; use dedicated sustainability endpoint if needed
+    if (false && req.body.materialsUsed !== undefined) {
       try {
         const materialsArray = Array.isArray(req.body.materialsUsed) ? req.body.materialsUsed : [req.body.materialsUsed];
         const materialInputForScoring = materialsArray.join(', ');

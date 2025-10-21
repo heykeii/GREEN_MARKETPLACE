@@ -441,7 +441,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 />
               </form>
               
-              {/* Mobile Navigation */}
+              {/* Mobile Navigation (always visible, even when logged out) */}
               {navItems.map((item) => (
                 <button
                   key={item.label}

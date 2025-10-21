@@ -867,27 +867,76 @@ const Profile = () => {
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
                   {/* Upload form */}
-                  <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input placeholder="Title" value={certForm.title} onChange={(e)=>setCertForm({...certForm,title:e.target.value})} className="rounded-md border-emerald-200" />
-                      <input placeholder="Issued by" value={certForm.issuedBy} onChange={(e)=>setCertForm({...certForm,issuedBy:e.target.value})} className="rounded-md border-emerald-200" />
-                      <input type="date" placeholder="Issue date" value={certForm.issueDate} onChange={(e)=>setCertForm({...certForm,issueDate:e.target.value})} className="rounded-md border-emerald-200" />
-                      <input placeholder="Description" value={certForm.description} onChange={(e)=>setCertForm({...certForm,description:e.target.value})} className="rounded-md border-emerald-200" />
-                      <div className="md:col-span-2 flex flex-col gap-2">
-                        <input type="file" accept="image/*,application/pdf,video/*" onChange={async (e)=>{
-                          const file=e.target.files?.[0]; if(!file) return; setCertUploading(true);
-                          const reader=new FileReader();
-                          reader.onload=async()=>{
-                            try{
-                              const dataUrl=reader.result;
-                              const upload=await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/admin/sustainability/upload`,{dataUrl},{ headers:{ Authorization:`Bearer ${localStorage.getItem('admin_token')||localStorage.getItem('token')}`}});
-                              setCertForm((p)=>({...p, mediaUrl: upload.data.media.url, mediaType: upload.data.media.type }));
-                              toast.success('Uploaded');
-                            }catch(err){ toast.error('Upload failed'); } finally{ setCertUploading(false); }
-                          };
-                          reader.readAsDataURL(file);
-                        }} />
-                        <input placeholder="Or paste media URL" value={certForm.mediaUrl} onChange={(e)=>setCertForm({...certForm,mediaUrl:e.target.value})} className="rounded-md border-emerald-200" />
+                  <div className="p-6 bg-emerald-50 rounded-lg border-2 border-emerald-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-emerald-700">Title</label>
+                        <input 
+                          placeholder="Certification title" 
+                          value={certForm.title} 
+                          onChange={(e)=>setCertForm({...certForm,title:e.target.value})} 
+                          className="w-full px-3 py-2 rounded-lg border-2 border-emerald-200 bg-white text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none transition-all duration-200" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-emerald-700">Issued by</label>
+                        <input 
+                          placeholder="Issuing organization" 
+                          value={certForm.issuedBy} 
+                          onChange={(e)=>setCertForm({...certForm,issuedBy:e.target.value})} 
+                          className="w-full px-3 py-2 rounded-lg border-2 border-emerald-200 bg-white text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none transition-all duration-200" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-emerald-700">Issue date</label>
+                        <input 
+                          type="date" 
+                          placeholder="Issue date" 
+                          value={certForm.issueDate} 
+                          onChange={(e)=>setCertForm({...certForm,issueDate:e.target.value})} 
+                          className="w-full px-3 py-2 rounded-lg border-2 border-emerald-200 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none transition-all duration-200" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-emerald-700">Description</label>
+                        <input 
+                          placeholder="Certification description" 
+                          value={certForm.description} 
+                          onChange={(e)=>setCertForm({...certForm,description:e.target.value})} 
+                          className="w-full px-3 py-2 rounded-lg border-2 border-emerald-200 bg-white text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none transition-all duration-200" 
+                        />
+                      </div>
+                      <div className="md:col-span-2 space-y-3">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-emerald-700">Upload File</label>
+                          <input 
+                            type="file" 
+                            accept="image/*,application/pdf,video/*" 
+                            onChange={async (e)=>{
+                              const file=e.target.files?.[0]; if(!file) return; setCertUploading(true);
+                              const reader=new FileReader();
+                              reader.onload=async()=>{
+                                try{
+                                  const dataUrl=reader.result;
+                                  const upload=await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/admin/sustainability/upload`,{dataUrl},{ headers:{ Authorization:`Bearer ${localStorage.getItem('admin_token')||localStorage.getItem('token')}`}});
+                                  setCertForm((p)=>({...p, mediaUrl: upload.data.media.url, mediaType: upload.data.media.type }));
+                                  toast.success('Uploaded');
+                                }catch(err){ toast.error('Upload failed'); } finally{ setCertUploading(false); }
+                              };
+                              reader.readAsDataURL(file);
+                            }} 
+                            className="w-full px-3 py-2 rounded-lg border-2 border-emerald-200 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none transition-all duration-200 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-emerald-700">Or paste media URL</label>
+                          <input 
+                            placeholder="https://example.com/certificate.pdf" 
+                            value={certForm.mediaUrl} 
+                            onChange={(e)=>setCertForm({...certForm,mediaUrl:e.target.value})} 
+                            className="w-full px-3 py-2 rounded-lg border-2 border-emerald-200 bg-white text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none transition-all duration-200" 
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="mt-3">
