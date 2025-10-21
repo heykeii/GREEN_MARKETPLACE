@@ -28,7 +28,7 @@ const CampaignDetail = () => {
   const fetchCampaign = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/campaigns/${id}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${id}`);
       if (response.data.success) {
         setCampaign(response.data.campaign);
       }
@@ -59,7 +59,7 @@ const CampaignDetail = () => {
 
     try {
       setDeleting(true);
-      await axios.delete(`/api/campaigns/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }

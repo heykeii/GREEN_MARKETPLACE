@@ -62,7 +62,7 @@ const PromotionalCampaign = ({ campaign }) => {
                 <DropdownMenuItem onClick={async () => {
                   if (!window.confirm('Delete this campaign? This cannot be undone.')) return;
                   try {
-                    await axios.delete(`/api/campaigns/${campaign._id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaign._id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                     window.location.href = '/campaigns';
                   } catch (e) {}
                 }} className="text-red-600">

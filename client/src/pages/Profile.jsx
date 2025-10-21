@@ -835,7 +835,7 @@ const Profile = () => {
                                   if (!window.confirm('Delete this campaign? This cannot be undone.')) return;
                                   try {
                                     const token = localStorage.getItem('token');
-                                    await axios.delete(`/api/campaigns/${c._id}`, { headers: { Authorization: `Bearer ${token}` } });
+                                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${c._id}`, { headers: { Authorization: `Bearer ${token}` } });
                                     setMyCampaigns((prev) => prev.filter((x) => x._id !== c._id));
                                     toast.success('Campaign deleted');
                                   } catch (e) {

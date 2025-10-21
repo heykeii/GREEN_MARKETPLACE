@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 const CampaignCard = ({ campaign, currentUser, onUpdate }) => {
   const handleLike = async (campaignId) => {
     try {
-      const response = await axios.post(`/api/campaigns/${campaignId}/like`, {}, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaignId}/like`, {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -33,7 +33,7 @@ const CampaignCard = ({ campaign, currentUser, onUpdate }) => {
 
   const handleComment = async (campaignId, text) => {
     try {
-      const response = await axios.post(`/api/campaigns/${campaignId}/comment`, 
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaignId}/comment`, 
         { text }, 
         {
           headers: {
@@ -56,7 +56,7 @@ const CampaignCard = ({ campaign, currentUser, onUpdate }) => {
 
   const handleJoin = async (campaignId) => {
     try {
-      const response = await axios.post(`/api/campaigns/${campaignId}/join`, {}, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaignId}/join`, {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }

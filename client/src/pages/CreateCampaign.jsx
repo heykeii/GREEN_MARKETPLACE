@@ -14,7 +14,7 @@ import Footer from '@/components/Footer';
 import { toast } from '@/utils/toast';
 
 const CreateCampaign = () => {
-  const { user } = useContext(AuthContext);
+  const { user: contextUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,16 +30,42 @@ const CreateCampaign = () => {
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
 
+  // Check both context and localStorage for user
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  
+  useEffect(() => {
+    if (contextUser) {
+      setUser(contextUser);
+      setAuthChecked(true);
+    } else {
+      // Fallback to localStorage
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+      if (storedUser && token) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error('Error parsing user:', e);
+        }
+      }
+      setAuthChecked(true);
+    }
+  }, [contextUser]);
+
   useEffect(() => {
     if (formData.type === 'community' && (!formData.objectives || formData.objectives.length === 0)) {
       setFormData(prev => ({ ...prev, objectives: [''] }));
     }
   }, [formData.type]);
 
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
+  useEffect(() => {
+    if (authChecked && !user) {
+      navigate('/login');
+    }
+  }, [authChecked, user, navigate]);
+  
+  if (!authChecked || !user) return null;
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({

@@ -23,7 +23,7 @@ const CommunityCampaign = ({ campaign, onJoin, onComment, currentUser }) => {
     if (!canDelete) return;
     if (!window.confirm('Delete this campaign? This cannot be undone.')) return;
     try {
-      await axios.delete(`/api/campaigns/${campaign._id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaign._id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       toast.success('Campaign deleted');

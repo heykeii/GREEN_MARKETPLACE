@@ -84,7 +84,7 @@ const PublicProfile = () => {
           setProducts([]);
         }
         try {
-          const campRes = await axios.get(`/api/campaigns/by-user/${userId}`);
+          const campRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/by-user/${userId}`);
           if (campRes.data?.success) setCampaigns(campRes.data.campaigns || []);
         } catch(e) {}
       } catch (e) {

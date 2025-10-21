@@ -41,17 +41,23 @@ const SuggestedFriends = () => {
           } catch (_) {}
         }
 
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/sellers?search=a`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined
-        });
-        let sellers = Array.isArray(res.data?.sellers) ? res.data.sellers : [];
+        // Only fetch when authenticated and query length >= 2
+        if (!token) {
+          setSuggestions([]);
+        } else {
+          const query = 'eco'; // default safe query
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/sellers?search=${encodeURIComponent(query)}` , {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          let sellers = Array.isArray(res.data?.sellers) ? res.data.sellers : [];
 
-        sellers = sellers.filter((u) => {
-          const id = String(u._id || u.id);
-          return !followingSet.has(id);
-        }).slice(0, 6);
+          sellers = sellers.filter((u) => {
+            const id = String(u._id || u.id);
+            return !followingSet.has(id);
+          }).slice(0, 6);
 
-        setSuggestions(sellers);
+          setSuggestions(sellers);
+        }
       } catch (_) {
         setSuggestions([]);
       } finally {
@@ -188,7 +194,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
       return;
     }
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/campaigns/${campaign._id}/like`, {}, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaign._id}/like`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -213,7 +219,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
     if (!currentUser || !newComment.trim()) return;
     
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/campaigns/${campaign._id}/comment`, 
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/${campaign._id}/comment`, 
         { text: newComment.trim() }, 
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -492,7 +498,7 @@ const InstagramStyleCampaignCard = ({ campaign, currentUser, onUpdate }) => {
 };
 
 const Campaigns = () => {
-  const { user } = useContext(AuthContext);
+  const { user: contextUser } = useContext(AuthContext);
   const [campaigns, setCampaigns] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -509,6 +515,26 @@ const Campaigns = () => {
     status: '',
     search: ''
   });
+
+  // Check both context and localStorage for user
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    if (contextUser) {
+      setUser(contextUser);
+    } else {
+      // Fallback to localStorage
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
+      if (storedUser && token) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error('Error parsing user:', e);
+        }
+      }
+    }
+  }, [contextUser]);
 
   useEffect(() => {
     fetchCampaigns();
@@ -638,25 +664,31 @@ const Campaigns = () => {
         {/* Left Sidebar - Enhanced */}
         <div className="hidden lg:block w-80 space-y-6 sticky top-24 self-start">
           {/* Create Campaign CTA with enhanced design */}
-          {user && (
-            <div className="relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-3xl p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-300">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-              <div className="relative z-10">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <Sparkles className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="font-bold text-xl mb-2">Start Your Campaign</h3>
-                <p className="text-green-100 text-sm mb-6 leading-relaxed">Make a difference in your community today and inspire others</p>
+          <div className="relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-3xl p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="relative z-10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                <Sparkles className="h-7 w-7 text-white" />
+              </div>
+              <h3 className="font-bold text-xl mb-2">Start Your Campaign</h3>
+              <p className="text-green-100 text-sm mb-6 leading-relaxed">Make a difference in your community today and inspire others</p>
+              {user ? (
                 <Link to="/create-campaign">
                   <Button className="w-full bg-white text-green-600 hover:bg-green-50 font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border-0">
                     <Plus className="h-5 w-5 mr-2" />
                     Create Campaign
                   </Button>
                 </Link>
-              </div>
+              ) : (
+                <Link to="/login">
+                  <Button className="w-full bg-white text-green-600 hover:bg-green-50 font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border-0">
+                    Login to Create
+                  </Button>
+                </Link>
+              )}
             </div>
-          )}
+          </div>
 
         </div>
 
