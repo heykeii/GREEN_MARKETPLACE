@@ -38,7 +38,7 @@ const AdminCampaignManagement = () => {
       if (filters.status) params.append('status', filters.status);
       if (filters.verified) params.append('verified', filters.verified);
 
-      const response = await axios.get(`/api/v1/admin/campaigns?${params.toString()}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/campaigns?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${adminToken}`
         }
@@ -60,7 +60,7 @@ const AdminCampaignManagement = () => {
       setActionLoading(true);
       const adminToken = localStorage.getItem('admin_token') || localStorage.getItem('token');
       const response = await axios.patch(
-        `/api/v1/admin/campaigns/verify/${campaignId}`,
+        `${import.meta.env.VITE_API_URL}/api/v1/admin/campaigns/verify/${campaignId}`,
         { verified, rejectionMessage: message },
         {
           headers: {
@@ -89,7 +89,7 @@ const AdminCampaignManagement = () => {
     try {
       setActionLoading(true);
       const adminToken = localStorage.getItem('admin_token') || localStorage.getItem('token');
-      await axios.delete(`/api/v1/admin/campaigns/${campaignId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/admin/campaigns/${campaignId}`, {
         headers: {
           Authorization: `Bearer ${adminToken}`
         }
