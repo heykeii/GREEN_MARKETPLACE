@@ -113,7 +113,22 @@ const CartPage = () => {
 
   const handleQuantity = (idx, val) => {
     const newCart = [...cart];
-    newCart[idx].quantity = Math.max(1, val);
+    const item = newCart[idx];
+    const product = productDetails[item._id];
+    
+    if (!product) {
+      toast.error('Product details not available');
+      return;
+    }
+
+    const availableStock = product.quantity;
+    const newQuantity = Math.min(Math.max(1, val), availableStock);
+
+    if (val > availableStock) {
+      toast.warning(`Only ${availableStock} items available in stock`);
+    }
+
+    newCart[idx].quantity = newQuantity;
     updateCart(newCart, 'update', newCart[idx]._id);
   };
 
@@ -313,13 +328,17 @@ const CartPage = () => {
                         </div>
                       ) : null}
                       
-                      <div className="text-gray-500 text-sm mt-1">
-                        ₱{(item.variant?.price || item.price).toFixed(2)} x
+                      <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                        <span>₱{(item.variant?.price || item.price).toFixed(2)} x</span>
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                          Stock: {productDetails[item._id]?.quantity || 0}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 mt-2">
                         <Input
                           type="number"
                           min={1}
+                          max={productDetails[item._id]?.quantity || 1}
                           value={item.quantity}
                           onChange={(e) => handleQuantity(idx, parseInt(e.target.value) || 1)}
                           className="w-20 border-gray-300 rounded-lg shadow-sm"

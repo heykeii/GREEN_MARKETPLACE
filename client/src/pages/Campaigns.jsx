@@ -645,7 +645,7 @@ const Campaigns = () => {
       <Navbar />
 
       {/* Enhanced Page-level Search */}
-      <div className="sticky top-16 z-20 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm md:static md:top-auto md:z-auto">
+      <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm pt-20 md:pt-24">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="relative w-full">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -816,7 +816,7 @@ const Campaigns = () => {
                 <div className="w-32 h-32 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl transform hover:scale-110 transition-transform duration-300">
                   <Compass className="h-16 w-16 text-white" />
                 </div>
-                <h3 className="text-3xl font-black text-gray-900 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <h3 className="text-3xl font-black mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   {filters.type || filters.status || filters.search
                     ? 'No campaigns match your filters'
                     : 'Start the Green Revolution!'}
@@ -852,6 +852,21 @@ const Campaigns = () => {
 
         {/* Right Sidebar - Enhanced */}
         <div className="hidden xl:block w-80 space-y-6 sticky top-24 self-start">
+          {/* Liked Campaigns Button */}
+          <Link to="/liked-campaigns">
+            <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-br from-red-400 to-pink-500 rounded-xl group-hover:scale-110 transition-transform">
+                    <Heart className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg">Liked Campaigns</h3>
+                </div>
+                <span className="text-sm text-gray-500">View All →</span>
+              </div>
+            </div>
+          </Link>
+
           {/* Trending Campaigns with enhanced design */}
           <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
             <div className="flex items-center space-x-2 mb-5">
@@ -943,26 +958,26 @@ const Campaigns = () => {
       </div>
 
       {/* Enhanced Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 px-6 py-3 z-40 shadow-2xl">
-        <div className="flex justify-around items-center">
-          <Link to="/" className="p-3 rounded-xl hover:bg-gray-100 transition-colors">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 px-4 py-2 z-40 shadow-2xl">
+        <div className="flex justify-around items-center max-w-lg mx-auto">
+          <Link to="/" className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <Home className="h-6 w-6 text-gray-700" />
           </Link>
-          <button onClick={() => setFilters({...filters, type: ''})} className="p-3 rounded-xl hover:bg-gray-100 transition-colors">
+          <button onClick={() => setFilters({...filters, type: ''})} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <Compass className="h-6 w-6 text-gray-700" />
           </button>
           {user && (
-            <Link to="/create-campaign" className="p-2">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
-                <Plus className="h-7 w-7 text-white" />
+            <Link to="/create-campaign" className="p-1.5">
+              <div className="w-11 h-11 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                <Plus className="h-6 w-6 text-white" />
               </div>
             </Link>
           )}
-          <button className="p-3 rounded-xl hover:bg-gray-100 transition-colors">
+          <Link to="/liked-campaigns" className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <Heart className="h-6 w-6 text-gray-700" />
-          </button>
+          </Link>
           {user && (
-            <Avatar className="h-9 w-9 border-2 border-green-500 shadow-md">
+            <Avatar className="h-8 w-8 border-2 border-green-500 shadow-md">
               <AvatarImage src={user.avatar} alt={user.firstName || user.name} />
               <AvatarFallback className="bg-gradient-to-br from-green-400 to-emerald-500 text-white text-sm font-bold">
                 {(user.firstName || user.name)?.charAt(0).toUpperCase()}
@@ -973,7 +988,7 @@ const Campaigns = () => {
       </div>
 
       {/* Bottom padding for mobile navigation */}
-      <div className="md:hidden h-20"></div>
+      <div className="md:hidden h-16"></div>
       <Footer />
     </div>
     </>

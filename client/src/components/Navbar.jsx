@@ -415,11 +415,11 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
-            <div className="px-4 py-4 space-y-3">
+          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-t border-gray-200 shadow-lg max-h-[calc(100vh-64px)] overflow-y-auto">
+            <div className="px-4 py-5 space-y-4">
               {/* Compact user row for mobile to expose avatar */}
               {user && (
-                <div className="flex items-center gap-3 px-2">
+                <div className="flex items-center gap-3 px-3 py-2">
                   <img
                     src={user.avatar || '/default-avatar.svg'}
                     onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.svg'; }}
@@ -430,14 +430,14 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                 </div>
               )}
               {/* Mobile Search */}
-              <form onSubmit={handleMobileSearch} className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+              <form onSubmit={handleMobileSearch} className="relative px-1">
+                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={mobileSearchQuery}
                   onChange={(e) => setMobileSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full bg-gray-50 border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="pl-10 pr-3 py-2.5 w-full bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </form>
               
@@ -461,7 +461,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                     }
                     setIsMobileMenuOpen(false);
                   }}
-                  className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                  className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                 >
                   <div className="flex items-center gap-2">
                     {item.icon}
@@ -473,14 +473,14 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
               {/* User-specific mobile menu items */}
               {user && (
                 <>
-                  <div className="border-t border-gray-200 pt-3 mt-3">
+                  <div className="border-t border-gray-200 pt-3 mt-1 space-y-1">
                     <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">My Account</div>
                     <button
                       onClick={() => {
                         navigate('/profile');
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                     >
                       Profile Settings
                     </button>
@@ -489,7 +489,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                         navigate('/orders');
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                     >
                       My Orders
                     </button>
@@ -498,47 +498,47 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                         navigate('/sustainability');
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                     >
                       Sustainability Hub
                     </button>
-                                         <button
-                       onClick={() => {
-                         navigate('/my-reports');
-                         setIsMobileMenuOpen(false);
-                       }}
-                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
-                     >
-                       Reports & Complaints
-                     </button>
-                     <button
-                       onClick={() => {
-                         navigate('/messages');
-                         setIsMobileMenuOpen(false);
-                       }}
-                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
-                     >
-                       Messages
-                     </button>
-                     <button
-                       onClick={() => {
-                         navigate('/notifications');
-                         setIsMobileMenuOpen(false);
-                       }}
-                       className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
-                     >
-                       Notifications
-                     </button>
+                    <button
+                      onClick={() => {
+                        navigate('/my-reports');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      Reports & Complaints
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/messages');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      Messages
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/notifications');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      Notifications
+                    </button>
                   </div>
                   
-                  <div className="border-t border-gray-200 pt-3">
+                  <div className="border-t border-gray-200 pt-3 space-y-1">
                     <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Seller Portal</div>
                     <button
                       onClick={() => {
                         navigate('/seller/application');
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                     >
                       Seller Application
                     </button>
@@ -548,7 +548,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                           navigate('/seller/dashboard');
                           setIsMobileMenuOpen(false);
                         }}
-                        className="block w-full text-left px-4 py-3 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                        className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                       >
                         Seller Dashboard
                       </button>
@@ -561,7 +561,7 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                         handleLogout();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-red-700 font-medium hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      className="block w-full text-left px-3 py-2.5 text-red-700 font-medium hover:bg-red-50 rounded-lg transition-colors duration-200"
                     >
                       Sign Out
                     </button>

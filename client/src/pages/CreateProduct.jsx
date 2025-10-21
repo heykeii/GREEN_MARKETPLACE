@@ -409,16 +409,20 @@ const CreateProduct = () => {
                       </select>
                     </div>
                     <div>
-                      <Label htmlFor="materialsUsed" className="text-sm font-medium text-gray-700">Materials Used *</Label>
+                      <Label htmlFor="materialsUsed" className="text-sm font-medium text-gray-700">
+                        Materials Used *
+                        <span className="ml-2 text-xs text-gray-500">(optional: include weight per material, e.g., "4kg cotton")</span>
+                      </Label>
                       <Input
                         id="materialsUsed"
                         name="materialsUsed"
                         type="text"
                         value={form.materialsUsed}
                         onChange={handleInputChange}
-                        placeholder="e.g., Recycled wood, Organic cotton, Bamboo"
+                        placeholder="e.g., 4kg cotton, 2kg recycled plastic, Bamboo"
                         className="w-full"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Adding weights improves sustainability scoring and eco assessment accuracy.</p>
                     </div>
 
                     {/* External URLs Section */}

@@ -49,6 +49,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AdminSustainability from './pages/AdminSustainability';
 import Terms from './pages/Terms';
+import LikedCampaigns from './pages/LikedCampaigns';
 
 const ScrollToTopOnRouteChange = () => {
   const { pathname } = useLocation();
@@ -100,6 +101,7 @@ const App = () => {
         <Route path="/search" element={<SearchResults />} />
         <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/campaigns/:id" element={<CampaignDetail />} />
+        <Route path="/liked-campaigns" element={<LikedCampaigns />} />
         <Route path="/create-campaign" element={<CreateCampaign />} />
         <Route path="/profile/followers" element={<FollowersPage />} />
         <Route path="/profile/following" element={<FollowingPage />} />
