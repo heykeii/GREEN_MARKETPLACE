@@ -589,10 +589,18 @@ export const getAdminOrderRecords = async (req, res) => {
       // Calculate commission
       const adminCommission = totalQuantity * COMMISSION_PER_ITEM;
       
+      // Provide a safe fallback customer if the account was deleted
+      const safeCustomer = order.customer || {
+        firstName: 'Deleted',
+        lastName: 'User',
+        email: 'deleted@unknown',
+        avatar: null
+      };
+
       return {
         _id: order._id,
         orderNumber: order.orderNumber,
-        customer: order.customer,
+        customer: safeCustomer,
         sellers: sellers,
         items: order.items.map(item => ({
           product: item.product,

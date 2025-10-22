@@ -229,7 +229,7 @@ const AdminOrderRecords = () => {
                         <div>
                           <p className="text-xs text-gray-500">Customer</p>
                           <p className="font-semibold truncate">
-                            {order.customer.firstName} {order.customer.lastName}
+                            {(order.customer?.firstName || 'Deleted')} {(order.customer?.lastName || 'User')}
                           </p>
                         </div>
                         <div>
@@ -272,22 +272,22 @@ const AdminOrderRecords = () => {
                               Customer Information
                             </h4>
                             <div className="flex items-center gap-3">
-                              {order.customer.avatar ? (
+                              {order.customer?.avatar ? (
                                 <img
                                   src={order.customer.avatar}
-                                  alt={order.customer.firstName}
+                                  alt={order.customer?.firstName || 'Customer'}
                                   className="w-12 h-12 rounded-full object-cover"
                                 />
                               ) : (
                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                                   <span className="text-blue-600 font-bold">
-                                    {order.customer.firstName?.charAt(0)}{order.customer.lastName?.charAt(0)}
+                                    {(order.customer?.firstName?.charAt(0) || 'D')}{(order.customer?.lastName?.charAt(0) || 'U')}
                                   </span>
                                 </div>
                               )}
                               <div>
-                                <p className="font-semibold">{order.customer.firstName} {order.customer.lastName}</p>
-                                <p className="text-sm text-gray-600">{order.customer.email}</p>
+                                <p className="font-semibold">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : 'Deleted user'}</p>
+                                <p className="text-sm text-gray-600">{order.customer?.email || 'Deleted account'}</p>
                               </div>
                             </div>
                           </div>
