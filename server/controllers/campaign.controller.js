@@ -135,13 +135,21 @@ const getCampaigns = async (req, res) => {
     if (type) filter.type = type;
     if (status) filter.status = status;
 
-    const campaigns = await Campaign.find(filter)
-      .populate('createdBy', 'firstName lastName email avatar')
+    // Only include campaigns whose creator exists and is active
+    let campaigns = await Campaign.find(filter)
+      .populate({
+        path: 'createdBy',
+        select: 'firstName lastName email avatar isActive',
+        match: { isActive: true }
+      })
       .populate('featuredBusinesses', 'name email businessName')
       .populate('participants', 'firstName lastName email avatar')
       .populate('likes', 'firstName lastName email avatar')
       .populate('comments.user', 'firstName lastName email avatar')
       .sort({ createdAt: -1 });
+
+    // Filter out campaigns where createdBy was not matched (deleted or inactive user)
+    campaigns = campaigns.filter(c => c.createdBy);
 
     res.json({
       success: true,
@@ -165,13 +173,19 @@ const getCampaignsByUser = async (req, res) => {
       filter.verified = true;
     }
 
-    const campaigns = await Campaign.find(filter)
-      .populate('createdBy', 'firstName lastName email avatar')
+    let campaigns = await Campaign.find(filter)
+      .populate({
+        path: 'createdBy',
+        select: 'firstName lastName email avatar isActive',
+        match: { isActive: true }
+      })
       .populate('featuredBusinesses', 'name email businessName')
       .populate('participants', 'firstName lastName email avatar')
       .populate('likes', 'firstName lastName email avatar')
       .populate('comments.user', 'firstName lastName email avatar')
       .sort({ createdAt: -1 });
+
+    campaigns = campaigns.filter(c => c.createdBy);
 
     res.json({ success: true, campaigns });
   } catch (error) {
