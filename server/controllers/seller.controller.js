@@ -13,13 +13,15 @@ export const upload = multer({ storage });
 
 // Helper to upload a file buffer to Cloudinary
 async function uploadToCloudinary(fileBuffer, filename) {
-  return await cloudinary.uploader.upload_stream({
-    folder: 'seller_verification',
-    public_id: path.parse(filename).name,
-    resource_type: 'auto',
-  }, (error, result) => {
-    if (error) throw error;
-    return result;
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream({
+      folder: 'seller_verification',
+      public_id: path.parse(filename).name,
+      resource_type: 'auto',
+    }, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    }).end(fileBuffer);
   });
 }
 
@@ -296,12 +298,17 @@ export const reviewSellerApplication = async (req, res) => {
 
 export const getSellerAnalytics = async (req, res) => {
   try {
+    console.log('=== ANALYTICS REQUEST START ===');
+    console.log('Request user:', req.user);
+    console.log('Request query:', req.query);
+    
     const sellerId = req.user._id;
     const { timeframe = '30d' } = req.query;
 
     // Validate timeframe parameter
     const validTimeframes = ['7d', '30d', '90d', '1y'];
     if (!validTimeframes.includes(timeframe)) {
+      console.log('Invalid timeframe:', timeframe);
       return res.status(400).json({
         success: false,
         message: 'Invalid timeframe. Must be one of: 7d, 30d, 90d, 1y'
@@ -343,6 +350,7 @@ export const getSellerAnalytics = async (req, res) => {
     }
 
     // Get seller's products (only approved and available for accurate inventory metrics)
+    console.log('Fetching products for seller:', sellerId);
     const products = await Product.find({ seller: sellerId, status: 'approved', isAvailable: true });
     console.log('Found products:', products.length);
     
@@ -354,6 +362,7 @@ export const getSellerAnalytics = async (req, res) => {
     
     if (productIds.length > 0) {
       try {
+        console.log('Fetching current period orders...');
         // Current period orders - include completed/ready orders with paid status
         // Note: 'ready' status means order is ready for pickup/delivery (should count as revenue)
         // 'completed' status means order is fully delivered and completed
@@ -364,6 +373,7 @@ export const getSellerAnalytics = async (req, res) => {
           paymentStatus: 'paid'
         }).populate('items.product customer');
 
+        console.log('Fetching previous period orders...');
         // Previous period orders for growth calculation
         previousOrders = await Order.find({
           'items.product': { $in: productIds },
@@ -382,6 +392,14 @@ export const getSellerAnalytics = async (req, res) => {
         })));
       } catch (orderError) {
         console.error('Error fetching orders:', orderError);
+        console.error('Order error details:', {
+          message: orderError.message,
+          name: orderError.name,
+          stack: orderError.stack
+        });
+        // Continue with empty orders arrays
+        currentOrders = [];
+        previousOrders = [];
       }
     }
 
@@ -824,10 +842,17 @@ export const getSellerAnalytics = async (req, res) => {
       growth: analytics.overview.monthlyGrowth
     });
     
+    console.log('=== ANALYTICS REQUEST SUCCESS ===');
     res.json(analytics);
   } catch (error) {
-    console.error('Analytics error:', error);
+    console.error('=== ANALYTICS ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error name:', error.name);
     console.error('Error stack:', error.stack);
+    console.error('Request user:', req.user);
+    console.error('Request query:', req.query);
+    console.error('=== END ANALYTICS ERROR ===');
+    
     res.status(500).json({ 
       success: false,
       message: 'Failed to fetch analytics', 
