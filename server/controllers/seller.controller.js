@@ -453,19 +453,26 @@ export const getSellerAnalytics = async (req, res) => {
 
     // Process current orders
     currentOrders.forEach(order => {
+      if (!order || !order.items) return;
       order.items.forEach(item => {
-        if (productIds.some(id => id.toString() === item.product._id.toString())) {
-          const itemRevenue = item.price * item.quantity;
+        // Guard against missing populated refs
+        const itemProductId = item?.product?._id || item?.product;
+        if (!itemProductId) return;
+        if (productIds.some(id => id.toString() === itemProductId.toString())) {
+          const price = Number(item?.price) || 0;
+          const qty = Number(item?.quantity) || 0;
+          const itemRevenue = price * qty;
           currentRevenue += itemRevenue;
           totalOrderValue += itemRevenue;
           
-          const customerId = order.customer._id.toString();
-          customerSet.add(customerId);
-          
-          if (!customerOrders[customerId]) {
-            customerOrders[customerId] = [];
+          const customerId = (order?.customer?._id || order?.customer)?.toString?.();
+          if (customerId) {
+            customerSet.add(customerId);
+            if (!customerOrders[customerId]) {
+              customerOrders[customerId] = [];
+            }
+            customerOrders[customerId].push(order._id.toString());
           }
-          customerOrders[customerId].push(order._id.toString());
         }
       });
     });
@@ -473,9 +480,14 @@ export const getSellerAnalytics = async (req, res) => {
     // Calculate previous period revenue for growth
     let previousRevenue = 0;
     previousOrders.forEach(order => {
+      if (!order || !order.items) return;
       order.items.forEach(item => {
-        if (productIds.some(id => id.toString() === item.product._id.toString())) {
-          previousRevenue += item.price * item.quantity;
+        const itemProductId = item?.product?._id || item?.product;
+        if (!itemProductId) return;
+        if (productIds.some(id => id.toString() === itemProductId.toString())) {
+          const price = Number(item?.price) || 0;
+          const qty = Number(item?.quantity) || 0;
+          previousRevenue += price * qty;
         }
       });
     });
@@ -521,11 +533,18 @@ export const getSellerAnalytics = async (req, res) => {
           let totalSpent = 0;
           
           allOrders.forEach(order => {
-            if (order.customer._id.toString() === topCustomer.customerId) {
+            const orderCustomerId = (order?.customer?._id || order?.customer)?.toString?.();
+            if (!orderCustomerId) return;
+            if (orderCustomerId === topCustomer.customerId) {
+              if (!order?.items) return;
               order.items.forEach(item => {
-                if (productIds.some(id => id.toString() === item.product._id.toString())) {
-                  totalQuantities += item.quantity;
-                  totalSpent += item.price * item.quantity;
+                const itemProductId = item?.product?._id || item?.product;
+                if (!itemProductId) return;
+                if (productIds.some(id => id.toString() === itemProductId.toString())) {
+                  const qty = Number(item?.quantity) || 0;
+                  const price = Number(item?.price) || 0;
+                  totalQuantities += qty;
+                  totalSpent += price * qty;
                 }
               });
             }
@@ -580,8 +599,10 @@ export const getSellerAnalytics = async (req, res) => {
     const productSales = {};
     
     allOrders.forEach(order => {
+      if (!order?.items) return;
       order.items.forEach(item => {
-        const productId = item.product._id.toString();
+        const productId = (item?.product?._id || item?.product)?.toString?.();
+        if (!productId) return;
         if (productIds.some(id => id.toString() === productId)) {
           if (!productRevenue[productId]) {
             productRevenue[productId] = {
@@ -591,8 +612,10 @@ export const getSellerAnalytics = async (req, res) => {
               product: item.product
             };
           }
-          productRevenue[productId].revenue += item.price * item.quantity;
-          productRevenue[productId].quantity += item.quantity;
+          const price = Number(item?.price) || 0;
+          const qty = Number(item?.quantity) || 0;
+          productRevenue[productId].revenue += price * qty;
+          productRevenue[productId].quantity += qty;
           productRevenue[productId].orders++;
         }
       });
@@ -655,12 +678,17 @@ export const getSellerAnalytics = async (req, res) => {
 
     // Add sales data to categories
     allOrders.forEach(order => {
+      if (!order?.items) return;
       order.items.forEach(item => {
-        const product = products.find(p => p._id.toString() === item.product._id.toString());
+        const itemProductId = item?.product?._id || item?.product;
+        if (!itemProductId) return;
+        const product = products.find(p => p._id.toString() === itemProductId.toString());
         if (product) {
-          categoryStats[product.category].revenue += item.price * item.quantity;
+          const price = Number(item?.price) || 0;
+          const qty = Number(item?.quantity) || 0;
+          categoryStats[product.category].revenue += price * qty;
           categoryStats[product.category].orders++;
-          categoryStats[product.category].quantity += item.quantity;
+          categoryStats[product.category].quantity += qty;
         }
       });
     });
@@ -668,13 +696,18 @@ export const getSellerAnalytics = async (req, res) => {
     // Calculate real growth for categories by comparing current vs previous period
     const previousCategoryStats = {};
     previousOrders.forEach(order => {
+      if (!order?.items) return;
       order.items.forEach(item => {
-        const product = products.find(p => p._id.toString() === item.product._id.toString());
+        const itemProductId = item?.product?._id || item?.product;
+        if (!itemProductId) return;
+        const product = products.find(p => p._id.toString() === itemProductId.toString());
         if (product) {
           if (!previousCategoryStats[product.category]) {
             previousCategoryStats[product.category] = { revenue: 0 };
           }
-          previousCategoryStats[product.category].revenue += item.price * item.quantity;
+          const price = Number(item?.price) || 0;
+          const qty = Number(item?.quantity) || 0;
+          previousCategoryStats[product.category].revenue += price * qty;
         }
       });
     });
@@ -726,11 +759,16 @@ export const getSellerAnalytics = async (req, res) => {
           let periodOrders = 0;
           
           ordersToCheck.forEach(order => {
-            const orderDate = new Date(order.createdAt);
+            const orderDate = new Date(order?.createdAt);
             if (orderDate >= periodStart && orderDate < periodEnd) {
+              if (!order?.items) return;
               order.items.forEach(item => {
-                if (productIds.some(id => id.toString() === item.product._id.toString())) {
-                  periodRevenue += item.price * item.quantity;
+                const itemProductId = item?.product?._id || item?.product;
+                if (!itemProductId) return;
+                if (productIds.some(id => id.toString() === itemProductId.toString())) {
+                  const price = Number(item?.price) || 0;
+                  const qty = Number(item?.quantity) || 0;
+                  periodRevenue += price * qty;
                   periodOrders++;
                 }
               });
@@ -758,14 +796,19 @@ export const getSellerAnalytics = async (req, res) => {
         let periodOrders = 0;
         
         ordersToCheck.forEach(order => {
-          const orderDate = new Date(order.createdAt);
+        const orderDate = new Date(order?.createdAt);
           if (orderDate >= periodStart && orderDate < periodEnd) {
-            order.items.forEach(item => {
-              if (productIds.some(id => id.toString() === item.product._id.toString())) {
-                periodRevenue += item.price * item.quantity;
-                periodOrders++;
-              }
-            });
+          if (!order?.items) return;
+          order.items.forEach(item => {
+            const itemProductId = item?.product?._id || item?.product;
+            if (!itemProductId) return;
+            if (productIds.some(id => id.toString() === itemProductId.toString())) {
+              const price = Number(item?.price) || 0;
+              const qty = Number(item?.quantity) || 0;
+              periodRevenue += price * qty;
+              periodOrders++;
+            }
+          });
           }
         });
         
