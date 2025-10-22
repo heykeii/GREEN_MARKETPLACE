@@ -256,12 +256,23 @@ export const googleLogin = async (req, res) => {
         googleId,
         googleEmail: email,
         avatar,
-        isVerified: true, // Google users are already verified by Google
+        isVerified: false, // Google users also need email verification
         verificationToken,
         password: crypto.randomBytes(32).toString("hex"), // Random password for Google users
       });
       isNewUser = true;
       console.log("New user created:", user._id);
+      
+      // Send verification email to new Google users
+      try {
+        await sendVerificationEmail(email, firstName, verificationToken);
+        console.log("Verification email sent to new Google user");
+      } catch (emailError) {
+        console.error("Failed to send verification email to Google user:", emailError);
+        // Delete the user if email sending fails
+        await User.findByIdAndDelete(user._id);
+        throw new Error("Failed to send verification email. Please try again.");
+      }
     }
 
     // If user is not verified, send verification email and block login
