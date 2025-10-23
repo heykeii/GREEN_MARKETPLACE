@@ -118,12 +118,16 @@ const ReviewCard = ({
     try {
       setSavingReply(true);
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
-      const base = import.meta?.env?.VITE_API_URL || '';
       
-      console.log('Saving reply...', { reviewId: review._id, content: replyText.trim() });
+      // Use absolute URL with proper fallback
+      const apiUrl = import.meta.env.VITE_API_URL 
+        ? `${import.meta.env.VITE_API_URL}/api/v1/reviews/${review._id}/reply`
+        : `/api/v1/reviews/${review._id}/reply`;
+      
+      console.log('Saving reply...', { apiUrl, reviewId: review._id, content: replyText.trim() });
       
       const res = await axios.post(
-        `${base}/api/v1/reviews/${review._id}/reply`,
+        apiUrl,
         { content: replyText.trim() },
         {
           headers: {
@@ -157,16 +161,25 @@ const ReviewCard = ({
     try {
       setSavingReply(true);
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
-      const base = import.meta?.env?.VITE_API_URL || '';
+      
+      // Use absolute URL with proper fallback
+      const apiUrlDelete = import.meta.env.VITE_API_URL 
+        ? `${import.meta.env.VITE_API_URL}/api/v1/reviews/${review._id}/reply`
+        : `/api/v1/reviews/${review._id}/reply`;
+      
+      const apiUrlDeleteFallback = import.meta.env.VITE_API_URL 
+        ? `${import.meta.env.VITE_API_URL}/api/v1/reviews/${review._id}/reply/delete`
+        : `/api/v1/reviews/${review._id}/reply/delete`;
+      
       let res;
       try {
-        res = await axios.delete(`${base}/api/v1/reviews/${review._id}/reply`, {
+        res = await axios.delete(apiUrlDelete, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err) {
         // Some CDNs/hosts block DELETE; use POST fallback
         if (err?.response?.status === 501 || err?.response?.status === 405) {
-          res = await axios.post(`${base}/api/v1/reviews/${review._id}/reply/delete`, {}, {
+          res = await axios.post(apiUrlDeleteFallback, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
         } else {
