@@ -19,6 +19,7 @@ const ReviewCard = ({
   const [isVoting, setIsVoting] = useState(false);
   const [replyEditing, setReplyEditing] = useState(false);
   const [replyText, setReplyText] = useState(review.sellerReply?.content || '');
+  const [localReply, setLocalReply] = useState(review.sellerReply?.content || '');
   const [savingReply, setSavingReply] = useState(false);
 
   const formatDate = (dateString) => {
@@ -124,6 +125,7 @@ const ReviewCard = ({
       if (res.data?.success) {
         toast.success('Reply saved');
         setReplyEditing(false);
+        setLocalReply(replyText.trim());
       }
     } catch (e) {
       toast.error(e?.response?.data?.message || 'Failed to save reply');
@@ -145,6 +147,7 @@ const ReviewCard = ({
         toast.success('Reply deleted');
         setReplyText('');
         setReplyEditing(false);
+        setLocalReply('');
       }
     } catch (e) {
       toast.error(e?.response?.data?.message || 'Failed to delete reply');
@@ -278,9 +281,9 @@ const ReviewCard = ({
       {/* Seller Reply Section */}
       <div className="mt-4 border-t border-gray-100 pt-4">
         <div className="text-sm font-medium text-gray-700 mb-2">Seller reply</div>
-        {review.sellerReply && review.sellerReply.content && !replyEditing ? (
+        {localReply && !replyEditing ? (
           <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-gray-700">
-            {review.sellerReply.content}
+            {localReply}
             {canReply ? (
               <div className="mt-2 flex gap-3">
                 <button onClick={() => setReplyEditing(true)} className="text-xs text-emerald-700 hover:underline">Edit reply</button>
@@ -291,7 +294,7 @@ const ReviewCard = ({
         ) : null}
         {canReply ? (
           <div className="mt-2">
-            {(!review.sellerReply || !review.sellerReply.content || replyEditing) ? (
+            {(!localReply || replyEditing) ? (
               <div className="space-y-2">
                 <textarea
                   value={replyText}
