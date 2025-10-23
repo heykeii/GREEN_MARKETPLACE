@@ -73,13 +73,25 @@ const userSchema = new mongoose.Schema({
         zipCode: {
             type: String,
             trim: true,
-            default: ""
+            default: "",
+            validate: {
+                validator: function (value) {
+                    return !value || /^\d{4}$/.test(value); // allow blank, else 4 digits
+                },
+                message: "Zip code must be exactly 4 digits"
+            }
         }
     },
     contactNumber: {
         type: String,
         trim: true,
-        match: [/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"],
+        validate: {
+            validator: function (value) {
+                if (!value) return true; // allow blank
+                return /^(?:\+639|09)\d{9}$/.test(value);
+            },
+            message: "Contact number must be a Philippine mobile (e.g., +639XXXXXXXXX or 09XXXXXXXXX)"
+        },
         default: ""
     },
     // Social graph

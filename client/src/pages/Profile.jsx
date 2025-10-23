@@ -234,6 +234,24 @@ const Profile = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Client-side validation for PH contact number and 4-digit ZIP
+      const phone = (form.contactNumber || '').trim();
+      const zip = (form.location?.zipCode || '').trim();
+      const errors = {};
+      const PH_MOBILE_REGEX = /^(?:\+639|09)\d{9}$/; // +639XXXXXXXXX or 09XXXXXXXXX
+      if (phone && !PH_MOBILE_REGEX.test(phone)) {
+        errors.contactNumber = 'Contact number must be Philippine format: +639XXXXXXXXX or 09XXXXXXXXX';
+      }
+      if (zip && !/^\d{4}$/.test(zip)) {
+        errors.zipCode = 'Zip code must be exactly 4 digits';
+      }
+      if (Object.keys(errors).length > 0) {
+        if (errors.contactNumber) toast.error(errors.contactNumber);
+        if (errors.zipCode) toast.error(errors.zipCode);
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("firstName", form.firstName);
@@ -288,8 +306,14 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error saving profile:", error);
-      const msg = error.response?.data?.message || "Failed to update profile.";
-      toast.error(msg);
+      // Prefer field-specific validation errors from API if provided
+      const apiErrors = error.response?.data?.errors;
+      if (apiErrors && typeof apiErrors === 'object') {
+        Object.values(apiErrors).forEach((msg) => msg && toast.error(String(msg)));
+      } else {
+        const msg = error.response?.data?.message || "Failed to update profile.";
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }

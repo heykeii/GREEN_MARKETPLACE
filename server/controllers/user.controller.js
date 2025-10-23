@@ -780,6 +780,35 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // ---------- Input normalization & validation ----------
+    // Support both nested form fields (location[city]) and JSON body (location.city)
+    const bodyLocation = req.body.location || {
+      address: req.body["location[address]"] ?? undefined,
+      city: req.body["location[city]"] ?? undefined,
+      province: req.body["location[province]"] ?? undefined,
+      zipCode: req.body["location[zipCode]"] ?? undefined,
+    };
+
+    const incomingContactNumber = (req.body.contactNumber ?? "").toString().trim();
+    const incomingZip = (bodyLocation?.zipCode ?? "").toString().trim();
+
+    const errors = {};
+    // Philippine mobile: starts with +639 or 09 then 9 remaining digits
+    const PH_MOBILE_REGEX = /^(?:\+639|09)\d{9}$/;
+    if (incomingContactNumber && !PH_MOBILE_REGEX.test(incomingContactNumber)) {
+      errors.contactNumber =
+        "Contact number must be a Philippine mobile (e.g., +639XXXXXXXXX or 09XXXXXXXXX).";
+    }
+
+    // Philippine ZIP: exactly 4 digits (optional field)
+    if (incomingZip && !/^\d{4}$/.test(incomingZip)) {
+      errors.zipCode = "Zip code must be exactly 4 digits.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ message: "Validation error", errors });
+    }
+
     // Handle avatar upload if present
     let avatarUrl = user.avatar;
     if (req.files && req.files.avatar && req.files.avatar[0]) {
@@ -805,14 +834,14 @@ export const updateProfile = async (req, res) => {
     user.firstName = req.body.firstName ?? user.firstName;
     user.lastName = req.body.lastName ?? user.lastName;
     user.bio = req.body.bio ?? user.bio;
-    user.contactNumber = req.body.contactNumber ?? user.contactNumber;
+    user.contactNumber = incomingContactNumber || (req.body.contactNumber === "" ? "" : user.contactNumber);
     user.avatar = avatarUrl;
     // Always set location fields, even if blank
     user.location = {
-      address: req.body.location?.address ?? user.location?.address ?? "",
-      city: req.body.location?.city ?? user.location?.city ?? "",
-      province: req.body.location?.province ?? user.location?.province ?? "",
-      zipCode: req.body.location?.zipCode ?? user.location?.zipCode ?? "",
+      address: bodyLocation?.address ?? user.location?.address ?? "",
+      city: bodyLocation?.city ?? user.location?.city ?? "",
+      province: bodyLocation?.province ?? user.location?.province ?? "",
+      zipCode: incomingZip || (bodyLocation?.zipCode === "" ? "" : (user.location?.zipCode ?? "")),
     };
 
     // Social links
@@ -831,6 +860,14 @@ export const updateProfile = async (req, res) => {
     res.status(200).json({ message: "Profile updated", user });
   } catch (error) {
     console.error("Profile update error:", error);
+    // Mongoose validation errors
+    if (error?.name === 'ValidationError') {
+      const errors = Object.keys(error.errors || {}).reduce((acc, key) => {
+        acc[key] = error.errors[key].message;
+        return acc;
+      }, {});
+      return res.status(400).json({ message: 'Validation error', errors });
+    }
     res.status(500).json({ message: "Failed to update profile" });
   }
 };
