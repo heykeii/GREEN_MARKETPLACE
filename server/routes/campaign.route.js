@@ -27,7 +27,7 @@ router.get('/', getCampaigns); // Public route, but filtered by verification sta
 router.get('/me', protect, getMyCampaigns);
 router.get('/by-user/:userId', getCampaignsByUser);
 router.get('/:id', getCampaignById); // Public route, but filtered by verification status
-router.put('/:id', protect, updateCampaign);
+router.put('/:id', protect, upload.array('media', 10), updateCampaign);
 router.delete('/:id', protect, deleteCampaign);
 
 // Admin verification

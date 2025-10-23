@@ -281,17 +281,83 @@ const updateCampaign = async (req, res) => {
       });
     }
 
-    const updates = req.body;
+    const { title, description, type, startDate, endDate, image, featuredBusinesses, goal, objectives } = req.body;
+    const updates = {};
+
+    // Handle file uploads if present
+    let mediaUrl = image || campaign.image; // Keep existing if not uploading new
+    const mediaUrls = [];
+
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      // Check if Cloudinary is configured
+      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return res.status(500).json({
+          success: false,
+          message: "Cloudinary configuration missing.",
+          error: "Missing Cloudinary configuration"
+        });
+      }
+
+      const folder = `campaigns/${type || campaign.type || 'general'}`;
+      const resourceType = 'image';
+
+      const uploadOne = (buffer) => new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder, resource_type: resourceType },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result.secure_url);
+          }
+        );
+        stream.end(buffer);
+      });
+
+      try {
+        for (const file of req.files.slice(0, 10)) {
+          const url = await uploadOne(file.buffer);
+          mediaUrls.push(url);
+        }
+        mediaUrl = mediaUrls[0] || mediaUrl;
+      } catch (err) {
+        console.error('Cloudinary upload error:', err);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload media",
+          error: err.message
+        });
+      }
+
+      updates.image = mediaUrl;
+      updates.media = mediaUrls.length ? mediaUrls : undefined;
+    }
+
+    // Build updates object
+    if (title) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (type) updates.type = type;
+    if (startDate !== undefined) updates.startDate = startDate ? new Date(startDate) : undefined;
+    if (endDate !== undefined) updates.endDate = endDate ? new Date(endDate) : undefined;
+    if (goal !== undefined) updates.goal = goal ? parseInt(goal) : undefined;
+    
+    // Handle objectives
+    if (objectives !== undefined) {
+      updates.objectives = Array.isArray(objectives)
+        ? objectives.filter(o => typeof o === 'string' && o.trim().length).slice(0, 20)
+        : typeof objectives === 'string'
+          ? objectives.split('\n').map(s=>s.trim()).filter(Boolean).slice(0, 20)
+          : undefined;
+    }
 
     // Date validation if either date is being updated
-    const nextStart = updates.startDate ? new Date(updates.startDate) : (campaign.startDate || null);
-    const nextEnd = updates.endDate ? new Date(updates.endDate) : (campaign.endDate || null);
-    if (nextStart && nextEnd && nextStart.getTime() > nextEnd.getTime()) {
+    const nextStart = updates.startDate !== undefined ? updates.startDate : campaign.startDate;
+    const nextEnd = updates.endDate !== undefined ? updates.endDate : campaign.endDate;
+    if (nextStart && nextEnd && new Date(nextStart).getTime() > new Date(nextEnd).getTime()) {
       return res.status(400).json({
         success: false,
         message: "Start date cannot be after end date"
       });
     }
+
     // Remove fields that shouldn't be updated directly
     delete updates.verified;
     delete updates.createdBy;

@@ -37,6 +37,7 @@ import Messages from './pages/Messages';
 import ChatView from './pages/ChatView';
 import Campaigns from './pages/Campaigns';
 import CampaignDetail from './pages/CampaignDetail';
+import EditCampaign from './pages/EditCampaign';
 import FollowersPage from './pages/FollowersPage';
 import FollowingPage from './pages/FollowingPage';
 import CreateCampaign from './pages/CreateCampaign';
@@ -101,6 +102,7 @@ const App = () => {
         <Route path="/search" element={<SearchResults />} />
         <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/campaigns/:id" element={<CampaignDetail />} />
+        <Route path="/campaigns/:id/edit" element={<EditCampaign />} />
         <Route path="/liked-campaigns" element={<LikedCampaigns />} />
         <Route path="/create-campaign" element={<CreateCampaign />} />
         <Route path="/profile/followers" element={<FollowersPage />} />
