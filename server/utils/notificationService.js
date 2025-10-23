@@ -18,7 +18,10 @@ export class NotificationService {
       'cancelled': 'order_cancelled'
     };
 
-    const message = statusMessages[newStatus] || `Your order status has been updated to ${newStatus}`;
+    let message = statusMessages[newStatus] || `Your order status has been updated to ${newStatus}`;
+    if (newStatus === 'cancelled' && order?.cancellation?.reason) {
+      message = `Your order has been cancelled. Reason: ${order.cancellation.reason}`;
+    }
     const type = statusTypes[newStatus] || 'order_status_updated';
 
     await createNotification(

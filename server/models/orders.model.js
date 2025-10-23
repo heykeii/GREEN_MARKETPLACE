@@ -103,6 +103,12 @@ const orderSchema = new mongoose.Schema({
         enum: ['pending', 'confirmed', 'ready', 'completed', 'cancelled'],
         default: 'pending'
     },
+    // Cancellation details (when status becomes cancelled)
+    cancellation: {
+        reason: { type: String, trim: true, maxlength: 300 },
+        cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        cancelledAt: { type: Date }
+    },
     
     // Shipping Address
     shippingAddress: {

@@ -549,7 +549,7 @@ export const getOrderById = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { status } = req.body;
+        const { status, reason } = req.body;
         const userId = req.user._id;
         const isAdmin = req.user.isAdmin;
 
@@ -602,6 +602,15 @@ export const updateOrderStatus = async (req, res) => {
             updateData.paymentStatus = 'paid';
         }
 
+        // Add cancellation details when cancelling
+        if (status === 'cancelled') {
+            updateData.cancellation = {
+                reason: (reason || '').toString().slice(0, 300),
+                cancelledBy: userId,
+                cancelledAt: new Date()
+            };
+        }
+
         // Update the order status (and payment status if needed)
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
@@ -614,7 +623,7 @@ export const updateOrderStatus = async (req, res) => {
         try {
             await NotificationService.notifyOrderStatusUpdate(
                 order.customer._id,
-                order,
+                { ...order.toObject(), cancellation: updateData.cancellation || order.cancellation },
                 status,
                 oldStatus
             );

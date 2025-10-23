@@ -102,7 +102,7 @@ const SellerOrderManagement = () => {
     }
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, reason) => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
@@ -112,7 +112,7 @@ const SellerOrderManagement = () => {
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_API_URL}/api/v1/orders/seller/${orderId}/status`,
-        { status: newStatus },
+        { status: newStatus, reason },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -193,6 +193,11 @@ const SellerOrderManagement = () => {
       default: return 'Update Status';
     }
   };
+
+  // Cancel order with reason modal
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   const calculateCommissionForOrder = (order) => {
     if (!order || !Array.isArray(order.items)) return 0;
@@ -408,12 +413,14 @@ const SellerOrderManagement = () => {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => {
-                                      updateOrderStatus(order._id, 'cancelled');
+                                      setCancelOrderId(order._id);
+                                      setCancelReason('');
+                                      setCancelDialogOpen(true);
                                       setStatusDropdownOpen(null);
                                     }}
                                     className="text-red-600 hover:text-red-700"
                                   >
-                                    ❌ Mark as Cancelled
+                                    ❌ Cancel Order
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -689,6 +696,42 @@ const SellerOrderManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+    {/* Cancel Order Dialog */}
+    <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancel Order</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="cancel-reason">Reason for cancellation</Label>
+          <Input
+            id="cancel-reason"
+            placeholder="Provide a brief reason (required)"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+          />
+          <p className="text-xs text-gray-500">This reason will be sent to the customer.</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>Close</Button>
+          <Button
+            className="bg-red-600 hover:bg-red-700 text-white"
+            disabled={!cancelReason.trim()}
+            onClick={async () => {
+              try {
+                await updateOrderStatus(cancelOrderId, 'cancelled', cancelReason.trim());
+                setCancelDialogOpen(false);
+                setCancelReason('');
+                setCancelOrderId(null);
+              } catch (_) {}
+            }}
+          >
+            Confirm Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 };
