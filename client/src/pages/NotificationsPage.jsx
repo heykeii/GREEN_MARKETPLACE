@@ -172,6 +172,10 @@ const NotificationsPage = () => {
         return '📋';
       case 'system_message':
         return '🔔';
+      case 'seller_application_approved':
+        return '✅';
+      case 'seller_application_rejected':
+        return '❗';
       default:
         return '📢';
     }
@@ -197,6 +201,10 @@ const NotificationsPage = () => {
         return 'text-yellow-600';
       case 'report_status_updated':
         return 'text-blue-600';
+      case 'seller_application_approved':
+        return 'text-emerald-600';
+      case 'seller_application_rejected':
+        return 'text-red-600';
       default:
         return 'text-gray-600';
     }
@@ -218,7 +226,9 @@ const NotificationsPage = () => {
       'order_cancelled': 'Order Cancelled',
       'order_cancelled_by_customer': 'Order Cancelled by Customer',
       'report_status_updated': 'Report Status Update',
-      'system_message': 'System Message'
+      'system_message': 'System Message',
+      'seller_application_approved': 'Seller Application Approved',
+      'seller_application_rejected': 'Seller Application Rejected'
     };
     return typeMap[type] || type;
   };

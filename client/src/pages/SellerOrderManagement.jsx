@@ -425,13 +425,29 @@ const SellerOrderManagement = () => {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => updateOrderStatus(order._id, getNextStatus(order.status))}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                              >
-                                {getNextStatusText(order.status)}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => updateOrderStatus(order._id, getNextStatus(order.status))}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                  {getNextStatusText(order.status)}
+                                </Button>
+                                {(order.status === 'pending' || order.status === 'confirmed') && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                    onClick={() => {
+                                      setCancelOrderId(order._id);
+                                      setCancelReason('');
+                                      setCancelDialogOpen(true);
+                                    }}
+                                  >
+                                    Cancel Order
+                                  </Button>
+                                )}
+                              </div>
                             )
                           )}
                         </div>

@@ -18,6 +18,8 @@ const notificationSchema = new mongoose.Schema({
       'order_confirmed',
       'order_ready',
       'order_completed',
+      'seller_application_approved',
+      'seller_application_rejected',
       
       // Seller notifications
       'new_order',

@@ -312,4 +312,28 @@ export class NotificationService {
       'high'
     );
   }
+
+  static async notifySellerApplicationApproved(userId, application) {
+    await createNotification(
+      userId,
+      'seller_application_approved',
+      'Seller Application Approved',
+      'Congratulations! Your seller application has been approved. You are now a verified seller.',
+      { applicationId: application._id },
+      '/seller/application',
+      'high'
+    );
+  }
+
+  static async notifySellerApplicationRejected(userId, application, reason) {
+    await createNotification(
+      userId,
+      'seller_application_rejected',
+      'Seller Application Rejected',
+      `Your seller application was rejected${reason ? `: ${reason}` : ''}. Please review and resubmit.`,
+      { applicationId: application._id },
+      '/seller/application',
+      'high'
+    );
+  }
 }

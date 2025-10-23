@@ -282,11 +282,19 @@ export const reviewSellerApplication = async (req, res) => {
         isSeller: true,
         sellerStatus: 'verified'
       });
+      try {
+        const { NotificationService } = await import('../utils/notificationService.js');
+        await NotificationService.notifySellerApplicationApproved(application.user, application);
+      } catch (_) {}
     } else if (action === 'rejected') {
       await User.findByIdAndUpdate(application.user, {
         isSeller: false,
         sellerStatus: 'rejected'
       });
+      try {
+        const { NotificationService } = await import('../utils/notificationService.js');
+        await NotificationService.notifySellerApplicationRejected(application.user, application, message || '');
+      } catch (_) {}
     }
 
     res.status(200).json({ message: `Seller application ${action}.`, application });

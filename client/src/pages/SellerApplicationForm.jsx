@@ -62,6 +62,31 @@ const SellerApplicationForm = () => {
     }
   }, []);
 
+  // Real-time status refresh when user revisits or on interval
+  useEffect(() => {
+    let interval;
+    const fetchLatest = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+        const latest = res.data?.user;
+        if (latest) {
+          localStorage.setItem('user', JSON.stringify(latest));
+          setUser(latest);
+          if (latest.sellerStatus === 'verified') setStatus('verified');
+          else if (latest.sellerStatus === 'pending') setStatus('pending');
+          else if (latest.sellerStatus === 'rejected') setStatus('rejected');
+          else setStatus('none');
+        }
+      } catch (_) {}
+    };
+    // Immediate and poll every 10s while on this page
+    fetchLatest();
+    interval = setInterval(fetchLatest, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleFileChange = (e, setter, fieldName) => {
     const file = e.target.files[0];
     setter(file);
