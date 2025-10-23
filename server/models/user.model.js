@@ -137,10 +137,7 @@ const userSchema = new mongoose.Schema({
                         return false;
                     }
                 },
-                message: function(props) {
-                    const p = (this.platform || 'other');
-                    return `URL does not match selected platform (${p}).`;
-                }
+                message: () => 'URL does not match the selected platform.'
             }
         },
         displayName: {
