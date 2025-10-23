@@ -52,6 +52,8 @@ router.post('/:reviewId/helpful', toggleHelpful); // Mark review as helpful/unhe
 // Seller reply routes
 router.post('/:reviewId/reply', replyToReview);
 router.delete('/:reviewId/reply', deleteReply);
+// Fallback for hosts that block DELETE method
+router.post('/:reviewId/reply/delete', deleteReply);
 
 // Admin routes
 router.get('/admin/all', isAdmin, getAllReviews); // Get all reviews (admin)

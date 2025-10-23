@@ -119,9 +119,16 @@ const ReviewCard = ({
       setSavingReply(true);
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
       const base = import.meta?.env?.VITE_API_URL || '';
-      const res = await axios.post(`${base}/api/v1/reviews/${review._id}/reply`, { content: replyText.trim() }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.post(
+        `${base}/api/v1/reviews/${review._id}/reply`,
+        { content: replyText.trim() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       if (res.data?.success) {
         toast.success('Reply saved');
         setReplyEditing(false);
@@ -140,9 +147,21 @@ const ReviewCard = ({
       setSavingReply(true);
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
       const base = import.meta?.env?.VITE_API_URL || '';
-      const res = await axios.delete(`${base}/api/v1/reviews/${review._id}/reply`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      let res;
+      try {
+        res = await axios.delete(`${base}/api/v1/reviews/${review._id}/reply`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err) {
+        // Some CDNs/hosts block DELETE; use POST fallback
+        if (err?.response?.status === 501 || err?.response?.status === 405) {
+          res = await axios.post(`${base}/api/v1/reviews/${review._id}/reply/delete`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } else {
+          throw err;
+        }
+      }
       if (res.data?.success) {
         toast.success('Reply deleted');
         setReplyText('');
