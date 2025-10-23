@@ -720,6 +720,70 @@ const Campaigns = () => {
 
         {/* Main Feed - Enhanced */}
         <div className="flex-1 max-w-2xl space-y-6 sm:space-y-8">
+          {/* Mobile Trending Today Section */}
+          <div className="lg:hidden bg-white rounded-3xl p-4 sm:p-6 shadow-xl border border-gray-100">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-5">
+              <div className="p-2 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-base sm:text-lg">Trending Today</h3>
+            </div>
+            <div className="space-y-3 sm:space-y-4">
+              {campaigns.slice(0, 3).map((campaign, index) => (
+                <Link key={campaign._id} to={`/campaigns/${campaign._id}`}>
+                  <div className="flex items-center space-x-3 p-3 rounded-2xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-green-50/30 transition-all duration-200 group cursor-pointer touch-manipulation">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow flex-shrink-0">
+                      <img 
+                        src={campaign.image || '/placeholder-campaign.jpg'} 
+                        alt={campaign.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-xs sm:text-sm line-clamp-1 group-hover:text-green-600 transition-colors">{campaign.title}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Heart className="h-3 w-3 text-red-500 flex-shrink-0" />
+                        <span className="text-gray-600 text-xs font-medium">{campaign.likes?.length || 0} likes</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1 flex-shrink-0">
+                      <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
+                      <span className="text-orange-600 text-xs sm:text-sm font-bold">#{index + 1}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile Suggested Friends Section */}
+          <div className="lg:hidden bg-white rounded-3xl p-4 sm:p-6 shadow-xl border border-gray-100">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-5">
+              <div className="p-2 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-base sm:text-lg">Suggested Friends</h3>
+            </div>
+            <SuggestedFriends />
+          </div>
+
+          {/* Mobile Liked Campaigns Button */}
+          <div className="lg:hidden">
+            <Link to="/liked-campaigns">
+              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group touch-manipulation">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-br from-red-400 to-pink-500 rounded-xl group-hover:scale-110 transition-transform">
+                      <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg">Liked Campaigns</h3>
+                  </div>
+                  <span className="text-xs sm:text-sm text-gray-500">View All →</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
           {/* Enhanced Filter Pills with gradient effects */}
           <div className="bg-white rounded-3xl p-5 shadow-xl border border-gray-100">
             <div className="flex items-center space-x-3 overflow-x-auto scrollbar-none pb-2">

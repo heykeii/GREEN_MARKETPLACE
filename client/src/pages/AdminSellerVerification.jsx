@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, FileText, Clock, Users, Mail, User, Star, Filter, Search, ExternalLink, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Clock, Users, Mail, User, Star, Filter, Search, ExternalLink, Eye, ChevronDown, ChevronUp, Smartphone, QrCode } from 'lucide-react';
 // Using consistent default avatar from public folder
 import AdminLayout from '@/components/AdminLayout';
 
@@ -199,6 +199,42 @@ const AdminSellerVerification = () => {
                   )}
                 </div>
 
+                {/* GCash Information */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-green-600" />
+                    GCash Number:
+                  </p>
+                  {application.gcash?.number ? (
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                      {application.gcash.number}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not provided</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <QrCode className="h-4 w-4 text-green-600" />
+                    GCash QR Code:
+                  </p>
+                  {application.gcash?.qrCode ? (
+                    <a
+                      href={application.gcash.qrCode}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View QR Code
+                      <ExternalLink className="h-3 w-3 ml-auto" />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">Not submitted</p>
+                  )}
+                </div>
+
 
                 {/* Business Documents (only for business type) */}
                 {application.sellerType === 'business' && (
@@ -306,6 +342,18 @@ const AdminSellerVerification = () => {
                     <p className="text-sm font-medium text-gray-700">Contact Number:</p>
                     <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
                       {application.user.contactNumber}
+                    </p>
+                  </div>
+                )}
+
+                {application.gcash?.number && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-green-600" />
+                      GCash Number:
+                    </p>
+                    <p className="text-sm text-gray-900 bg-white rounded-lg px-3 py-2 mt-1">
+                      {application.gcash.number}
                     </p>
                   </div>
                 )}
