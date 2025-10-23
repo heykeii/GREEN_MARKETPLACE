@@ -62,8 +62,11 @@ const SellerApplicationForm = () => {
     }
   }, []);
 
-  // Real-time status refresh when user revisits or on interval
+  // Real-time status refresh when user is not actively re-applying
   useEffect(() => {
+    // When the user is on the form (status === 'none'), do not auto-refresh
+    if (status === 'none') return;
+
     let interval;
     const fetchLatest = async () => {
       try {
@@ -81,11 +84,11 @@ const SellerApplicationForm = () => {
         }
       } catch (_) {}
     };
-    // Immediate and poll every 10s while on this page
+    // Immediate and poll every 10s while not editing
     fetchLatest();
     interval = setInterval(fetchLatest, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [status]);
 
   const handleFileChange = (e, setter, fieldName) => {
     const file = e.target.files[0];
@@ -343,6 +346,7 @@ const SellerApplicationForm = () => {
                 <Button
                   className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-6 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105"
                   onClick={() => {
+                    // Switch to form mode and stop polling by setting status to 'none'
                     setStatus('none');
                     setSellerType('individual');
                     setGovID1(null);
