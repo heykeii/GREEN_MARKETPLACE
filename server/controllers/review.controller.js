@@ -612,12 +612,22 @@ export const replyToReview = async (req, res) => {
     const { content } = req.body;
     const userId = req.user._id;
 
+    console.log('Reply to review request:', { 
+      reviewId, 
+      hasContent: !!content, 
+      contentLength: content?.length,
+      userId,
+      body: req.body 
+    });
+
     if (!content || !content.trim()) {
+      console.log('Reply validation failed: content is empty');
       return errorResponse(res, 400, 'Reply content is required');
     }
 
     const review = await Review.findById(reviewId).populate('seller', '_id');
     if (!review) {
+      console.log('Review not found:', reviewId);
       return errorResponse(res, 404, 'Review not found');
     }
 
@@ -625,7 +635,11 @@ export const replyToReview = async (req, res) => {
     const sellerId = typeof review.seller === 'object' && review.seller !== null
       ? review.seller._id
       : review.seller;
+    
+    console.log('Authorization check:', { sellerId: sellerId.toString(), userId: userId.toString() });
+    
     if (sellerId.toString() !== userId.toString()) {
+      console.log('Authorization failed: user is not the seller');
       return errorResponse(res, 403, 'Only the seller can reply to this review');
     }
 
@@ -636,18 +650,24 @@ export const replyToReview = async (req, res) => {
         : { content: content.trim(), createdAt: now, updatedAt: now }
     };
 
+    console.log('Updating review with reply:', update);
+
     const updated = await Review.findByIdAndUpdate(
       reviewId,
       update,
       { new: true }
     ).populate('reviewer', 'firstName lastName profilePicture');
 
+    console.log('Review updated successfully');
+
     // Notify reviewer that seller replied
     try {
       const product = await Product.findById(review.product).select('name');
       const sellerUser = await User.findById(sellerId).select('firstName lastName');
       await NotificationService.notifyReviewReply(review.reviewer, product || { _id: review.product, name: 'your product' }, sellerUser || { _id: sellerId });
-    } catch (e) { /* non-fatal */ }
+    } catch (e) { 
+      console.error('Failed to send notification:', e);
+    }
 
     return res.json({ success: true, message: 'Reply saved', review: updated });
   } catch (error) {

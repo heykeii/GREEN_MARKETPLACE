@@ -119,23 +119,34 @@ const ReviewCard = ({
       setSavingReply(true);
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || localStorage.getItem('userToken');
       const base = import.meta?.env?.VITE_API_URL || '';
+      
+      console.log('Saving reply...', { reviewId: review._id, content: replyText.trim() });
+      
       const res = await axios.post(
         `${base}/api/v1/reviews/${review._id}/reply`,
         { content: replyText.trim() },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
         }
       );
+      
+      console.log('Reply response:', res.data);
+      
       if (res.data?.success) {
         toast.success('Reply saved');
         setReplyEditing(false);
         setLocalReply(replyText.trim());
+      } else {
+        throw new Error(res.data?.message || 'Failed to save reply');
       }
     } catch (e) {
-      toast.error(e?.response?.data?.message || 'Failed to save reply');
+      console.error('Save reply error:', e);
+      const errorMsg = e?.response?.data?.message || e?.message || 'Failed to save reply';
+      toast.error(errorMsg);
     } finally {
       setSavingReply(false);
     }
