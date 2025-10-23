@@ -340,7 +340,7 @@ export const getPendingProducts = async (req, res) => {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('seller', 'firstName lastName email')
-        .select('name description images price quantity category origin productionMethod materialsUsed sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
+        .select('name description images price quantity category origin productionMethod materialsUsed externalUrls sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
@@ -423,7 +423,7 @@ export const getApprovedProducts = async (req, res) => {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('seller', 'firstName lastName email')
-        .select('name description images price quantity category origin productionMethod materialsUsed sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
+        .select('name description images price quantity category origin productionMethod materialsUsed externalUrls sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
@@ -458,7 +458,7 @@ export const getRejectedProducts = async (req, res) => {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('seller', 'firstName lastName email')
-        .select('name description images price quantity category origin productionMethod materialsUsed sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
+        .select('name description images price quantity category origin productionMethod materialsUsed externalUrls sustainabilityScore structuredMaterials materialRecyclabilityScores sustainabilityCalculation seller status createdAt')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))

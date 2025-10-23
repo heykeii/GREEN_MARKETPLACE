@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Eye, Package, User, Calendar, MapPin, Palette, Tag, DollarSign, Hash, Wrench, Filter, Clock, Star, ArrowLeft, ArrowRight, MoreHorizontal, Leaf, Award, Info } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Package, User, Calendar, MapPin, Palette, Tag, DollarSign, Hash, Wrench, Filter, Clock, Star, ArrowLeft, ArrowRight, MoreHorizontal, Leaf, Award, Info, ExternalLink } from 'lucide-react';
 // Using consistent default avatar from public folder
 import AdminLayout from '@/components/AdminLayout';
 
@@ -535,6 +535,30 @@ const AdminProductVerification = () => {
                                         <Badge key={idx} variant="outline" className="text-xs font-medium border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors">
                                           #{tag}
                                         </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* External Product Links */}
+                              {Array.isArray(product.externalUrls) && product.externalUrls.length > 0 && (
+                                <div className="flex items-start gap-3">
+                                  <ExternalLink className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
+                                  <div className="flex-1">
+                                    <span className="text-sm font-medium text-gray-700 block mb-2">External Links</span>
+                                    <div className="space-y-2">
+                                      {product.externalUrls.map((u, i) => (
+                                        <a
+                                          key={i}
+                                          href={u.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-800 hover:underline break-all"
+                                        >
+                                          <span className="font-semibold">{u.platform || 'Link'}</span>
+                                          <span className="text-gray-500">- {u.url}</span>
+                                        </a>
                                       ))}
                                     </div>
                                   </div>

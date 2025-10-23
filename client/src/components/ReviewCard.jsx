@@ -10,11 +10,11 @@ const ReviewCard = ({
   onReviewUpdate = null,
   onReviewDelete = null 
 }) => {
-  const [helpfulVotes, setHelpfulVotes] = useState(review.helpfulVotes || 0);
+  const [helpfulVotes, setHelpfulVotes] = useState(review?.helpfulVotes || 0);
   const [userVoted, setUserVoted] = useState(
-    currentUser && review.helpfulBy 
-      ? review.helpfulBy.includes(currentUser._id) 
-      : false
+    Boolean(
+      currentUser && Array.isArray(review?.helpfulBy) && review.helpfulBy.includes(currentUser._id)
+    )
   );
   const [isVoting, setIsVoting] = useState(false);
   const [replyEditing, setReplyEditing] = useState(false);
@@ -95,9 +95,19 @@ const ReviewCard = ({
     }
   };
 
-  const isOwnReview = currentUser && review.reviewer._id === currentUser._id;
-  const sellerIdOfReview = typeof review.seller === 'object' ? review.seller._id : review.seller;
-  const canReply = currentUser && sellerIdOfReview && sellerIdOfReview === currentUser._id;
+  const reviewer = review?.reviewer || null;
+  const reviewerId = reviewer
+    ? (typeof reviewer === 'object' && reviewer !== null ? reviewer._id : reviewer)
+    : null;
+  const isOwnReview = Boolean(
+    currentUser && reviewerId && currentUser._id && String(reviewerId) === String(currentUser._id)
+  );
+  const sellerIdOfReview = review && review.seller
+    ? (typeof review.seller === 'object' && review.seller !== null ? review.seller._id : review.seller)
+    : null;
+  const canReply = Boolean(
+    currentUser && sellerIdOfReview && currentUser._id && String(sellerIdOfReview) === String(currentUser._id)
+  );
 
   const saveReply = async () => {
     if (!replyText.trim()) {
@@ -149,10 +159,10 @@ const ReviewCard = ({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-            {review.reviewer.profilePicture ? (
+            {reviewer?.profilePicture ? (
               <img
-                src={review.reviewer.profilePicture}
-                alt={review.reviewer.firstName}
+                src={reviewer.profilePicture}
+                alt={reviewer.firstName || 'Reviewer'}
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
@@ -161,7 +171,7 @@ const ReviewCard = ({
           </div>
           <div>
             <div className="font-medium text-gray-900">
-              {review.reviewer.firstName} {review.reviewer.lastName}
+              {(reviewer?.firstName || 'Anonymous')} {reviewer?.lastName || ''}
               {review.isVerifiedPurchase && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                   Verified Purchase
@@ -169,7 +179,7 @@ const ReviewCard = ({
               )}
             </div>
             <div className="text-sm text-gray-500">
-              {formatDate(review.createdAt)}
+              {review?.createdAt ? formatDate(review.createdAt) : ''}
             </div>
           </div>
         </div>
@@ -206,7 +216,7 @@ const ReviewCard = ({
         </p>
 
         {/* Review Images */}
-        {review.images && review.images.length > 0 && (
+        {Array.isArray(review?.images) && review.images.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {review.images.map((image, index) => (
               <div 
@@ -240,8 +250,8 @@ const ReviewCard = ({
               : 'text-gray-600 hover:bg-gray-100'
           } ${!currentUser ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-         
-          
+          <FaThumbsUp className="text-xs" />
+          <span>{helpfulVotes}</span>
         </button>
 
         <div className="flex items-center gap-2">

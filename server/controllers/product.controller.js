@@ -29,6 +29,7 @@ export const createProduct = async (req, res) => {
       materialsInput, // New field for sustainability scoring
       tags = [],
       variants = [],
+      externalUrls: externalUrlsBody
     } = req.body;
 
     if (!name || !description || !price || !quantity || !category || !materialsUsed) {
@@ -123,6 +124,23 @@ export const createProduct = async (req, res) => {
       }
     }
 
+    // Parse external URLs if provided
+    let parsedExternalUrls = [];
+    try {
+      if (externalUrlsBody) {
+        const raw = typeof externalUrlsBody === 'string' ? JSON.parse(externalUrlsBody) : externalUrlsBody;
+        if (Array.isArray(raw)) {
+          parsedExternalUrls = raw
+            .filter((x) => x && x.platform && x.url)
+            .map((x) => ({ platform: String(x.platform).trim(), url: String(x.url).trim() }))
+            .filter((x) => x.platform && /^https?:\/\//i.test(x.url));
+        }
+      }
+    } catch (_) {
+      // ignore malformed externalUrls; do not fail product creation
+      parsedExternalUrls = [];
+    }
+
     const newProduct = new Product({
       name,
       description,
@@ -137,6 +155,7 @@ export const createProduct = async (req, res) => {
       seller: req.user._id,
       status: 'pending',
       variants: processedVariants,
+      externalUrls: parsedExternalUrls,
       // Add sustainability fields
       structuredMaterials: sustainabilityData.structuredMaterials,
       materialRecyclabilityScores: sustainabilityData.materialRecyclabilityScores,
@@ -263,6 +282,21 @@ export const updateProduct = async (req, res) => {
         product[field] = req.body[field];
       }
     });
+
+    // External URLs update (optional)
+    if (req.body.externalUrls !== undefined) {
+      try {
+        const raw = typeof req.body.externalUrls === 'string' ? JSON.parse(req.body.externalUrls) : req.body.externalUrls;
+        if (Array.isArray(raw)) {
+          product.externalUrls = raw
+            .filter((x) => x && x.platform && x.url)
+            .map((x) => ({ platform: String(x.platform).trim(), url: String(x.url).trim() }))
+            .filter((x) => x.platform && /^https?:\/\//i.test(x.url));
+        }
+      } catch (_) {
+        // keep existing externalUrls on parse error
+      }
+    }
 
     // Ignore materialsUsed in this endpoint; use dedicated sustainability endpoint if needed
     if (false && req.body.materialsUsed !== undefined) {
