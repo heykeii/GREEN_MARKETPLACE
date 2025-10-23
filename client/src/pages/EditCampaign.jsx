@@ -300,18 +300,22 @@ const EditCampaign = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="type" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        Campaign Type <span className="text-red-500">*</span>
+                        Campaign Type
                       </Label>
-                      <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
-                        <SelectTrigger className="h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200">
-                          <SelectValue placeholder="Choose the type of campaign" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="awareness" className="py-3">💡 Awareness Campaign</SelectItem>
-                          <SelectItem value="promotional" className="py-3">🏪 Promotional Campaign</SelectItem>
-                          <SelectItem value="community" className="py-3">👥 Community Campaign</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <Select value={formData.type} disabled>
+                          <SelectTrigger className="h-12 border-gray-200 bg-gray-50 cursor-not-allowed opacity-75">
+                            <SelectValue placeholder="Campaign type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="awareness" className="py-3">💡 Awareness Campaign</SelectItem>
+                            <SelectItem value="promotional" className="py-3">🏪 Promotional Campaign</SelectItem>
+                            <SelectItem value="community" className="py-3">👥 Community Campaign</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="absolute inset-0 bg-gray-100/50 rounded-md pointer-events-none"></div>
+                      </div>
+                      <p className="text-xs text-gray-500 italic">Campaign type cannot be changed after creation</p>
                     </div>
                   </div>
 

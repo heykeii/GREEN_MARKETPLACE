@@ -913,3 +913,39 @@ export const searchSellers = async (req, res) => {
     });
   }
 };
+
+// Get random users for suggestions
+export const getRandomUsers = async (req, res) => {
+  try {
+    const { limit = 6 } = req.query;
+    const currentUserId = req.user._id;
+    
+    // Get users excluding current user and those already being followed
+    const currentUser = await User.findById(currentUserId).select('following');
+    const followingIds = currentUser?.following || [];
+    followingIds.push(currentUserId); // Exclude self
+    
+    const users = await User.find({
+      _id: { $nin: followingIds },
+      isActive: true,
+      isVerified: true
+    })
+    .select('firstName lastName email avatar businessName')
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 }); // Sort by newest first for some variety
+    
+    // Shuffle the results for randomness
+    const shuffledUsers = users.sort(() => Math.random() - 0.5);
+    
+    res.status(200).json({
+      success: true,
+      users: shuffledUsers
+    });
+  } catch (error) {
+    console.error('Get random users error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get random users' 
+    });
+  }
+};

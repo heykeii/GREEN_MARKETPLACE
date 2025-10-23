@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile, searchSellers, followUser, unfollowUser, getFollowers, getFollowing, forgotPassword, resetPassword } from "../controllers/user.controller.js";
+import { register, login, verifyEmail, resendVerification, deactivateAccount, googleLogin, updateProfile, getUser, getProfile, searchSellers, followUser, unfollowUser, getFollowers, getFollowing, forgotPassword, resetPassword, getRandomUsers } from "../controllers/user.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import multer from 'multer';
 
@@ -32,5 +32,6 @@ router.post('/follow', protect, followUser);
 router.post('/unfollow', protect, unfollowUser);
 router.get('/:userId/followers', protect, getFollowers);
 router.get('/:userId/following', protect, getFollowing);
+router.get('/random', protect, getRandomUsers);
 
 export default router;

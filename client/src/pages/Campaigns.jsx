@@ -22,6 +22,7 @@ import ImageCarousel from '../components/ImageCarousel';
 const SuggestedFriends = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [following, setFollowing] = useState(new Set());
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -38,41 +39,62 @@ const SuggestedFriends = () => {
             myId = me._id || me.id || null;
             followingSet = new Set((me.following || []).map((x) => String(x)));
             if (myId) followingSet.add(String(myId));
+            setFollowing(followingSet);
           } catch (_) {}
         }
 
-        // Only fetch when authenticated and query length >= 2
         if (!token) {
           setSuggestions([]);
         } else {
-          const query = 'eco'; // default safe query
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/sellers?search=${encodeURIComponent(query)}` , {
-            headers: { Authorization: `Bearer ${token}` }
+          // Fetch random users instead of just sellers
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/users/random`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { limit: 6 }
           });
-          let sellers = Array.isArray(res.data?.sellers) ? res.data.sellers : [];
+          let users = Array.isArray(res.data?.users) ? res.data.users : [];
 
-          sellers = sellers.filter((u) => {
+          // Filter out users already being followed and current user
+          users = users.filter((u) => {
             const id = String(u._id || u.id);
             return !followingSet.has(id);
           }).slice(0, 6);
 
-          setSuggestions(sellers);
+          setSuggestions(users);
         }
-      } catch (_) {
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
         setSuggestions([]);
       } finally {
         setLoading(false);
       }
     };
     fetchSuggestions();
-  }, []);
+  }, [token]);
 
   const handleFollow = async (userId, idx) => {
     try {
-      if (!token) return;
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/users/follow`, { targetUserId: userId }, { headers: { Authorization: `Bearer ${token}` } });
-      setSuggestions(prev => prev.filter((_, i) => i !== idx));
-    } catch (_) {}
+      if (!token) {
+        toast.error('Please login to follow users');
+        return;
+      }
+      
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/users/follow`, 
+        { targetUserId: userId }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.success) {
+        // Update local state
+        setFollowing(prev => new Set([...prev, String(userId)]));
+        setSuggestions(prev => prev.map((user, i) => 
+          i === idx ? { ...user, __isFollowing: true } : user
+        ));
+        toast.success('Successfully followed user!');
+      }
+    } catch (error) {
+      console.error('Error following user:', error);
+      toast.error('Failed to follow user');
+    }
   };
 
   if (loading) return (
@@ -95,7 +117,8 @@ const SuggestedFriends = () => {
   if (suggestions.length === 0) return (
     <div className="text-center py-6">
       <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-      <p className="text-sm text-gray-500">No suggestions right now</p>
+      <p className="text-sm text-gray-500">No new users to suggest</p>
+      <p className="text-xs text-gray-400 mt-1">You're following everyone!</p>
     </div>
   );
 
@@ -111,8 +134,12 @@ const SuggestedFriends = () => {
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm truncate">{`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}</p>
-              <p className="text-gray-500 text-xs truncate">{u.businessName || 'Eco enthusiast'}</p>
+              <p className="font-semibold text-gray-900 text-sm truncate">
+                {`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
+              </p>
+              <p className="text-gray-500 text-xs truncate">
+                {u.businessName || 'Eco enthusiast'}
+              </p>
             </div>
           </div>
           <Button 
