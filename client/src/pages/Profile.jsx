@@ -245,9 +245,43 @@ const Profile = () => {
       if (zip && !/^\d{4}$/.test(zip)) {
         errors.zipCode = 'Zip code must be exactly 4 digits';
       }
+      // Social link platform vs URL validation
+      const domainAllow = {
+        website: [],
+        other: [],
+        facebook: ['facebook.com', 'fb.com'],
+        instagram: ['instagram.com'],
+        twitter: ['twitter.com', 'x.com'],
+        linkedin: ['linkedin.com'],
+        youtube: ['youtube.com', 'youtu.be'],
+        tiktok: ['tiktok.com'],
+        pinterest: ['pinterest.com'],
+        snapchat: ['snapchat.com'],
+        discord: ['discord.com', 'discord.gg'],
+        telegram: ['t.me', 'telegram.me', 'telegram.org'],
+      };
+      for (const link of form.socialLinks || []) {
+        if (!link?.url) continue;
+        try {
+          const u = new URL(link.url);
+          const host = (u.hostname || '').toLowerCase();
+          const allowed = domainAllow[link.platform || 'other'] || [];
+          if (allowed.length > 0) {
+            const ok = allowed.some((d) => host === d || host.endsWith('.' + d));
+            if (!ok) {
+              errors.socialLinks = `The URL for ${link.platform} must be on ${allowed.join(', ')}`;
+              break;
+            }
+          }
+        } catch {
+          errors.socialLinks = 'Please enter a valid URL starting with http(s)://';
+          break;
+        }
+      }
       if (Object.keys(errors).length > 0) {
         if (errors.contactNumber) toast.error(errors.contactNumber);
         if (errors.zipCode) toast.error(errors.zipCode);
+        if (errors.socialLinks) toast.error(errors.socialLinks);
         setLoading(false);
         return;
       }

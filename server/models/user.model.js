@@ -109,9 +109,38 @@ const userSchema = new mongoose.Schema({
             trim: true,
             validate: {
                 validator: function(value) {
-                    return value.match(/^https?:\/\/.+/);
+                    // Basic URL check
+                    if (!/^https?:\/\//i.test(value)) return false;
+                    // Platform-domain consistency
+                    try {
+                        const urlObj = new URL(value);
+                        const host = (urlObj.hostname || '').toLowerCase();
+                        const platform = (this.platform || 'other').toLowerCase();
+                        const allowedDomains = {
+                            website: [],
+                            other: [],
+                            facebook: ['facebook.com', 'fb.com'],
+                            instagram: ['instagram.com'],
+                            twitter: ['twitter.com', 'x.com'],
+                            linkedin: ['linkedin.com'],
+                            youtube: ['youtube.com', 'youtu.be'],
+                            tiktok: ['tiktok.com'],
+                            pinterest: ['pinterest.com'],
+                            snapchat: ['snapchat.com'],
+                            discord: ['discord.com', 'discord.gg'],
+                            telegram: ['t.me', 'telegram.me', 'telegram.org']
+                        };
+                        const domains = allowedDomains[platform] || [];
+                        if (domains.length === 0) return true; // website/other -> any URL
+                        return domains.some(d => host === d || host.endsWith('.' + d));
+                    } catch (e) {
+                        return false;
+                    }
                 },
-                message: "Social link must be a valid URL"
+                message: function(props) {
+                    const p = (this.platform || 'other');
+                    return `URL does not match selected platform (${p}).`;
+                }
             }
         },
         displayName: {
