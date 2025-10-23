@@ -88,13 +88,88 @@ export const unfollowUser = async (req, res) => {
   }
 };
 
+// Cleanup function to remove deleted/inactive users from follower/following arrays
+export const cleanupDeletedUsers = async (req, res) => {
+  try {
+    console.log('Starting cleanup of deleted users from follower/following arrays...');
+    
+    // Find all users who have followers or following arrays
+    const users = await User.find({
+      $or: [
+        { followers: { $exists: true, $ne: [] } },
+        { following: { $exists: true, $ne: [] } }
+      ]
+    }).select('followers following');
+    
+    let cleanedCount = 0;
+    
+    for (const user of users) {
+      let needsUpdate = false;
+      const updates = {};
+      
+      // Check followers array
+      if (user.followers && user.followers.length > 0) {
+        const activeFollowers = await User.find({
+          _id: { $in: user.followers },
+          isActive: { $ne: false }
+        }).select('_id');
+        
+        const activeFollowerIds = activeFollowers.map(f => f._id);
+        const originalLength = user.followers.length;
+        const cleanedFollowers = user.followers.filter(id => activeFollowerIds.includes(id));
+        
+        if (cleanedFollowers.length !== originalLength) {
+          updates.followers = cleanedFollowers;
+          needsUpdate = true;
+        }
+      }
+      
+      // Check following array
+      if (user.following && user.following.length > 0) {
+        const activeFollowing = await User.find({
+          _id: { $in: user.following },
+          isActive: { $ne: false }
+        }).select('_id');
+        
+        const activeFollowingIds = activeFollowing.map(f => f._id);
+        const originalLength = user.following.length;
+        const cleanedFollowing = user.following.filter(id => activeFollowingIds.includes(id));
+        
+        if (cleanedFollowing.length !== originalLength) {
+          updates.following = cleanedFollowing;
+          needsUpdate = true;
+        }
+      }
+      
+      if (needsUpdate) {
+        await User.findByIdAndUpdate(user._id, updates);
+        cleanedCount++;
+      }
+    }
+    
+    console.log(`Cleanup completed. Updated ${cleanedCount} users.`);
+    res.json({ success: true, message: `Cleanup completed. Updated ${cleanedCount} users.`, cleanedCount });
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    res.status(500).json({ success: false, message: 'Failed to cleanup deleted users', error: error.message });
+  }
+};
+
 // Get followers list for a user
 export const getFollowers = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).populate('followers', 'firstName lastName avatar email');
+    const user = await User.findById(userId).populate({
+      path: 'followers',
+      select: 'firstName lastName avatar email isActive',
+      match: { isActive: { $ne: false } } // Only include active users
+    });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    return res.json({ success: true, followers: user.followers || [] });
+    
+    // Filter out any null values (deleted users that couldn't be populated)
+    const activeFollowers = (user.followers || []).filter(follower => follower !== null);
+    
+    return res.json({ success: true, followers: activeFollowers });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch followers', error: error.message });
   }
@@ -104,9 +179,17 @@ export const getFollowers = async (req, res) => {
 export const getFollowing = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).populate('following', 'firstName lastName avatar email');
+    const user = await User.findById(userId).populate({
+      path: 'following',
+      select: 'firstName lastName avatar email isActive',
+      match: { isActive: { $ne: false } } // Only include active users
+    });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    return res.json({ success: true, following: user.following || [] });
+    
+    // Filter out any null values (deleted users that couldn't be populated)
+    const activeFollowing = (user.following || []).filter(following => following !== null);
+    
+    return res.json({ success: true, following: activeFollowing });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch following', error: error.message });
   }
@@ -666,6 +749,26 @@ export const deactivateAccount = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Remove this user from all other users' followers/following arrays
+    try {
+      // Remove from followers arrays (users who follow this user)
+      await User.updateMany(
+        { followers: userId },
+        { $pull: { followers: userId } }
+      );
+      
+      // Remove from following arrays (users this user follows)
+      await User.updateMany(
+        { following: userId },
+        { $pull: { following: userId } }
+      );
+      
+      console.log(`Cleaned up followers/following for deactivated user ${user.email}`);
+    } catch (cleanupError) {
+      console.error('Error cleaning up followers/following during deactivation:', cleanupError);
+      // Continue with deactivation even if cleanup fails
+    }
+
     user.isActive = false;
     user.deactivatedAt = new Date();
     await user.save();
@@ -706,8 +809,15 @@ export const getUser = async (req, res) => {
       }
     }
 
-    const followerCount = user.followers?.length || 0;
-    const followingCount = user.following?.length || 0;
+    // Calculate accurate counts by checking if referenced users still exist and are active
+    const followerCount = await User.countDocuments({ 
+      _id: { $in: user.followers || [] }, 
+      isActive: { $ne: false } 
+    });
+    const followingCount = await User.countDocuments({ 
+      _id: { $in: user.following || [] }, 
+      isActive: { $ne: false } 
+    });
     res.status(200).json({ 
       user: {
         ...user.toObject(),
@@ -760,8 +870,16 @@ export const getProfile = async (req, res) => {
     } catch (e) {
       // ignore token errors for public profile
     }
-    const followerCount = user.followers?.length || 0;
-    const followingCount = user.following?.length || 0;
+    
+    // Calculate accurate counts by checking if referenced users still exist and are active
+    const followerCount = await User.countDocuments({ 
+      _id: { $in: user.followers || [] }, 
+      isActive: { $ne: false } 
+    });
+    const followingCount = await User.countDocuments({ 
+      _id: { $in: user.following || [] }, 
+      isActive: { $ne: false } 
+    });
     const isFollowing = authUserId ? (user.followers || []).map(String).includes(authUserId) : false;
     const profile = user.toObject();
     delete profile.password;

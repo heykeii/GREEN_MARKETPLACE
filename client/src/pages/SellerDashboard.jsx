@@ -926,57 +926,57 @@ const SellerDashboard = () => {
 
   // Analytics Components
   const AnalyticsOverview = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
       <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-3xl font-bold text-emerald-600">₱{analyticsData.overview.totalRevenue.toLocaleString()}</p>
-              <div className="flex items-center mt-2">
-                <FaArrowUp className="text-green-500 mr-1" />
-                <span className="text-sm text-green-600">+{analyticsData.overview.monthlyGrowth}%</span>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-2xl sm:text-3xl font-bold text-emerald-600 break-all">₱{analyticsData.overview.totalRevenue.toLocaleString()}</p>
+              <div className="flex items-center mt-1 sm:mt-2">
+                <FaArrowUp className="text-green-500 mr-1 text-xs sm:text-sm" />
+                <span className="text-xs sm:text-sm text-green-600">+{analyticsData.overview.monthlyGrowth}%</span>
               </div>
             </div>
-            <div className="bg-emerald-100 p-3 rounded-full">
-              <FaDollarSign className="text-emerald-600 text-2xl" />
+            <div className="bg-emerald-100 p-2 sm:p-3 rounded-full flex-shrink-0">
+              <FaDollarSign className="text-emerald-600 text-xl sm:text-2xl" />
             </div>
           </div>
         </CardContent>
       </Card>
 
       <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Orders</p>
-              <p className="text-3xl font-bold text-blue-600">{analyticsData.overview.totalOrders}</p>
-              <div className="flex items-center mt-2">
-                <FaArrowUp className="text-green-500 mr-1" />
-                <span className="text-sm text-green-600">+8.2%</span>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Orders</p>
+              <p className="text-2xl sm:text-3xl font-bold text-blue-600">{analyticsData.overview.totalOrders}</p>
+              <div className="flex items-center mt-1 sm:mt-2">
+                <FaArrowUp className="text-green-500 mr-1 text-xs sm:text-sm" />
+                <span className="text-xs sm:text-sm text-green-600">+8.2%</span>
               </div>
             </div>
-            <div className="bg-blue-100 p-3 rounded-full">
-              <FaShoppingBag className="text-blue-600 text-2xl" />
+            <div className="bg-blue-100 p-2 sm:p-3 rounded-full flex-shrink-0">
+              <FaShoppingBag className="text-blue-600 text-xl sm:text-2xl" />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Average Rating</p>
-              <p className="text-3xl font-bold text-amber-600">
+      <Card className="glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 sm:col-span-2 xl:col-span-1">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Average Rating</p>
+              <p className="text-2xl sm:text-3xl font-bold text-amber-600">
                 {analyticsData.overview.averageRating > 0 
                   ? analyticsData.overview.averageRating.toFixed(1)
                   : '0.0'
                 }
               </p>
-              <div className="flex items-center mt-2">
-                <FaStar className="text-amber-500 mr-1" />
-                <span className="text-sm text-amber-600">
+              <div className="flex items-center mt-1 sm:mt-2">
+                <FaStar className="text-amber-500 mr-1 text-xs sm:text-sm" />
+                <span className="text-xs sm:text-sm text-amber-600">
                   {analyticsData.overview.averageRating >= 4.5 ? 'Excellent' :
                    analyticsData.overview.averageRating >= 4.0 ? 'Very Good' :
                    analyticsData.overview.averageRating >= 3.5 ? 'Good' :
@@ -985,8 +985,8 @@ const SellerDashboard = () => {
                 </span>
               </div>
             </div>
-            <div className="bg-amber-100 p-3 rounded-full">
-              <FaStar className="text-amber-600 text-2xl" />
+            <div className="bg-amber-100 p-2 sm:p-3 rounded-full flex-shrink-0">
+              <FaStar className="text-amber-600 text-xl sm:text-2xl" />
             </div>
           </div>
         </CardContent>
@@ -1006,14 +1006,35 @@ const SellerDashboard = () => {
         { label: 'Orders', data: orders, borderColor: 'rgba(59, 130, 246, 1)', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3 }
       ]
     };
-    const options = { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } };
+    const options = { 
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { 
+          position: 'top',
+          labels: {
+            font: { size: 12 }
+          }
+        } 
+      }, 
+      scales: { 
+        y: { beginAtZero: true },
+        x: {
+          ticks: {
+            font: { size: 10 }
+          }
+        }
+      } 
+    };
     return (
       <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg">Sales Trend (Daily)</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Sales Trend (Daily)</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Line data={data} options={options} height={80} />
+        <CardContent className="pt-0">
+          <div className="h-64 sm:h-80">
+            <Line data={data} options={options} />
+          </div>
         </CardContent>
       </Card>
     );
@@ -1023,14 +1044,30 @@ const SellerDashboard = () => {
     const categories = (analyticsData.categoryPerformance || []).map(c => c.category);
     const products = (analyticsData.categoryPerformance || []).map(c => c.products || 0);
     const data = { labels: categories, datasets: [ { label: 'Products', data: products, backgroundColor: 'rgba(16, 185, 129, 0.6)' } ] };
-    const options = { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
+    const options = { 
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false } 
+      }, 
+      scales: { 
+        y: { beginAtZero: true },
+        x: {
+          ticks: {
+            font: { size: 10 }
+          }
+        }
+      } 
+    };
     return (
       <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg">Products by Category</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Products by Category</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Bar data={data} options={options} height={80} />
+        <CardContent className="pt-0">
+          <div className="h-64 sm:h-80">
+            <Bar data={data} options={options} />
+          </div>
         </CardContent>
       </Card>
     );
@@ -1047,14 +1084,35 @@ const SellerDashboard = () => {
         { label: 'Orders', data: orders, backgroundColor: 'rgba(59,130,246,0.6)' }
       ]
     };
-    const options = { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } };
+    const options = { 
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { 
+          position: 'top',
+          labels: {
+            font: { size: 12 }
+          }
+        } 
+      }, 
+      scales: { 
+        y: { beginAtZero: true },
+        x: {
+          ticks: {
+            font: { size: 10 }
+          }
+        }
+      } 
+    };
     return (
       <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg">Monthly Sales</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Monthly Sales</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Bar data={data} options={options} height={80} />
+        <CardContent className="pt-0">
+          <div className="h-64 sm:h-80">
+            <Bar data={data} options={options} />
+          </div>
         </CardContent>
       </Card>
     );
@@ -1165,21 +1223,23 @@ const SellerDashboard = () => {
     
     return (
       <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm sm:text-base lg:text-lg flex items-center gap-2">
             <FaCalendarAlt className="text-emerald-600" />
             Yearly Sales Trend (Last 12 Months)
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Line data={data} options={options} height={100} />
-          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+        <CardContent className="pt-0">
+          <div className="h-64 sm:h-80 lg:h-96">
+            <Line data={data} options={options} />
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="bg-emerald-50 p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
                 <span className="font-medium text-emerald-700">Total Revenue</span>
               </div>
-              <div className="text-emerald-900 font-bold text-lg">
+              <div className="text-emerald-900 font-bold text-sm sm:text-base lg:text-lg">
                 ₱{revenue.reduce((sum, val) => sum + val, 0).toLocaleString()}
               </div>
             </div>
@@ -1188,7 +1248,7 @@ const SellerDashboard = () => {
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                 <span className="font-medium text-blue-700">Total Orders</span>
               </div>
-              <div className="text-blue-900 font-bold text-lg">
+              <div className="text-blue-900 font-bold text-sm sm:text-base lg:text-lg">
                 {orders.reduce((sum, val) => sum + val, 0)}
               </div>
             </div>
@@ -1204,14 +1264,31 @@ const SellerDashboard = () => {
     const labels = top.map(p => p.name);
     const orders = top.map(p => Number(p.orders || 0));
     const data = { labels, datasets: [ { label: 'Orders', data: orders, backgroundColor: 'rgba(99,102,241,0.7)' } ] };
-    const options = { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } };
+    const options = { 
+      indexAxis: 'y', 
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false } 
+      }, 
+      scales: { 
+        x: { beginAtZero: true },
+        y: {
+          ticks: {
+            font: { size: 10 }
+          }
+        }
+      } 
+    };
     return (
       <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg">Top Products (by orders)</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Top Products (by orders)</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Bar data={data} options={options} height={100} />
+        <CardContent className="pt-0">
+          <div className="h-64 sm:h-80">
+            <Bar data={data} options={options} />
+          </div>
         </CardContent>
       </Card>
     );
@@ -1221,29 +1298,29 @@ const SellerDashboard = () => {
   const TopProductsSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
           <FaChartBar className="text-emerald-600" />
           Top Performing Products
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {analyticsData.topProducts.map((product, index) => (
-            <div key={product.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold">
+            <div key={product.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-3 sm:gap-0">
+              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold text-sm sm:text-base flex-shrink-0">
                   {index + 1}
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800">{product.name}</h4>
-                  <p className="text-sm text-gray-500">{product.orders} orders</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{product.name}</h4>
+                  <p className="text-xs sm:text-sm text-gray-500">{product.orders} orders</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-emerald-600">₱{product.revenue.toLocaleString()}</p>
+              <div className="text-left sm:text-right w-full sm:w-auto">
+                <p className="font-bold text-emerald-600 text-sm sm:text-base">₱{product.revenue.toLocaleString()}</p>
                 <div className="flex items-center gap-1">
-                  <FaStar className="text-amber-500 text-sm" />
-                  <span className="text-sm text-gray-600">{product.rating}</span>
+                  <FaStar className="text-amber-500 text-xs sm:text-sm" />
+                  <span className="text-xs sm:text-sm text-gray-600">{product.rating}</span>
                 </div>
               </div>
             </div>
@@ -1256,33 +1333,33 @@ const SellerDashboard = () => {
   const CategoryPerformanceSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
           <FaTag className="text-emerald-600" />
           Category Performance
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {analyticsData.categoryPerformance?.map((category, index) => (
-            <div key={category.category} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+            <div key={category.category} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-3 sm:gap-0">
+              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0">
                   {index + 1}
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800">{category.category}</h4>
-                  <p className="text-sm text-gray-500">{category.products} products</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{category.category}</h4>
+                  <p className="text-xs sm:text-sm text-gray-500">{category.products} products</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-emerald-600">₱{category.revenue.toLocaleString()}</p>
+              <div className="text-left sm:text-right w-full sm:w-auto">
+                <p className="font-bold text-emerald-600 text-sm sm:text-base">₱{category.revenue.toLocaleString()}</p>
                 <div className="flex items-center gap-1">
                   {parseFloat(category.growth) > 0 ? (
-                    <FaArrowUp className="text-green-500 text-sm" />
+                    <FaArrowUp className="text-green-500 text-xs sm:text-sm" />
                   ) : (
-                    <FaArrowDown className="text-red-500 text-sm" />
+                    <FaArrowDown className="text-red-500 text-xs sm:text-sm" />
                   )}
-                  <span className={`text-sm ${parseFloat(category.growth) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-xs sm:text-sm ${parseFloat(category.growth) > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {category.growth}%
                   </span>
                 </div>
@@ -1297,43 +1374,43 @@ const SellerDashboard = () => {
   const CustomerInsightsSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
           <FaUsers className="text-emerald-600" />
           Customer Insights
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Customers</p>
-                <p className="text-2xl font-bold text-blue-600">{analyticsData.customerInsights.totalCustomers}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Customers</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">{analyticsData.customerInsights.totalCustomers}</p>
               </div>
-              <FaUsers className="text-blue-500 text-2xl" />
+              <FaUsers className="text-blue-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Repeat Customers</p>
-                <p className="text-2xl font-bold text-green-600">{analyticsData.customerInsights.repeatCustomers}</p>
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-green-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Repeat Customers</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{analyticsData.customerInsights.repeatCustomers}</p>
               </div>
-              <FaHeart className="text-green-500 text-2xl" />
+              <FaHeart className="text-green-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Avg Order Value</p>
-                <p className="text-2xl font-bold text-amber-600">₱{analyticsData.customerInsights.averageOrderValue}</p>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-amber-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Avg Order Value</p>
+                <p className="text-xl sm:text-2xl font-bold text-amber-600">₱{analyticsData.customerInsights.averageOrderValue}</p>
               </div>
-              <FaShoppingCart className="text-amber-500 text-2xl" />
+              <FaShoppingCart className="text-amber-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Satisfaction</p>
-                <p className="text-2xl font-bold text-purple-600">{analyticsData.customerInsights.customerSatisfaction}/5</p>
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Satisfaction</p>
+                <p className="text-xl sm:text-2xl font-bold text-purple-600">{analyticsData.customerInsights.customerSatisfaction}/5</p>
               </div>
-              <FaStar className="text-purple-500 text-2xl" />
+              <FaStar className="text-purple-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
           </div>
         </div>
@@ -1369,19 +1446,19 @@ const SellerDashboard = () => {
     return (
       <Card className="glass-card border-0 shadow-xl mb-8">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
             <FaUsers className="text-emerald-600" />
             Top Frequent Buyers
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {topFrequentBuyers.map((buyer, index) => (
-              <div key={buyer.customer._id} className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4">
-                <div className="flex items-center gap-4">
+              <div key={buyer.customer._id} className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                   {/* Rank Badge */}
                   <div className="flex-shrink-0">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm ${
                       index === 0 ? 'bg-yellow-500' : 
                       index === 1 ? 'bg-gray-400' : 
                       index === 2 ? 'bg-orange-500' : 'bg-emerald-500'
@@ -1392,7 +1469,7 @@ const SellerDashboard = () => {
 
                   {/* Customer Avatar */}
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
                       {buyer.customer.avatar ? (
                         <img
                           src={buyer.customer.avatar}
@@ -1401,7 +1478,7 @@ const SellerDashboard = () => {
                         />
                       ) : (
                         <div className="w-full h-full bg-emerald-100 flex items-center justify-center">
-                          <span className="text-emerald-600 font-bold text-sm">
+                          <span className="text-emerald-600 font-bold text-xs sm:text-sm">
                             {buyer.customer.firstName?.charAt(0)}{buyer.customer.lastName?.charAt(0)}
                           </span>
                         </div>
@@ -1409,7 +1486,7 @@ const SellerDashboard = () => {
                     </div>
                     {/* Crown icon for #1 buyer */}
                     {index === 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-yellow-400 rounded-full flex items-center justify-center">
                         <FaStar className="text-yellow-600 text-xs" />
                       </div>
                     )}
@@ -1417,34 +1494,34 @@ const SellerDashboard = () => {
 
                   {/* Customer Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-gray-800 truncate">
+                    <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 truncate">
                       {buyer.customer.firstName} {buyer.customer.lastName}
                     </h3>
-                    <p className="text-gray-600 text-sm truncate">{buyer.customer.email}</p>
+                    <p className="text-gray-600 text-xs sm:text-sm truncate">{buyer.customer.email}</p>
                     
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-3 mt-2">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-2">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-emerald-600">{buyer.orderCount}</div>
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-emerald-600">{buyer.orderCount}</div>
                         <div className="text-xs text-gray-500">Orders</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-lg font-bold text-blue-600">{buyer.totalQuantities}</div>
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-blue-600">{buyer.totalQuantities}</div>
                         <div className="text-xs text-gray-500">Items</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-lg font-bold text-purple-600">₱{buyer.totalSpent.toLocaleString()}</div>
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-purple-600">₱{buyer.totalSpent.toLocaleString()}</div>
                         <div className="text-xs text-gray-500">Spent</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Button */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 w-full sm:w-auto"
                       onClick={() => navigate(`/profile/${buyer.customer._id}`)}
                     >
                       <FaEye className="mr-1 h-3 w-3" />
@@ -1463,43 +1540,43 @@ const SellerDashboard = () => {
   const InventoryMetricsSection = () => (
     <Card className="glass-card border-0 shadow-xl mb-8">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
           <FaBoxOpen className="text-emerald-600" />
           Inventory Metrics
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
-                <p className="text-2xl font-bold text-red-600">{analyticsData.inventoryMetrics.lowStockItems}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-red-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Low Stock Items</p>
+                <p className="text-xl sm:text-2xl font-bold text-red-600">{analyticsData.inventoryMetrics.lowStockItems}</p>
               </div>
-              <FaClock className="text-red-500 text-2xl" />
+              <FaClock className="text-red-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
-            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Out of Stock</p>
-                <p className="text-2xl font-bold text-orange-600">{analyticsData.inventoryMetrics.outOfStockItems}</p>
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-orange-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Out of Stock</p>
+                <p className="text-xl sm:text-2xl font-bold text-orange-600">{analyticsData.inventoryMetrics.outOfStockItems}</p>
               </div>
-              <FaTimes className="text-orange-500 text-2xl" />
+              <FaTimes className="text-orange-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Inventory Value</p>
-                <p className="text-2xl font-bold text-emerald-600">₱{analyticsData.inventoryMetrics.totalInventoryValue.toLocaleString()}</p>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-emerald-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Inventory Value</p>
+                <p className="text-xl sm:text-2xl font-bold text-emerald-600">₱{analyticsData.inventoryMetrics.totalInventoryValue.toLocaleString()}</p>
               </div>
-              <FaDollarSign className="text-emerald-500 text-2xl" />
+              <FaDollarSign className="text-emerald-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Turnover Rate</p>
-                <p className="text-2xl font-bold text-blue-600">{analyticsData.inventoryMetrics.inventoryTurnover}x</p>
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Turnover Rate</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">{analyticsData.inventoryMetrics.inventoryTurnover}x</p>
               </div>
-              <FaChartLine className="text-blue-500 text-2xl" />
+              <FaChartLine className="text-blue-500 text-xl sm:text-2xl flex-shrink-0" />
             </div>
           </div>
         </div>
@@ -1816,20 +1893,20 @@ const SellerDashboard = () => {
               ) : (
                 <div className="space-y-8">
                   {/* Timeframe Selector */}
-                  <div className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Business Analytics</h3>
-                      <p className="text-sm text-gray-600">Track your performance and growth metrics</p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white rounded-xl p-4 shadow-sm gap-4 sm:gap-0">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800">Business Analytics</h3>
+                      <p className="text-xs sm:text-sm text-gray-600">Track your performance and growth metrics</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="timeframe" className="text-sm font-medium text-gray-700">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                      <Label htmlFor="timeframe" className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
                         Timeframe:
                       </Label>
                       <select
                         id="timeframe"
                         value={analyticsTimeframe}
                         onChange={(e) => setAnalyticsTimeframe(e.target.value)}
-                        className="p-2 border border-gray-300 rounded-lg text-sm"
+                        className="p-2 border border-gray-300 rounded-lg text-xs sm:text-sm w-full sm:w-auto min-w-[140px]"
                       >
                         <option value="7d">Last 7 days</option>
                         <option value="30d">Last 30 days</option>
@@ -1843,18 +1920,18 @@ const SellerDashboard = () => {
                   <AnalyticsOverview />
 
                   {/* Charts */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                     <SalesLineChart />
                     <CategoryBarChart />
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                     <MonthlySalesChart />
                     <TopProductsChart />
                   </div>
 
                   {/* Yearly Sales Chart - Full Width */}
-                  <div className="grid grid-cols-1 gap-6">
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
                     <YearlySalesChart />
                   </div>
 

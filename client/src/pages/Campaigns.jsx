@@ -126,22 +126,21 @@ const SuggestedFriends = () => {
     <div className="space-y-4">
       {suggestions.map((u, idx) => (
         <div key={u._id} className="group flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition-all duration-200">
-          <div className="flex items-center space-x-3 min-w-0 flex-1">
+          <Link to={`/profile/${u._id}`} className="flex items-center space-x-3 min-w-0 flex-1 hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors">
             <div className="relative">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md group-hover:border-green-200 transition-all duration-200">
                 <img src={u.avatar || '/default-avatar.svg'} onError={(e)=>{ e.currentTarget.src='/default-avatar.svg'; }} className="w-full h-full object-cover" />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm truncate">
+              <p className="font-semibold text-gray-900 text-sm truncate hover:text-green-600 transition-colors">
                 {`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
               </p>
               <p className="text-gray-500 text-xs truncate">
                 {u.businessName || 'Eco enthusiast'}
               </p>
             </div>
-          </div>
+          </Link>
           <Button 
             size="sm" 
             className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200 px-4" 
