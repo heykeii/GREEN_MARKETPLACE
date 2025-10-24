@@ -195,7 +195,11 @@ const CheckoutPage = () => {
           `${import.meta.env.VITE_API_URL}/api/v1/orders/calculate-shipping`,
           {
             shippingAddress: address,
-            items: isDirect && directCheckout ? directCheckout.items : undefined
+            items: isDirect && directCheckout ? directCheckout.items : cart.map(item => ({
+              productId: item._id || item.product, // Handle both flattened and nested structures
+              quantity: item.quantity,
+              variant: item.variant
+            }))
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -206,7 +210,8 @@ const CheckoutPage = () => {
         }
       } catch (error) {
         console.error('Failed to calculate shipping:', error);
-        setShippingFee(50); // Default fallback
+        setShippingFee(0); // Free shipping fallback
+        setShippingDetails({ isEstimated: false, explanation: 'Free shipping - calculation failed' });
       } finally {
         setLoadingShipping(false);
       }
@@ -527,6 +532,10 @@ const CheckoutPage = () => {
                             {shippingDetails.isEstimated ? (
                               <>
                                 {shippingDetails.estimatedDays} days · {shippingDetails.courierType}
+                              </>
+                            ) : shippingFee === 0 ? (
+                              <>
+                                Free shipping
                               </>
                             ) : (
                               <>

@@ -167,37 +167,12 @@ export const createOrder = async (req, res) => {
         // Sum up shipping fees from all sellers (assuming one shipping fee per seller)
         shippingFee = Array.from(sellerShippingFees.values()).reduce((sum, seller) => sum + seller.shippingFee, 0);
         
-        // If no seller-defined shipping fees, fall back to estimated shipping
+        // If no seller-defined shipping fees, use free shipping
         if (shippingFee === 0) {
-            try {
-                // Get seller location from first product
-                const firstProduct = validItems[0].product;
-                const seller = await User.findById(firstProduct.seller);
-                const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
-                
-                const shippingEstimate = await ShippingService.estimateShippingFee({
-                    sellerLocation,
-                    buyerCity: shippingAddress.city,
-                    buyerProvince: shippingAddress.province,
-                    totalWeight: validItems.reduce((sum, item) => sum + item.quantity, 0) * 0.5 // Estimate 0.5kg per item
-                });
-                
-                if (shippingEstimate.success) {
-                    shippingFee = shippingEstimate.shippingFee;
-                    shippingDetails = {
-                        estimatedDays: shippingEstimate.estimatedDays,
-                        courierType: shippingEstimate.courierType,
-                        distance: shippingEstimate.distance,
-                        explanation: shippingEstimate.explanation,
-                        isEstimated: true
-                    };
-                }
-            } catch (shippingError) {
-                console.error('Shipping calculation error:', shippingError);
-                // Use default shipping fee if calculation fails
-                shippingFee = 50;
-                shippingDetails = { isEstimated: true, explanation: 'Default shipping fee applied' };
-            }
+            shippingDetails = {
+                isEstimated: false,
+                explanation: 'Free shipping - no seller-defined fees'
+            };
         } else {
             // Seller-defined shipping fees
             shippingDetails = {
@@ -405,35 +380,12 @@ export const createDirectOrder = async (req, res) => {
         // Sum up shipping fees from all sellers (assuming one shipping fee per seller)
         shippingFee = Array.from(sellerShippingFees.values()).reduce((sum, seller) => sum + seller.shippingFee, 0);
         
-        // If no seller-defined shipping fees, fall back to estimated shipping
+        // If no seller-defined shipping fees, use free shipping
         if (shippingFee === 0) {
-            try {
-                const firstProduct = products[0];
-                const seller = await User.findById(firstProduct.seller);
-                const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
-                
-                const shippingEstimate = await ShippingService.estimateShippingFee({
-                    sellerLocation,
-                    buyerCity: shippingAddress.city,
-                    buyerProvince: shippingAddress.province,
-                    totalWeight: orderItems.reduce((sum, it) => sum + it.quantity, 0) * 0.5
-                });
-                
-                if (shippingEstimate.success) {
-                    shippingFee = shippingEstimate.shippingFee;
-                    shippingDetails = {
-                        estimatedDays: shippingEstimate.estimatedDays,
-                        courierType: shippingEstimate.courierType,
-                        distance: shippingEstimate.distance,
-                        explanation: shippingEstimate.explanation,
-                        isEstimated: true
-                    };
-                }
-            } catch (shippingError) {
-                console.error('Shipping calculation error:', shippingError);
-                shippingFee = 50;
-                shippingDetails = { isEstimated: true, explanation: 'Default shipping fee applied' };
-            }
+            shippingDetails = {
+                isEstimated: false,
+                explanation: 'Free shipping - no seller-defined fees'
+            };
         } else {
             // Seller-defined shipping fees
             shippingDetails = {
@@ -947,11 +899,11 @@ export const calculateShipping = async (req, res) => {
         let totalItems = 0;
 
         if (items && Array.isArray(items)) {
-            // Direct checkout
+            // Direct checkout or cart items provided
             productIds = items.map(i => i.productId);
             totalItems = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
         } else {
-            // Cart checkout
+            // Cart checkout - fetch from database
             const cart = await Cart.findOne({ user: userId }).populate('items.product');
             if (!cart || cart.items.length === 0) {
                 return res.status(400).json({ success: false, message: 'Cart is empty' });
@@ -961,7 +913,7 @@ export const calculateShipping = async (req, res) => {
         }
 
         // Get products to check for seller-defined shipping fees
-        const products = await Product.find({ _id: { $in: productIds } });
+        const products = await Product.find({ _id: { $in: productIds } }).populate('seller');
         
         // Calculate seller-defined shipping fees
         const sellerShippingFees = new Map();
@@ -995,26 +947,16 @@ export const calculateShipping = async (req, res) => {
             });
             return;
         }
-
-        // Fall back to estimated shipping if no seller-defined fees
-        const firstProduct = await Product.findById(productIds[0]).populate('seller');
-        if (!firstProduct) {
-            return res.status(404).json({ success: false, message: 'Product not found' });
-        }
-
-        const seller = await User.findById(firstProduct.seller);
-        const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
-
-        const shippingEstimate = await ShippingService.estimateShippingFee({
-            sellerLocation,
-            buyerCity: shippingAddress.city,
-            buyerProvince: shippingAddress.province,
-            totalWeight: totalItems * 0.5 // 0.5kg per item estimate
-        });
-
+        
+        // If no seller-defined shipping fees, use free shipping (0)
         res.json({
             success: true,
-            shipping: shippingEstimate
+            shipping: {
+                success: true,
+                shippingFee: 0,
+                isEstimated: false,
+                explanation: 'Free shipping - no seller-defined fees'
+            }
         });
 
     } catch (error) {
