@@ -64,9 +64,9 @@ export const submitSellerVerification = async (req, res) => {
       });
     }
 
-    if (!files.proofOfAddress || !files.bankProof || !files.gcashQR) {
+    if (!files.proofOfAddress || !files.gcashQR) {
       return res.status(400).json({ 
-        message: 'Proof of address, bank proof, and GCash QR code are required.' 
+        message: 'Proof of address and GCash QR code are required.' 
       });
     }
 
@@ -99,9 +99,6 @@ export const submitSellerVerification = async (req, res) => {
     
     console.log('Uploading proof of address...');
     const proofOfAddress = await uploadFile(files.proofOfAddress[0]);
-    
-    console.log('Uploading bank proof...');
-    const bankProof = await uploadFile(files.bankProof[0]);
 
     console.log('Uploading GCash QR...');
     const gcashQR = await uploadFile(files.gcashQR[0]);
@@ -124,7 +121,6 @@ export const submitSellerVerification = async (req, res) => {
     const documents = {
       govIDs,
       proofOfAddress,
-      bankProof,
       ...(sellerType === 'business' && {
         businessPermit,
         birRegistration,

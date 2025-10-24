@@ -47,7 +47,6 @@ const sellerApplicationSchema = new mongoose.Schema({
   documents: {
     govIDs: [{ type: String, required: true }], // URLs to 2 government IDs
     proofOfAddress: { type: String, required: true },
-    bankProof: { type: String, required: true }, // Screenshot or account details
 
     // For business type only
     businessPermit: { type: String },

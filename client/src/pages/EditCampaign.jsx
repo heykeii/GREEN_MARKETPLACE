@@ -225,37 +225,38 @@ const EditCampaign = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/20 py-6 sm:py-8 pt-24">
-        <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/20 py-4 sm:py-6 lg:py-8 pt-20 sm:pt-24">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 sm:mb-8">
             <Link to={`/campaigns/${id}`}>
-              <Button variant="ghost" className="mb-6 hover:bg-white/80 transition-all duration-200">
+              <Button variant="ghost" className="mb-4 sm:mb-6 hover:bg-white/80 transition-all duration-200 text-sm sm:text-base">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Campaign
+                <span className="hidden xs:inline">Back to Campaign</span>
+                <span className="xs:hidden">Back</span>
               </Button>
             </Link>
             <div className="relative">
-              <div className="absolute -top-4 -left-4 w-24 h-24 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-2xl"></div>
-              <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-2xl"></div>
+              <div className="absolute -top-2 sm:-top-4 -left-2 sm:-left-4 w-16 sm:w-24 h-16 sm:h-24 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-2xl"></div>
+              <div className="absolute -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 w-20 sm:w-32 h-20 sm:h-32 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-2xl"></div>
               <div className="relative">
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-green-900 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-green-900 bg-clip-text text-transparent leading-tight">
                   Edit Campaign
                 </h1>
-                <p className="mt-3 text-gray-600 text-lg">Update details and keep your campaign fresh</p>
+                <p className="mt-2 sm:mt-3 text-gray-600 text-base sm:text-lg">Update details and keep your campaign fresh</p>
               </div>
             </div>
           </div>
 
           <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-green-50/50 to-blue-50/50">
-              <CardTitle className="flex items-center gap-3 text-2xl">
-                <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
-                  <Sparkles className="h-5 w-5 text-white" />
+            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-green-50/50 to-blue-50/50 px-4 sm:px-6">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl lg:text-2xl">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
                 Campaign Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-8">
+            <CardContent className="pt-6 sm:pt-8 px-4 sm:px-6">
               {loading ? (
                 <div className="h-40 animate-pulse">
                   <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
@@ -263,11 +264,11 @@ const EditCampaign = () => {
                   <div className="h-32 bg-gray-200 rounded"></div>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-1 w-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
-                      <h3 className="text-lg font-semibold text-gray-800">Basic Information</h3>
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                      <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800">Basic Information</h3>
                     </div>
 
                     <div className="space-y-2">
@@ -280,7 +281,7 @@ const EditCampaign = () => {
                         onChange={(e) => handleInputChange('title', e.target.value)}
                         placeholder="Update the campaign name..."
                         required
-                        className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-12 text-base transition-all duration-200"
+                        className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11 sm:h-12 text-sm sm:text-base transition-all duration-200"
                       />
                     </div>
 
@@ -293,8 +294,8 @@ const EditCampaign = () => {
                         value={formData.description}
                         onChange={(e) => handleInputChange('description', e.target.value)}
                         placeholder="Describe the latest updates and goals..."
-                        rows={5}
-                        className="border-gray-200 focus:border-green-500 focus:ring-green-500 resize-none transition-all duration-200"
+                        rows={4}
+                        className="border-gray-200 focus:border-green-500 focus:ring-green-500 resize-none transition-all duration-200 text-sm sm:text-base"
                       />
                     </div>
 
@@ -304,7 +305,7 @@ const EditCampaign = () => {
                       </Label>
                       <div className="relative">
                         <Select value={formData.type} disabled>
-                          <SelectTrigger className="h-12 border-gray-200 bg-gray-50 cursor-not-allowed opacity-75">
+                          <SelectTrigger className="h-11 sm:h-12 border-gray-200 bg-gray-50 cursor-not-allowed opacity-75 text-sm sm:text-base">
                             <SelectValue placeholder="Campaign type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -321,16 +322,16 @@ const EditCampaign = () => {
 
                   {/* Community Campaign Specific Fields */}
                   {formData.type === 'community' && (
-                    <div className="space-y-6 bg-gradient-to-br from-green-50/50 to-emerald-50/30 rounded-xl p-6 border border-green-100">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="h-1 w-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
-                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                          <Calendar className="h-5 w-5 text-green-600" />
+                    <div className="space-y-4 sm:space-y-6 bg-gradient-to-br from-green-50/50 to-emerald-50/30 rounded-xl p-4 sm:p-6 border border-green-100">
+                      <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                        <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                           Event Details
                         </h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">
                             Start Date & Time
@@ -341,7 +342,7 @@ const EditCampaign = () => {
                             value={formData.startDate}
                             onChange={(e) => handleInputChange('startDate', e.target.value)}
                             max={formData.endDate || undefined}
-                            className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11"
+                            className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11 text-sm sm:text-base"
                           />
                         </div>
                         <div className="space-y-2">
@@ -354,7 +355,7 @@ const EditCampaign = () => {
                             value={formData.endDate}
                             onChange={(e) => handleInputChange('endDate', e.target.value)}
                             min={formData.startDate || undefined}
-                            className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11"
+                            className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11 text-sm sm:text-base"
                           />
                         </div>
                       </div>
@@ -371,7 +372,7 @@ const EditCampaign = () => {
                           value={formData.goal}
                           onChange={(e) => handleInputChange('goal', e.target.value)}
                           placeholder="e.g., 100 volunteers"
-                          className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11"
+                          className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11 text-sm sm:text-base"
                         />
                       </div>
 
@@ -388,9 +389,9 @@ const EditCampaign = () => {
                                   value={obj}
                                   onChange={(e) => handleObjectiveChange(idx, e.target.value)}
                                   placeholder={`Objective #${idx + 1} - What do you want to achieve?`}
-                                  className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11 pl-10"
+                                  className="border-gray-200 focus:border-green-500 focus:ring-green-500 h-11 pl-8 sm:pl-10 text-sm sm:text-base"
                                 />
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">{idx + 1}</div>
+                                <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-xs sm:text-sm">{idx + 1}</div>
                               </div>
                               <Button
                                 type="button"
@@ -398,9 +399,9 @@ const EditCampaign = () => {
                                 size="sm"
                                 onClick={() => removeObjectiveField(idx)}
                                 disabled={formData.objectives && formData.objectives.length <= 1}
-                                className="h-11 px-3 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+                                className="h-11 px-2 sm:px-3 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors flex-shrink-0"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                             </div>
                           ))}
@@ -410,9 +411,9 @@ const EditCampaign = () => {
                           variant="outline"
                           onClick={addObjectiveField}
                           disabled={(formData.objectives?.length || 0) >= 20}
-                          className="w-full border-dashed border-2 hover:border-green-500 hover:bg-green-50 transition-colors h-11"
+                          className="w-full border-dashed border-2 hover:border-green-500 hover:bg-green-50 transition-colors h-11 text-sm sm:text-base"
                         >
-                          <Plus className="h-4 w-4 mr-2" />
+                          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                           Add Another Objective
                         </Button>
                       </div>
@@ -420,10 +421,10 @@ const EditCampaign = () => {
                   )}
 
                   {/* Media Upload Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-1 w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-                      <h3 className="text-lg font-semibold text-gray-800">Campaign Media</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                      <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800">Campaign Media</h3>
                     </div>
 
                     {/* Show current image if exists and no new files selected */}
@@ -469,16 +470,16 @@ const EditCampaign = () => {
                         />
                         <label
                           htmlFor="media"
-                          className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gradient-to-br from-gray-50 to-green-50/30 hover:from-green-50 hover:to-blue-50/30 transition-all duration-300 group"
+                          className="flex flex-col items-center justify-center w-full h-32 sm:h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gradient-to-br from-gray-50 to-green-50/30 hover:from-green-50 hover:to-blue-50/30 transition-all duration-300 group"
                         >
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mb-3 group-hover:scale-110 transition-transform duration-300">
-                              <Upload className="h-8 w-8 text-white" />
+                          <div className="flex flex-col items-center justify-center pt-3 sm:pt-5 pb-4 sm:pb-6 px-4">
+                            <div className="p-3 sm:p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">
+                              <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                             </div>
-                            <p className="mb-2 text-sm text-gray-700 font-medium">
+                            <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-gray-700 font-medium text-center">
                               <span className="font-semibold">Click to upload</span> or drag and drop
                             </p>
-                            <p className="text-xs text-gray-500">PNG, JPG or WEBP (MAX. 10 images)</p>
+                            <p className="text-xs text-gray-500 text-center">PNG, JPG or WEBP (MAX. 10 images)</p>
                           </div>
                         </label>
                       </div>
@@ -501,17 +502,17 @@ const EditCampaign = () => {
                               Clear all
                             </button>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                             {mediaPreviews.map((src, idx) => (
                               <div key={idx} className="relative group">
-                                <div className="relative aspect-square overflow-hidden rounded-xl border-2 border-gray-200 shadow-md">
+                                <div className="relative aspect-square overflow-hidden rounded-lg sm:rounded-xl border-2 border-gray-200 shadow-md">
                                   <img 
                                     src={src} 
                                     alt={`Preview ${idx + 1}`} 
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
                                   />
                                   {idx === 0 && (
-                                    <div className="absolute top-2 left-2 px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs font-semibold rounded-full">
+                                    <div className="absolute top-1 sm:top-2 left-1 sm:left-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs font-semibold rounded-full">
                                       Cover
                                     </div>
                                   )}
@@ -520,7 +521,7 @@ const EditCampaign = () => {
                               </div>
                             ))}
                           </div>
-                          <p className="text-xs text-gray-500 mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
                             💡 <span className="font-medium">Pro tip:</span> The first image will be your campaign cover. Choose wisely!
                           </p>
                         </div>
@@ -528,11 +529,11 @@ const EditCampaign = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                     <Button
                       type="submit"
                       disabled={saving}
-                      className="flex-1 h-12 text-base font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                      className="flex-1 h-11 sm:h-12 text-sm sm:text-base font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                     >
                       {saving ? 'Saving changes...' : 'Save Changes'}
                     </Button>
@@ -540,7 +541,7 @@ const EditCampaign = () => {
                       <Button 
                         type="button" 
                         variant="outline" 
-                        className="w-full h-12 text-base font-medium border-2 hover:bg-gray-50 transition-all duration-200"
+                        className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium border-2 hover:bg-gray-50 transition-all duration-200"
                       >
                         Cancel
                       </Button>
@@ -551,7 +552,7 @@ const EditCampaign = () => {
             </CardContent>
           </Card>
 
-          <div className="h-12"></div>
+          <div className="h-8 sm:h-12"></div>
         </div>
       </div>
       <Footer />

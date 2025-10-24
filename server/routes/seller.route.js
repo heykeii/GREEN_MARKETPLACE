@@ -35,7 +35,6 @@ router.get('/analytics-basic', protect, getSellerAnalytics);
 router.post('/verify', protect, upload.fields([
   { name: 'govIDs', maxCount: 2 },
   { name: 'proofOfAddress', maxCount: 1 },
-  { name: 'bankProof', maxCount: 1 },
   { name: 'gcashQR', maxCount: 1 },
   { name: 'businessPermit', maxCount: 1 },
   { name: 'birRegistration', maxCount: 1 }

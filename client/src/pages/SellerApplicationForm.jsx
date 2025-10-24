@@ -14,7 +14,6 @@ const SellerApplicationForm = () => {
   const [govID1, setGovID1] = useState(null);
   const [govID2, setGovID2] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
-  const [bankProof, setBankProof] = useState(null);
   const [businessPermit, setBusinessPermit] = useState(null);
   const [birRegistration, setBirRegistration] = useState(null);
   const [gcashNumber, setGcashNumber] = useState('');
@@ -125,9 +124,6 @@ const SellerApplicationForm = () => {
       newErrors.proofOfAddress = 'Please select a file.';
     }
     
-    if (!bankProof) {
-      newErrors.bankProof = 'Please select a file.';
-    }
     
     if (!gcashQR) {
       newErrors.gcashQR = 'Please select a file.';
@@ -170,7 +166,6 @@ const SellerApplicationForm = () => {
     formData.append('govIDs', govID1);
     formData.append('govIDs', govID2);
     if (proofOfAddress) formData.append('proofOfAddress', proofOfAddress);
-    if (bankProof) formData.append('bankProof', bankProof);
     formData.append('gcashNumber', gcashNumber);
     if (gcashQR) formData.append('gcashQR', gcashQR);
     if (sellerType === 'business') {
@@ -464,15 +459,6 @@ const SellerApplicationForm = () => {
                       error={errors.proofOfAddress}
                     />
                     
-                    <FileUploadField
-                      id="bankProof"
-                      label="Bank Proof"
-                      icon={FileText}
-                      onChange={e => handleFileChange(e, setBankProof, 'bankProof')}
-                      required
-                      file={bankProof}
-                      error={errors.bankProof}
-                    />
                   </div>
                 </div>
 
