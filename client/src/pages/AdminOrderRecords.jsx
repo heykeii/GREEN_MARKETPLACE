@@ -249,7 +249,7 @@ const AdminOrderRecords = () => {
                           <div className="flex flex-col gap-1">
                             <p className="font-bold text-emerald-600">₱{order.adminCommission.toLocaleString()}</p>
                             <div className="flex items-center gap-2 flex-wrap">
-                              {getReceiptStatusBadge(order?.commission?.receiptStatus)}
+                              {!order?.commission?.isPaid && getReceiptStatusBadge(order?.commission?.receiptStatus)}
                               {order?.commission?.isPaid ? (
                                 <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">Paid</span>
                               ) : order?.commission?.receiptStatus === 'uploaded' ? (
@@ -404,7 +404,10 @@ const AdminOrderRecords = () => {
                                 <div className="flex-1 space-y-2">
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-gray-700">Status:</span>
-                                    {getReceiptStatusBadge(order.commission.receiptStatus)}
+                                    {!order.commission.isPaid && getReceiptStatusBadge(order.commission.receiptStatus)}
+                                    {order.commission.isPaid && (
+                                      <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">Commission Paid</span>
+                                    )}
                                   </div>
                                   {order.commission.receiptUploadedAt && (
                                     <p className="text-sm text-gray-600">

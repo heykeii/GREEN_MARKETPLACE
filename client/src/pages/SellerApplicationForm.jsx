@@ -11,6 +11,8 @@ import Navbar from '@/components/Navbar';
 
 const SellerApplicationForm = () => {
   const [sellerType, setSellerType] = useState('individual');
+  const [govID1Type, setGovID1Type] = useState('');
+  const [govID2Type, setGovID2Type] = useState('');
   const [govID1, setGovID1] = useState(null);
   const [govID2, setGovID2] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
@@ -112,8 +114,16 @@ const SellerApplicationForm = () => {
     // Validate required fields
     const newErrors = {};
     
+    if (!govID1Type) {
+      newErrors.govID1Type = 'Please select an ID type.';
+    }
+    
     if (!govID1) {
       newErrors.govID1 = 'Please select a file.';
+    }
+    
+    if (!govID2Type) {
+      newErrors.govID2Type = 'Please select an ID type.';
     }
     
     if (!govID2) {
@@ -163,6 +173,8 @@ const SellerApplicationForm = () => {
     setLoading(true);
     const formData = new FormData();
     formData.append('sellerType', sellerType);
+    formData.append('govID1Type', govID1Type);
+    formData.append('govID2Type', govID2Type);
     formData.append('govIDs', govID1);
     formData.append('govIDs', govID2);
     if (proofOfAddress) formData.append('proofOfAddress', proofOfAddress);
@@ -203,6 +215,86 @@ const SellerApplicationForm = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const IDUploadField = ({ id, label, idType, setIdType, onChange, required, icon: Icon, helpText, file, error }) => {
+    const idOptions = [
+      'Passport',
+      'National ID', 
+      'Driver\'s License',
+      'SSS/UMID',
+      'Voter\'s ID/Certification',
+      'TIN ID',
+      'School ID',
+      'Other'
+    ];
+
+    return (
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <Icon className="h-4 w-4 text-green-600" />
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </Label>
+        
+        {/* ID Type Dropdown */}
+        <div className="space-y-2">
+          <Label htmlFor={`${id}-type`} className="text-xs font-medium text-gray-600">
+            ID Type
+          </Label>
+          <select
+            id={`${id}-type`}
+            value={idType}
+            onChange={(e) => setIdType(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+          >
+            <option value="">Select ID type</option>
+            {idOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          {error && error.includes('type') && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+              <AlertCircle className="h-4 w-4" />
+              <span className="font-medium">{error}</span>
+            </div>
+          )}
+        </div>
+
+        {/* File Upload */}
+        <div className="space-y-2">
+          <Label htmlFor={`${id}-file`} className="text-xs font-medium text-gray-600">
+            Upload File
+          </Label>
+          <div className="relative">
+            <Input
+              id={`${id}-file`}
+              name={`${id}-file`}
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={onChange}
+              className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all"
+            />
+            {file && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                <CheckCircle className="h-4 w-4" />
+                <span className="font-medium">{file.name}</span>
+              </div>
+            )}
+            {error && error.includes('file') && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                <AlertCircle className="h-4 w-4" />
+                <span className="font-medium">{error}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {helpText && <p className="text-xs text-gray-500 mt-1 ml-1">{helpText}</p>}
+      </div>
+    );
   };
 
   const FileUploadField = ({ id, label, onChange, required, icon: Icon, helpText, file, error }) => (
@@ -429,24 +521,28 @@ const SellerApplicationForm = () => {
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FileUploadField
+                    <IDUploadField
                       id="govID1"
                       label="Valid ID 1"
                       icon={FileText}
+                      idType={govID1Type}
+                      setIdType={setGovID1Type}
                       onChange={e => handleFileChange(e, setGovID1, 'govID1')}
                       required
                       file={govID1}
-                      error={errors.govID1}
+                      error={errors.govID1Type || errors.govID1}
                     />
                     
-                    <FileUploadField
+                    <IDUploadField
                       id="govID2"
                       label="Valid ID 2"
                       icon={FileText}
+                      idType={govID2Type}
+                      setIdType={setGovID2Type}
                       onChange={e => handleFileChange(e, setGovID2, 'govID2')}
                       required
                       file={govID2}
-                      error={errors.govID2}
+                      error={errors.govID2Type || errors.govID2}
                     />
                     
                     <div className="space-y-2">

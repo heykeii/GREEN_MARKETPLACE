@@ -45,7 +45,14 @@ const sellerApplicationSchema = new mongoose.Schema({
   },
 
   documents: {
-    govIDs: [{ type: String, required: true }], // URLs to 2 government IDs
+    govIDs: [{
+      type: {
+        type: String,
+        enum: ['Passport', 'National ID', 'Driver\'s License', 'SSS/UMID', 'Voter\'s ID/Certification', 'TIN ID', 'School ID', 'Other'],
+        required: true
+      },
+      url: { type: String, required: true }
+    }],
     proofOfAddress: { type: String, required: true },
 
     // For business type only

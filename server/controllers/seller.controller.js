@@ -33,14 +33,14 @@ export const submitSellerVerification = async (req, res) => {
       files: req.files ? Object.keys(req.files) : 'No files'
     });
 
-    const { sellerType, gcashNumber } = req.body;
+    const { sellerType, gcashNumber, govID1Type, govID2Type } = req.body;
     const userId = req.user._id;
     const files = req.files;
 
     // Validate required fields
-    if (!sellerType || !gcashNumber) {
+    if (!sellerType || !gcashNumber || !govID1Type || !govID2Type) {
       return res.status(400).json({ 
-        message: 'Seller type and GCash number are required.' 
+        message: 'Seller type, GCash number, and both government ID types are required.' 
       });
     }
 
@@ -95,7 +95,13 @@ export const submitSellerVerification = async (req, res) => {
 
     // Upload required documents
     console.log('Uploading government IDs...');
-    const govIDs = await Promise.all(files.govIDs.map(uploadFile));
+    const govID1Url = await uploadFile(files.govIDs[0]);
+    const govID2Url = await uploadFile(files.govIDs[1]);
+    
+    const govIDs = [
+      { type: govID1Type, url: govID1Url },
+      { type: govID2Type, url: govID2Url }
+    ];
     
     console.log('Uploading proof of address...');
     const proofOfAddress = await uploadFile(files.proofOfAddress[0]);
