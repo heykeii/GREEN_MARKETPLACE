@@ -449,15 +449,20 @@ const SellerApplicationForm = () => {
                       error={errors.govID2}
                     />
                     
-                    <FileUploadField
-                      id="proofOfAddress"
-                      label="Proof of Address"
-                      icon={FileText}
-                      onChange={e => handleFileChange(e, setProofOfAddress, 'proofOfAddress')}
-                      required
-                      file={proofOfAddress}
-                      error={errors.proofOfAddress}
-                    />
+                    <div className="space-y-2">
+                      <FileUploadField
+                        id="proofOfAddress"
+                        label="Proof of Address"
+                        icon={FileText}
+                        onChange={e => handleFileChange(e, setProofOfAddress, 'proofOfAddress')}
+                        required
+                        file={proofOfAddress}
+                        error={errors.proofOfAddress}
+                      />
+                      <p className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                        💡 <span className="font-medium">Examples:</span> Meralco bill, Water bill, Internet bill, Bank statement, or any official document showing your current address
+                      </p>
+                    </div>
                     
                   </div>
                 </div>

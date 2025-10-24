@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/utils/toast';
-import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp, FaFilePdf } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
 import { onSellerAnalyticsUpdated } from '@/lib/socket';
+import { pdfExportService } from '@/services/pdfExportService';
 
 const SellerDashboard = () => {
   const [user, setUser] = useState(null);
@@ -63,6 +64,7 @@ const SellerDashboard = () => {
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState('30d');
+  const [pdfExportLoading, setPdfExportLoading] = useState(false);
   
   const [form, setForm] = useState({
     name: '',
@@ -325,6 +327,30 @@ const SellerDashboard = () => {
       setAnalyticsLoading(false);
     }
   }, [analyticsTimeframe, navigate, approvedProducts.length]);
+
+  // PDF Export function
+  const handleExportPDF = useCallback(async () => {
+    if (!user || !analyticsData) {
+      toast.error('No analytics data available to export');
+      return;
+    }
+
+    setPdfExportLoading(true);
+    try {
+      await pdfExportService.exportAnalytics(
+        analyticsData,
+        user,
+        analyticsTimeframe,
+        'analytics-charts-container'
+      );
+      toast.success('PDF report generated successfully!');
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast.error('Failed to generate PDF report. Please try again.');
+    } finally {
+      setPdfExportLoading(false);
+    }
+  }, [analyticsData, user, analyticsTimeframe]);
 
   // Debug function to check seller status
   const checkSellerStatus = useCallback(async () => {
@@ -1899,6 +1925,18 @@ const SellerDashboard = () => {
                       <p className="text-xs sm:text-sm text-gray-600">Track your performance and growth metrics</p>
                     </div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                      <Button
+                        onClick={handleExportPDF}
+                        disabled={pdfExportLoading || analyticsLoading}
+                        className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-lg transition-all duration-200 flex items-center gap-2"
+                      >
+                        {pdfExportLoading ? (
+                          <FaSpinner className="animate-spin h-3 w-3" />
+                        ) : (
+                          <FaFilePdf className="h-3 w-3" />
+                        )}
+                        {pdfExportLoading ? 'Generating...' : 'Export PDF'}
+                      </Button>
                       <Label htmlFor="timeframe" className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
                         Timeframe:
                       </Label>
@@ -1920,19 +1958,21 @@ const SellerDashboard = () => {
                   <AnalyticsOverview />
 
                   {/* Charts */}
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-                    <SalesLineChart />
-                    <CategoryBarChart />
-                  </div>
+                  <div id="analytics-charts-container" className="space-y-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+                      <SalesLineChart />
+                      <CategoryBarChart />
+                    </div>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-                    <MonthlySalesChart />
-                    <TopProductsChart />
-                  </div>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+                      <MonthlySalesChart />
+                      <TopProductsChart />
+                    </div>
 
-                  {/* Yearly Sales Chart - Full Width */}
-                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                    <YearlySalesChart />
+                    {/* Yearly Sales Chart - Full Width */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      <YearlySalesChart />
+                    </div>
                   </div>
 
                   {/* Top Products */}
