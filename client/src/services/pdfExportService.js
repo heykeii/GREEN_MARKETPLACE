@@ -26,47 +26,76 @@ export class PDFExportService {
    */
   async exportAnalytics(analyticsData, user, timeframe, elementId = null) {
     try {
+      console.log('Starting PDF generation...');
+      console.log('Analytics data:', analyticsData);
+      console.log('User:', user);
+      console.log('Timeframe:', timeframe);
+      console.log('Element ID:', elementId);
+
       // Reset document
       this.doc = new jsPDF('p', 'mm', 'a4');
       this.currentY = this.margin;
 
+      console.log('PDF document created');
+
       // Add professional header with logo area
       this.addEnhancedHeader(user, timeframe);
+      console.log('Header added');
 
       // Add executive summary
       this.addExecutiveSummary(analyticsData.overview);
+      console.log('Executive summary added');
 
       // Add charts section (if elementId provided, capture the charts)
       if (elementId) {
+        console.log('Attempting to capture charts...');
         await this.addChartsSection(elementId);
+        console.log('Charts captured');
       }
 
       // Add detailed analytics sections with improved formatting
       this.addDetailedOverviewSection(analyticsData.overview);
+      console.log('Overview section added');
+
       this.addEnhancedSalesDataSection(analyticsData.salesData);
+      console.log('Sales data section added');
+
       this.addTopProductsSection(analyticsData.topProducts);
+      console.log('Top products section added');
+
       this.addCategoryPerformanceSection(analyticsData.categoryPerformance);
+      console.log('Category performance section added');
+
       this.addCustomerInsightsSection(analyticsData.customerInsights);
+      console.log('Customer insights section added');
+
       this.addInventoryMetricsSection(analyticsData.inventoryMetrics);
+      console.log('Inventory metrics section added');
 
       // Add insights and recommendations
       this.addInsightsAndRecommendations(analyticsData);
+      console.log('Insights section added');
 
       // Add professional footer
       this.addEnhancedFooter();
+      console.log('Footer added');
 
       // Generate filename
       const timestamp = new Date().toISOString().split('T')[0];
       const sellerName = user.name ? user.name.replace(/\s+/g, '-') : user.email.split('@')[0];
       const filename = `Seller-Analytics-${sellerName}-${timeframe}-${timestamp}.pdf`;
 
+      console.log('Saving PDF with filename:', filename);
+
       // Save the PDF
       this.doc.save(filename);
 
+      console.log('PDF saved successfully');
       return { success: true, filename };
     } catch (error) {
       console.error('Error generating PDF:', error);
-      throw new Error('Failed to generate PDF report');
+      console.error('Error stack:', error.stack);
+      throw new Error(`Failed to generate PDF report: ${error.message}`);
     }
   }
 
@@ -289,11 +318,20 @@ export class PDFExportService {
    */
   async addChartsSection(elementId) {
     try {
+      console.log('Starting chart capture for element:', elementId);
+      
       const element = document.getElementById(elementId);
       if (!element) {
         console.warn(`Element with id ${elementId} not found`);
         return;
       }
+
+      console.log('Element found, dimensions:', {
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        scrollWidth: element.scrollWidth,
+        scrollHeight: element.scrollHeight
+      });
 
       // Check if we need a new page
       if (this.currentY > this.pageHeight - 100) {
@@ -303,31 +341,71 @@ export class PDFExportService {
 
       this.addSectionTitle('📊 Visual Analytics Charts');
       
+      // Wait a bit for charts to render
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('Capturing charts with html2canvas...');
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        width: element.scrollWidth,
-        height: element.scrollHeight
+        width: element.scrollWidth || element.offsetWidth,
+        height: element.scrollHeight || element.offsetHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth || element.offsetWidth,
+        windowHeight: element.scrollHeight || element.offsetHeight
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      console.log('Canvas created, dimensions:', {
+        width: canvas.width,
+        height: canvas.height
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const imgWidth = this.pageWidth - (2 * this.margin);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+      console.log('Image dimensions for PDF:', {
+        imgWidth,
+        imgHeight,
+        currentY: this.currentY,
+        pageHeight: this.pageHeight,
+        margin: this.margin
+      });
+
       // Check if image fits on current page
       if (this.currentY + imgHeight > this.pageHeight - this.margin) {
+        console.log('Image too large for current page, adding new page');
         this.doc.addPage();
         this.currentY = this.margin;
       }
 
+      console.log('Adding image to PDF...');
       this.doc.addImage(imgData, 'PNG', this.margin, this.currentY, imgWidth, imgHeight);
       this.currentY += imgHeight + 15;
+      
+      console.log('Charts successfully added to PDF');
     } catch (error) {
       console.error('Error capturing charts:', error);
-      // Continue without charts if capture fails
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Add a placeholder text if chart capture fails
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('📊 Charts Section', this.margin, this.currentY);
+      this.currentY += 10;
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text('Charts could not be captured. Please check the analytics dashboard for visual data.', this.margin, this.currentY);
+      this.currentY += 15;
     }
   }
 
