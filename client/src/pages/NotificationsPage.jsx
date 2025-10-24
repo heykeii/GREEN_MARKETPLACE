@@ -252,72 +252,80 @@ const NotificationsPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-14 sm:py-16 px-3 sm:px-4 pt-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-emerald-800 mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
-              <FaBell className="text-emerald-600 text-3xl" />
-              Notifications
+      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-4 sm:py-6 md:py-8 lg:py-14 px-2 sm:px-3 md:px-4 lg:px-6 pt-16 sm:pt-20 md:pt-24">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-4 sm:mb-6 md:mb-8">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-emerald-800 mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
+              <FaBell className="text-emerald-600 text-xl sm:text-2xl md:text-3xl" />
+              <span className="break-words">Notifications</span>
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base">Stay updated with your latest activities</p>
+            <p className="text-gray-600 text-xs sm:text-sm md:text-base">Stay updated with your latest activities</p>
           </div>
 
           {/* Filters and Actions */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Filters & Actions</CardTitle>
+          <Card className="mb-4 sm:mb-6">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Filters & Actions</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4 items-end">
-                <div className="flex-1 min-w-48">
-                  <label className="text-sm font-medium">Type</label>
-                  <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value, page: 1 }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="new_order">New Orders</SelectItem>
-                      <SelectItem value="new_review">New Reviews</SelectItem>
-                      <SelectItem value="order_status_updated">Order Updates</SelectItem>
-                      <SelectItem value="order_cancelled">Order Cancellations</SelectItem>
-                      <SelectItem value="report_status_updated">Report Updates</SelectItem>
-                      <SelectItem value="system_message">System Messages</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex-1 min-w-48">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select value={filters.isRead} onValueChange={(value) => setFilters(prev => ({ ...prev, isRead: value, page: 1 }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="false">Unread</SelectItem>
-                      <SelectItem value="true">Read</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <CardContent className="pt-0">
+              <div className="space-y-4 sm:space-y-0">
+                {/* Filter Controls */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs sm:text-sm font-medium text-gray-700">Type</label>
+                    <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value, page: 1 }))}>
+                      <SelectTrigger className="h-9 sm:h-10">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="new_order">New Orders</SelectItem>
+                        <SelectItem value="new_review">New Reviews</SelectItem>
+                        <SelectItem value="order_status_updated">Order Updates</SelectItem>
+                        <SelectItem value="order_cancelled">Order Cancellations</SelectItem>
+                        <SelectItem value="report_status_updated">Report Updates</SelectItem>
+                        <SelectItem value="system_message">System Messages</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
+                    <Select value={filters.isRead} onValueChange={(value) => setFilters(prev => ({ ...prev, isRead: value, page: 1 }))}>
+                      <SelectTrigger className="h-9 sm:h-10">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="false">Unread</SelectItem>
+                        <SelectItem value="true">Read</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    onClick={markAllAsRead}
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                    <FaCheckDouble />
-                    Mark All Read
-                  </Button>
-                  <Button
-                    onClick={deleteReadNotifications}
-                    variant="outline"
-                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                  >
-                    <FaTrash />
-                    Delete Read
-                  </Button>
+                  {/* Action Buttons */}
+                  <div className="sm:col-span-2 lg:col-span-1 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <Button
+                      onClick={markAllAsRead}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+                    >
+                      <FaCheckDouble className="text-xs sm:text-sm" />
+                      <span className="hidden sm:inline">Mark All Read</span>
+                      <span className="sm:hidden">Mark Read</span>
+                    </Button>
+                    <Button
+                      onClick={deleteReadNotifications}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 sm:gap-2 text-red-600 hover:text-red-700 text-xs sm:text-sm"
+                    >
+                      <FaTrash className="text-xs sm:text-sm" />
+                      <span className="hidden sm:inline">Delete Read</span>
+                      <span className="sm:hidden">Delete</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -326,63 +334,71 @@ const NotificationsPage = () => {
           {/* Notifications List */}
           {notifications.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center">
+              <CardContent className="p-4 sm:p-6 md:p-8 text-center">
                 <div className="text-gray-500">
-                  <FaBell className="text-6xl mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg mb-2">No notifications found</p>
-                  <p className="text-sm">You're all caught up!</p>
+                  <FaBell className="text-4xl sm:text-5xl md:text-6xl mx-auto mb-3 sm:mb-4 text-gray-300" />
+                  <p className="text-base sm:text-lg mb-1 sm:mb-2">No notifications found</p>
+                  <p className="text-xs sm:text-sm">You're all caught up!</p>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {notifications.map((notification) => (
                 <Card key={notification._id} className={`${!notification.isRead ? 'border-l-4 border-l-blue-500 bg-blue-50/50' : ''}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className={`text-2xl ${getNotificationColor(notification.type)}`}>
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                      {/* Icon and Content */}
+                      <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className={`text-xl sm:text-2xl ${getNotificationColor(notification.type)} flex-shrink-0`}>
                           {getNotificationIcon(notification.type)}
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className={`font-semibold ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                          {/* Title and Badges */}
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className={`font-semibold text-sm sm:text-base break-words ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
                               {notification.title}
                             </h3>
-                            <Badge variant="outline" className="text-xs">
-                              {getTypeLabel(notification.type)}
-                            </Badge>
-                            {!notification.isRead && (
-                              <Badge className="bg-blue-500 text-white text-xs">
-                                New
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {getTypeLabel(notification.type)}
                               </Badge>
-                            )}
+                              {!notification.isRead && (
+                                <Badge className="bg-blue-500 text-white text-xs">
+                                  New
+                                </Badge>
+                              )}
+                              {notification.priority === 'high' && (
+                                <Badge className="bg-red-100 text-red-800 text-xs">
+                                  High Priority
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           
-                          <p className="text-gray-600 mb-2">{notification.message}</p>
+                          {/* Message */}
+                          <p className="text-gray-600 text-sm sm:text-base mb-2 break-words">{notification.message}</p>
                           
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          {/* Time */}
+                          <div className="text-xs sm:text-sm text-gray-500">
                             <span>{notification.age}</span>
-                            {notification.priority === 'high' && (
-                              <Badge className="bg-red-100 text-red-800 text-xs">
-                                High Priority
-                              </Badge>
-                            )}
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 ml-4">
+                      {/* Action Buttons */}
+                      <div className="flex flex-row sm:flex-col gap-2 sm:gap-2 sm:ml-4">
                         {!notification.isRead && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => markAsRead(notification._id)}
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-1 text-xs sm:text-sm flex-1 sm:flex-none"
                           >
-                            <FaCheck />
-                            Mark Read
+                            <FaCheck className="text-xs" />
+                            <span className="hidden sm:inline">Mark Read</span>
+                            <span className="sm:hidden">Read</span>
                           </Button>
                         )}
                         
@@ -390,20 +406,23 @@ const NotificationsPage = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => deleteNotification(notification._id)}
-                          className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700 text-xs sm:text-sm flex-1 sm:flex-none"
                         >
-                          <FaTrash />
+                          <FaTrash className="text-xs" />
+                          <span className="hidden sm:inline">Delete</span>
+                          <span className="sm:hidden">Del</span>
                         </Button>
                       </div>
                     </div>
                     
+                    {/* Action URL Button */}
                     {notification.actionUrl && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleNotificationClick(notification)}
-                          className="text-emerald-600 hover:text-emerald-700"
+                          className="text-emerald-600 hover:text-emerald-700 w-full sm:w-auto text-xs sm:text-sm"
                         >
                           View Details
                         </Button>
@@ -417,25 +436,43 @@ const NotificationsPage = () => {
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  disabled={pagination.currentPage === 1}
-                  onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
-                >
-                  Previous
-                </Button>
-                <span className="flex items-center px-4">
-                  Page {pagination.currentPage} of {pagination.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
-                >
-                  Next
-                </Button>
+            <div className="flex justify-center mt-6 sm:mt-8">
+              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2">
+                <div className="flex gap-1 sm:gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.currentPage === 1}
+                    onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
+                    className="text-xs sm:text-sm px-2 sm:px-3"
+                  >
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
+                  </Button>
+                  
+                  <div className="flex items-center px-2 sm:px-4">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      <span className="hidden sm:inline">Page </span>
+                      {pagination.currentPage} <span className="hidden sm:inline">of</span> <span className="sm:hidden">/</span> {pagination.totalPages}
+                    </span>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
+                    className="text-xs sm:text-sm px-2 sm:px-3"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Next</span>
+                  </Button>
+                </div>
+                
+                {/* Page Info */}
+                <div className="text-xs sm:text-sm text-gray-500">
+                  {pagination.totalItems} total notifications
+                </div>
               </div>
             </div>
           )}

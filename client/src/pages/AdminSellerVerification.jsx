@@ -137,9 +137,9 @@ const AdminSellerVerification = () => {
                 Submitted Documents
               </h4>
               <div className="space-y-4">
-                {/* Government IDs */}
+                {/* Valid IDs */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Government IDs:</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Valid IDs:</p>
                   {application.documents?.govIDs?.length > 0 ? (
                     <div className="space-y-2">
                       {application.documents.govIDs.map((url, index) => (
@@ -151,7 +151,7 @@ const AdminSellerVerification = () => {
                           className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm bg-white rounded-lg px-3 py-2 border border-blue-100 hover:border-blue-200 transition-all duration-200"
                         >
                           <Eye className="h-4 w-4" />
-                          Government ID {index + 1}
+                          Valid ID {index + 1}
                           <ExternalLink className="h-3 w-3 ml-auto" />
                         </a>
                       ))}

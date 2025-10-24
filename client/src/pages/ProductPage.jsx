@@ -236,6 +236,7 @@ const ProductPage = () => {
       name: product.name || '',
       description: product.description || '',
       price: product.price || '',
+      shippingFee: product.shippingFee || 0,
       quantity: product.quantity || '',
       category: product.category || '',
       origin: product.origin || '',
@@ -313,6 +314,7 @@ const ProductPage = () => {
       formData.append('name', editForm.name);
       formData.append('description', editForm.description);
       formData.append('price', editForm.price);
+      formData.append('shippingFee', editForm.shippingFee || 0);
       formData.append('quantity', editForm.quantity);
       formData.append('category', editForm.category);
       formData.append('origin', editForm.origin);
@@ -985,6 +987,21 @@ const ProductPage = () => {
                     required
                     className="w-full"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="shippingFee" className="text-sm font-semibold text-gray-700 mb-2 block">Shipping Fee (₱)</Label>
+                  <Input
+                    id="shippingFee"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.shippingFee}
+                    onChange={(e) => setEditForm({ ...editForm, shippingFee: e.target.value })}
+                    placeholder="0.00"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Shipping fee charged to buyers. Leave empty for free shipping.</p>
                 </div>
 
                 <div>

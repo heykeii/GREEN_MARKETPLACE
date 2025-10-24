@@ -145,35 +145,66 @@ export const createOrder = async (req, res) => {
 
         const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
-        // Calculate shipping fee
+        // Calculate shipping fee - use seller-defined shipping fee from products
         let shippingFee = 0;
         let shippingDetails = null;
-        try {
-            // Get seller location from first product
-            const firstProduct = validItems[0].product;
-            const seller = await User.findById(firstProduct.seller);
-            const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+        
+        // Get unique sellers and their shipping fees
+        const sellerShippingFees = new Map();
+        for (const item of validItems) {
+            const sellerId = item.product.seller.toString();
+            const productShippingFee = item.product.shippingFee || 0;
             
-            const shippingEstimate = await ShippingService.estimateShippingFee({
-                sellerLocation,
-                buyerCity: shippingAddress.city,
-                buyerProvince: shippingAddress.province,
-                totalWeight: validItems.reduce((sum, item) => sum + item.quantity, 0) * 0.5 // Estimate 0.5kg per item
-            });
-            
-            if (shippingEstimate.success) {
-                shippingFee = shippingEstimate.shippingFee;
-                shippingDetails = {
-                    estimatedDays: shippingEstimate.estimatedDays,
-                    courierType: shippingEstimate.courierType,
-                    distance: shippingEstimate.distance,
-                    explanation: shippingEstimate.explanation
-                };
+            if (!sellerShippingFees.has(sellerId)) {
+                sellerShippingFees.set(sellerId, {
+                    sellerId: sellerId,
+                    shippingFee: productShippingFee,
+                    sellerName: item.product.seller?.firstName + ' ' + item.product.seller?.lastName || 'Seller'
+                });
             }
-        } catch (shippingError) {
-            console.error('Shipping calculation error:', shippingError);
-            // Use default shipping fee if calculation fails
-            shippingFee = 50;
+        }
+        
+        // Sum up shipping fees from all sellers (assuming one shipping fee per seller)
+        shippingFee = Array.from(sellerShippingFees.values()).reduce((sum, seller) => sum + seller.shippingFee, 0);
+        
+        // If no seller-defined shipping fees, fall back to estimated shipping
+        if (shippingFee === 0) {
+            try {
+                // Get seller location from first product
+                const firstProduct = validItems[0].product;
+                const seller = await User.findById(firstProduct.seller);
+                const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+                
+                const shippingEstimate = await ShippingService.estimateShippingFee({
+                    sellerLocation,
+                    buyerCity: shippingAddress.city,
+                    buyerProvince: shippingAddress.province,
+                    totalWeight: validItems.reduce((sum, item) => sum + item.quantity, 0) * 0.5 // Estimate 0.5kg per item
+                });
+                
+                if (shippingEstimate.success) {
+                    shippingFee = shippingEstimate.shippingFee;
+                    shippingDetails = {
+                        estimatedDays: shippingEstimate.estimatedDays,
+                        courierType: shippingEstimate.courierType,
+                        distance: shippingEstimate.distance,
+                        explanation: shippingEstimate.explanation,
+                        isEstimated: true
+                    };
+                }
+            } catch (shippingError) {
+                console.error('Shipping calculation error:', shippingError);
+                // Use default shipping fee if calculation fails
+                shippingFee = 50;
+                shippingDetails = { isEstimated: true, explanation: 'Default shipping fee applied' };
+            }
+        } else {
+            // Seller-defined shipping fees
+            shippingDetails = {
+                isEstimated: false,
+                explanation: 'Seller-defined shipping fees',
+                sellerFees: Array.from(sellerShippingFees.values())
+            };
         }
 
         const totalAmount = subtotal + shippingFee;
@@ -351,33 +382,65 @@ export const createDirectOrder = async (req, res) => {
 
         const subtotal = orderItems.reduce((sum, it) => sum + it.price * it.quantity, 0);
         
-        // Calculate shipping fee
+        // Calculate shipping fee - use seller-defined shipping fee from products
         let shippingFee = 0;
         let shippingDetails = null;
-        try {
-            const firstProduct = products[0];
-            const seller = await User.findById(firstProduct.seller);
-            const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+        
+        // Get unique sellers and their shipping fees
+        const sellerShippingFees = new Map();
+        for (const item of orderItems) {
+            const product = idToProduct.get(item.product.toString());
+            const sellerId = product.seller.toString();
+            const productShippingFee = product.shippingFee || 0;
             
-            const shippingEstimate = await ShippingService.estimateShippingFee({
-                sellerLocation,
-                buyerCity: shippingAddress.city,
-                buyerProvince: shippingAddress.province,
-                totalWeight: orderItems.reduce((sum, it) => sum + it.quantity, 0) * 0.5
-            });
-            
-            if (shippingEstimate.success) {
-                shippingFee = shippingEstimate.shippingFee;
-                shippingDetails = {
-                    estimatedDays: shippingEstimate.estimatedDays,
-                    courierType: shippingEstimate.courierType,
-                    distance: shippingEstimate.distance,
-                    explanation: shippingEstimate.explanation
-                };
+            if (!sellerShippingFees.has(sellerId)) {
+                sellerShippingFees.set(sellerId, {
+                    sellerId: sellerId,
+                    shippingFee: productShippingFee,
+                    sellerName: product.seller?.firstName + ' ' + product.seller?.lastName || 'Seller'
+                });
             }
-        } catch (shippingError) {
-            console.error('Shipping calculation error:', shippingError);
-            shippingFee = 50;
+        }
+        
+        // Sum up shipping fees from all sellers (assuming one shipping fee per seller)
+        shippingFee = Array.from(sellerShippingFees.values()).reduce((sum, seller) => sum + seller.shippingFee, 0);
+        
+        // If no seller-defined shipping fees, fall back to estimated shipping
+        if (shippingFee === 0) {
+            try {
+                const firstProduct = products[0];
+                const seller = await User.findById(firstProduct.seller);
+                const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
+                
+                const shippingEstimate = await ShippingService.estimateShippingFee({
+                    sellerLocation,
+                    buyerCity: shippingAddress.city,
+                    buyerProvince: shippingAddress.province,
+                    totalWeight: orderItems.reduce((sum, it) => sum + it.quantity, 0) * 0.5
+                });
+                
+                if (shippingEstimate.success) {
+                    shippingFee = shippingEstimate.shippingFee;
+                    shippingDetails = {
+                        estimatedDays: shippingEstimate.estimatedDays,
+                        courierType: shippingEstimate.courierType,
+                        distance: shippingEstimate.distance,
+                        explanation: shippingEstimate.explanation,
+                        isEstimated: true
+                    };
+                }
+            } catch (shippingError) {
+                console.error('Shipping calculation error:', shippingError);
+                shippingFee = 50;
+                shippingDetails = { isEstimated: true, explanation: 'Default shipping fee applied' };
+            }
+        } else {
+            // Seller-defined shipping fees
+            shippingDetails = {
+                isEstimated: false,
+                explanation: 'Seller-defined shipping fees',
+                sellerFees: Array.from(sellerShippingFees.values())
+            };
         }
 
         const totalAmount = subtotal + shippingFee;
@@ -897,7 +960,43 @@ export const calculateShipping = async (req, res) => {
             totalItems = cart.items.reduce((sum, i) => sum + i.quantity, 0);
         }
 
-        // Get seller location from first product
+        // Get products to check for seller-defined shipping fees
+        const products = await Product.find({ _id: { $in: productIds } });
+        
+        // Calculate seller-defined shipping fees
+        const sellerShippingFees = new Map();
+        let totalSellerShippingFee = 0;
+        
+        for (const product of products) {
+            const sellerId = product.seller.toString();
+            const productShippingFee = product.shippingFee || 0;
+            
+            if (!sellerShippingFees.has(sellerId)) {
+                sellerShippingFees.set(sellerId, {
+                    sellerId: sellerId,
+                    shippingFee: productShippingFee,
+                    sellerName: product.seller?.firstName + ' ' + product.seller?.lastName || 'Seller'
+                });
+                totalSellerShippingFee += productShippingFee;
+            }
+        }
+        
+        // If seller-defined shipping fees exist, use them
+        if (totalSellerShippingFee > 0) {
+            res.json({
+                success: true,
+                shipping: {
+                    success: true,
+                    shippingFee: totalSellerShippingFee,
+                    isEstimated: false,
+                    explanation: 'Seller-defined shipping fees',
+                    sellerFees: Array.from(sellerShippingFees.values())
+                }
+            });
+            return;
+        }
+
+        // Fall back to estimated shipping if no seller-defined fees
         const firstProduct = await Product.findById(productIds[0]).populate('seller');
         if (!firstProduct) {
             return res.status(404).json({ success: false, message: 'Product not found' });

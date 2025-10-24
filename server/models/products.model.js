@@ -22,6 +22,12 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
 
+  shippingFee: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
   quantity: {
     type: Number,
     required: true,

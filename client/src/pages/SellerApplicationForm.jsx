@@ -431,7 +431,7 @@ const SellerApplicationForm = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FileUploadField
                       id="govID1"
-                      label="Government ID 1"
+                      label="Valid ID 1"
                       icon={FileText}
                       onChange={e => handleFileChange(e, setGovID1, 'govID1')}
                       required
@@ -441,7 +441,7 @@ const SellerApplicationForm = () => {
                     
                     <FileUploadField
                       id="govID2"
-                      label="Government ID 2"
+                      label="Valid ID 2"
                       icon={FileText}
                       onChange={e => handleFileChange(e, setGovID2, 'govID2')}
                       required

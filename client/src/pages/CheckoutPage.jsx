@@ -524,7 +524,18 @@ const CheckoutPage = () => {
                         </span>
                         {shippingDetails && (
                           <p className="text-xs text-gray-500">
-                            {shippingDetails.estimatedDays} days · {shippingDetails.courierType}
+                            {shippingDetails.isEstimated ? (
+                              <>
+                                {shippingDetails.estimatedDays} days · {shippingDetails.courierType}
+                              </>
+                            ) : (
+                              <>
+                                Seller-defined shipping
+                                {shippingDetails.sellerFees && shippingDetails.sellerFees.length > 1 && 
+                                  ` (${shippingDetails.sellerFees.length} sellers)`
+                                }
+                              </>
+                            )}
                           </p>
                         )}
                       </div>

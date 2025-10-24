@@ -390,6 +390,7 @@ const SellerDashboard = () => {
       name: product.name,
       description: product.description,
       price: product.price,
+      shippingFee: product.shippingFee || 0,
       quantity: product.quantity,
       category: product.category,
       origin: product.origin || '',
@@ -422,6 +423,7 @@ const SellerDashboard = () => {
       formData.append('name', form.name);
       formData.append('description', form.description);
       formData.append('price', form.price);
+      formData.append('shippingFee', form.shippingFee || 0);
       formData.append('quantity', form.quantity);
       formData.append('category', form.category);
       formData.append('origin', form.origin);
@@ -2019,6 +2021,21 @@ const SellerDashboard = () => {
                       onChange={handleInputChange}
                       required
                     />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="shippingFee">Shipping Fee (₱)</Label>
+                    <Input
+                      id="shippingFee"
+                      name="shippingFee"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.shippingFee}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Shipping fee charged to buyers. Leave empty for free shipping.</p>
                   </div>
 
                   <div>

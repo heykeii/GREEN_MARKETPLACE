@@ -21,6 +21,7 @@ export const createProduct = async (req, res) => {
       name,
       description,
       price,
+      shippingFee = 0,
       quantity,
       category,
       origin = '',
@@ -146,6 +147,7 @@ export const createProduct = async (req, res) => {
       description,
       images: imageUrls,
       price,
+      shippingFee: parseFloat(shippingFee) || 0,
       quantity,
       category,
       origin,
@@ -274,7 +276,7 @@ export const updateProduct = async (req, res) => {
     // Update other fields
     // Disallow updating materialsUsed via standard update endpoint
     const updatableFields = [
-      'name', 'description', 'price', 'quantity', 'category',
+      'name', 'description', 'price', 'shippingFee', 'quantity', 'category',
       'origin', 'productionMethod', 'tags'
     ];
     updatableFields.forEach(field => {

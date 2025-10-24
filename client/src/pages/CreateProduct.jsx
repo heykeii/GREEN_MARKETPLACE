@@ -16,6 +16,7 @@ const CreateProduct = () => {
     name: '',
     description: '',
     price: '',
+    shippingFee: '',
     quantity: '',
     category: '',
     origin: '',
@@ -63,6 +64,7 @@ const CreateProduct = () => {
       formData.append('name', form.name);
       formData.append('description', form.description);
       formData.append('price', form.price);
+      formData.append('shippingFee', form.shippingFee || 0);
       formData.append('quantity', form.quantity);
       formData.append('category', form.category);
       formData.append('origin', form.origin);
@@ -357,6 +359,21 @@ const CreateProduct = () => {
                           min="0"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="shippingFee" className="text-sm font-medium text-gray-700">Shipping Fee (₱)</Label>
+                      <Input
+                        id="shippingFee"
+                        name="shippingFee"
+                        type="number"
+                        value={form.shippingFee}
+                        onChange={handleInputChange}
+                        className="w-full"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Shipping fee charged to buyers for this product. Leave empty for free shipping.</p>
                     </div>
                     <div>
                       <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category *</Label>
