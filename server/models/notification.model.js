@@ -38,7 +38,18 @@ const notificationSchema = new mongoose.Schema({
       'campaign_liked',
       'campaign_commented',
       'campaign_joined',
-      'review_reply'
+      'campaign_approved',
+      'campaign_rejected',
+      'review_reply',
+      
+      // Payment notifications
+      'receipt_verified',
+      'receipt_rejected',
+      'payment_received',
+      'receipt_needs_review',
+      
+      // Badge notifications
+      'badge_earned'
     ],
     required: true
   },

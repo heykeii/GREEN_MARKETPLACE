@@ -10,13 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/utils/toast';
-import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp, FaFilePdf } from 'react-icons/fa';
+import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
 import { onSellerAnalyticsUpdated } from '@/lib/socket';
-import { pdfExportService } from '@/services/pdfExportService';
-import jsPDF from 'jspdf';
 
 const SellerDashboard = () => {
   const [user, setUser] = useState(null);
@@ -65,7 +63,6 @@ const SellerDashboard = () => {
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState('30d');
-  const [pdfExportLoading, setPdfExportLoading] = useState(false);
   
   const [form, setForm] = useState({
     name: '',
@@ -328,221 +325,6 @@ const SellerDashboard = () => {
       setAnalyticsLoading(false);
     }
   }, [analyticsTimeframe, navigate, approvedProducts.length]);
-
-  // Simple PDF test function
-  const testPDFGeneration = useCallback(() => {
-    try {
-      console.log('Testing PDF generation...');
-      
-      // Create a simple test PDF
-      const doc = new jsPDF();
-      
-      doc.setFontSize(20);
-      doc.text('Test PDF Generation', 20, 20);
-      doc.text('This is a test PDF to verify jsPDF is working', 20, 40);
-      doc.text(`Generated at: ${new Date().toLocaleString()}`, 20, 60);
-      
-      doc.save('test-pdf-generation.pdf');
-      
-      toast.success('Test PDF generated successfully!');
-      console.log('Test PDF generated successfully');
-    } catch (error) {
-      console.error('Test PDF generation failed:', error);
-      toast.error(`Test PDF failed: ${error.message}`);
-    }
-  }, []);
-
-  // Simple PDF Export function with charts
-  const handleSimplePDFExport = useCallback(async () => {
-    if (!user || !analyticsData) {
-      toast.error('No analytics data available to export');
-      return;
-    }
-
-    setPdfExportLoading(true);
-    try {
-      console.log('Creating simple PDF with charts...');
-      
-      const doc = new jsPDF();
-      
-      // Header
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('SELLER ANALYTICS REPORT', 20, 20);
-      
-      // Report details
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Generated for: ${user.name || user.email}`, 20, 35);
-      doc.text(`Timeframe: ${analyticsTimeframe}`, 20, 45);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 55);
-      
-      // Line separator
-      doc.line(20, 65, 190, 65);
-      
-      // Overview metrics
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Overview Metrics', 20, 80);
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      let yPos = 95;
-      
-      const metrics = [
-        `Total Revenue: ₱${analyticsData.overview?.totalRevenue?.toLocaleString() || '0'}`,
-        `Total Orders: ${analyticsData.overview?.totalOrders || '0'}`,
-        `Total Products: ${analyticsData.overview?.totalProducts || '0'}`,
-        `Average Rating: ${analyticsData.overview?.averageRating?.toFixed(1) || '0.0'} ⭐`,
-        `Monthly Growth: ${analyticsData.overview?.monthlyGrowth?.toFixed(1) || '0.0'}%`,
-        `Conversion Rate: ${analyticsData.overview?.conversionRate?.toFixed(1) || '0.0'}%`
-      ];
-      
-      metrics.forEach(metric => {
-        doc.text(metric, 20, yPos);
-        yPos += 8;
-      });
-      
-      // Try to capture charts
-      try {
-        console.log('Attempting to capture charts for simple PDF...');
-        const element = document.getElementById('analytics-charts-container');
-        
-        if (element) {
-          console.log('Charts container found, capturing...');
-          
-          // Wait for charts to render
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const html2canvas = (await import('html2canvas')).default;
-          const canvas = await html2canvas(element, {
-            scale: 1.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            logging: false
-          });
-          
-          const imgData = canvas.toDataURL('image/png');
-          const imgWidth = 170; // Fixed width
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          
-          // Check if we need a new page for charts
-          if (yPos + imgHeight > 250) {
-            doc.addPage();
-            yPos = 20;
-          }
-          
-          // Add charts section title
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text('📊 Analytics Charts', 20, yPos);
-          yPos += 10;
-          
-          // Add the chart image
-          doc.addImage(imgData, 'PNG', 20, yPos, imgWidth, imgHeight);
-          yPos += imgHeight + 15;
-          
-          console.log('Charts successfully added to simple PDF');
-        } else {
-          console.log('Charts container not found, skipping charts');
-        }
-      } catch (chartError) {
-        console.error('Error capturing charts for simple PDF:', chartError);
-        // Continue without charts
-      }
-      
-      // Sales data
-      if (analyticsData.salesData?.daily?.length > 0) {
-        yPos += 10;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Daily Sales Trend (Last 7 Days)', 20, yPos);
-        yPos += 10;
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        
-        analyticsData.salesData.daily.slice(-7).forEach(day => {
-          doc.text(`${day.date}: ₱${day.revenue?.toLocaleString() || '0'}`, 20, yPos);
-          yPos += 6;
-        });
-      }
-      
-      // Top products
-      if (analyticsData.topProducts?.length > 0) {
-        yPos += 10;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Top Products', 20, yPos);
-        yPos += 10;
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        
-        analyticsData.topProducts.slice(0, 5).forEach(product => {
-          doc.text(`${product.name}: ₱${product.revenue?.toLocaleString() || '0'}`, 20, yPos);
-          yPos += 6;
-        });
-      }
-      
-      // Footer
-      const pageCount = doc.internal.getNumberOfPages();
-      doc.setFontSize(8);
-      doc.text(`Generated by Green Marketplace Analytics - Page 1 of ${pageCount}`, 20, 280);
-      
-      // Save PDF
-      const timestamp = new Date().toISOString().split('T')[0];
-      const sellerName = user.name ? user.name.replace(/\s+/g, '-') : user.email.split('@')[0];
-      const filename = `Seller-Analytics-${sellerName}-${analyticsTimeframe}-${timestamp}.pdf`;
-      
-      doc.save(filename);
-      
-      toast.success('Simple PDF with charts generated successfully!');
-      console.log('Simple PDF with charts generated successfully');
-    } catch (error) {
-      console.error('Simple PDF generation failed:', error);
-      toast.error(`Simple PDF generation failed: ${error.message}`);
-    } finally {
-      setPdfExportLoading(false);
-    }
-  }, [analyticsData, user, analyticsTimeframe]);
-
-  // PDF Export function
-  const handleExportPDF = useCallback(async () => {
-    console.log('PDF Export button clicked!');
-    console.log('User:', user);
-    console.log('Analytics Data:', analyticsData);
-    
-    if (!user || !analyticsData) {
-      toast.error('No analytics data available to export');
-      return;
-    }
-
-    setPdfExportLoading(true);
-    try {
-      console.log('Attempting enhanced PDF generation...');
-      
-      // Try enhanced PDF generation first
-      await pdfExportService.exportAnalytics(
-        analyticsData,
-        user,
-        analyticsTimeframe,
-        'analytics-charts-container'
-      );
-      
-      console.log('Enhanced PDF generated successfully!');
-      toast.success('Enhanced PDF report generated successfully!');
-    } catch (error) {
-      console.error('Enhanced PDF export error:', error);
-      console.log('Falling back to simple PDF generation...');
-      
-      // Fallback to simple PDF generation
-      await handleSimplePDFExport();
-    } finally {
-      setPdfExportLoading(false);
-    }
-  }, [analyticsData, user, analyticsTimeframe, handleSimplePDFExport]);
 
   // Debug function to check seller status
   const checkSellerStatus = useCallback(async () => {
@@ -2110,7 +1892,7 @@ const SellerDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {/* Analytics Header with Export Button */}
+                  {/* Analytics Header */}
                   <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                       <div className="flex-1">
@@ -2118,57 +1900,21 @@ const SellerDashboard = () => {
                         <p className="text-sm text-gray-600">Track your performance and growth metrics</p>
                       </div>
                       
-                      {/* Export PDF Button - Prominent */}
-                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={handleExportPDF}
-                            disabled={pdfExportLoading || analyticsLoading}
-                            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 min-w-[160px] border-2 border-red-500"
-                            title="Export your analytics data as a PDF report"
-                          >
-                            {pdfExportLoading ? (
-                              <FaSpinner className="animate-spin h-5 w-5" />
-                            ) : (
-                              <FaFilePdf className="h-5 w-5" />
-                            )}
-                            {pdfExportLoading ? 'Generating PDF...' : '📊 Export PDF + Charts'}
-                          </Button>
-                          
-                          <Button
-                            onClick={testPDFGeneration}
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
-                            title="Test PDF generation"
-                          >
-                            Test PDF
-                          </Button>
-                          
-                          <Button
-                            onClick={handleSimplePDFExport}
-                            disabled={pdfExportLoading || analyticsLoading}
-                            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
-                            title="Generate PDF report with charts and data"
-                          >
-                            📊 PDF + Charts
-                          </Button>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="timeframe" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-                            Timeframe:
-                          </Label>
-                          <select
-                            id="timeframe"
-                            value={analyticsTimeframe}
-                            onChange={(e) => setAnalyticsTimeframe(e.target.value)}
-                            className="p-2 border-2 border-gray-300 rounded-lg text-sm w-full sm:w-auto min-w-[140px] focus:border-red-500 focus:ring-2 focus:ring-red-200"
-                          >
-                            <option value="7d">Last 7 days</option>
-                            <option value="30d">Last 30 days</option>
-                            <option value="90d">Last 90 days</option>
-                            <option value="1y">Last year</option>
-                          </select>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="timeframe" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          Timeframe:
+                        </Label>
+                        <select
+                          id="timeframe"
+                          value={analyticsTimeframe}
+                          onChange={(e) => setAnalyticsTimeframe(e.target.value)}
+                          className="p-2 border-2 border-gray-300 rounded-lg text-sm w-full sm:w-auto min-w-[140px] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        >
+                          <option value="7d">Last 7 days</option>
+                          <option value="30d">Last 30 days</option>
+                          <option value="90d">Last 90 days</option>
+                          <option value="1y">Last year</option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -2177,7 +1923,7 @@ const SellerDashboard = () => {
                   <AnalyticsOverview />
 
                   {/* Charts */}
-                  <div id="analytics-charts-container" className="space-y-6 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                  <div className="space-y-6 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                       <SalesLineChart />
                       <CategoryBarChart />

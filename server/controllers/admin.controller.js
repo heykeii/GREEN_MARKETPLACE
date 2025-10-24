@@ -871,7 +871,7 @@ export const verifyCampaign = async (req, res) => {
     const { campaignId } = req.params;
     const { verified, rejectionMessage } = req.body;
 
-    const campaign = await Campaign.findById(campaignId);
+    const campaign = await Campaign.findById(campaignId).populate('createdBy', 'firstName lastName email');
     if (!campaign) {
       return errorResponse(res, 404, 'Campaign not found');
     }
@@ -887,6 +887,19 @@ export const verifyCampaign = async (req, res) => {
     }
 
     await campaign.save();
+
+    // Send notification to campaign creator
+    try {
+      const { NotificationService } = await import('../utils/notificationService.js');
+      if (verified) {
+        await NotificationService.notifyCampaignApproved(campaign.createdBy._id, campaign);
+      } else {
+        await NotificationService.notifyCampaignRejected(campaign.createdBy._id, campaign, rejectionMessage);
+      }
+    } catch (notificationError) {
+      console.error('Failed to send campaign verification notification:', notificationError);
+      // Don't fail the verification if notification fails
+    }
 
     res.status(200).json({ 
       success: true,
