@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/utils/toast';
 import { 
   FaSpinner, 
-  FaHeart, 
   FaShoppingCart,
   FaStar,
   FaEye,
@@ -24,7 +23,6 @@ const SearchResults = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState({});
-  const [wishlist, setWishlist] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -128,19 +126,6 @@ const SearchResults = () => {
     }
   };
 
-  const handleWishlist = (productId) => {
-    setWishlist(prev => {
-      const newWishlist = new Set(prev);
-      if (newWishlist.has(productId)) {
-        newWishlist.delete(productId);
-        toast.success('Removed from wishlist');
-      } else {
-        newWishlist.add(productId);
-        toast.success('Added to wishlist');
-      }
-      return newWishlist;
-    });
-  };
 
   const handleProductClick = (productId) => {
     navigate(`/product/${productId}`);
@@ -262,16 +247,6 @@ const SearchResults = () => {
                     className="group relative overflow-hidden shadow-lg border-emerald-100 bg-white/95 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 backdrop-blur-sm cursor-pointer"
                     onClick={() => handleProductClick(product._id)}
                   >
-                    {/* Wishlist Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleWishlist(product._id);
-                      }}
-                      className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md transition-all duration-200"
-                    >
-                      <FaHeart className={`w-4 h-4 ${wishlist.has(product._id) ? 'text-red-500' : 'text-gray-400'}`} />
-                    </button>
 
                     <CardContent className="p-0 flex flex-col h-full">
                       {/* Product Image */}

@@ -43,7 +43,7 @@ export class NotificationService {
       `Product Approved: ${product.name}`,
       'Your product has been approved and is now ready for listing.',
       { productId: product._id },
-      `/seller/products`,
+      `/product/${product._id}`,
       'medium'
     );
   }
@@ -55,7 +55,7 @@ export class NotificationService {
       `Product Rejected: ${product.name}`,
       message || 'Your product has been rejected by the admin. Please review and resubmit.',
       { productId: product._id },
-      `/seller/products`,
+      `/product/${product._id}`,
       'high'
     );
   }
@@ -67,7 +67,7 @@ export class NotificationService {
       `Product ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
       `Your product "${product.name}" status changed to ${newStatus}.`,
       { productId: product._id },
-      `/seller/products`,
+      `/product/${product._id}`,
       newStatus === 'rejected' ? 'high' : 'medium'
     );
   }

@@ -222,9 +222,9 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
 
           {/* Right Section */}
           <div className="flex items-center gap-1 sm:gap-3">
-            {/* Notification Icon (hide on very small screens) */}
+            {/* Notification Icon - visible on all screen sizes */}
             {user && (
-              <div className="hidden sm:inline-flex">
+              <div className="inline-flex">
                 <NotificationIcon />
               </div>
             )}

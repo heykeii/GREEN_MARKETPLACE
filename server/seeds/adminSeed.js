@@ -21,7 +21,7 @@ const createAdminUser = async () => {
 
     // Hash the password
     const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash('HOTDOGSAPACIFICOCEAN', saltRounds);
+    const hashedPassword = await bcrypt.hash('GreenM@2004/2025', saltRounds);
 
     // Create admin user
     const adminUser = new User({
@@ -37,7 +37,7 @@ const createAdminUser = async () => {
     await adminUser.save();
     console.log('Default admin user created successfully');
     console.log('Email: greenmarketplace02@gmail.com');
-    console.log('Password: HOTDOGSAPACIFICOCEAN');
+    console.log('Password: GreenM@2004/2025');
 
   } catch (error) {
     console.error('Error creating admin user:', error);

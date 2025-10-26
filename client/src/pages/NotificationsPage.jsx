@@ -176,6 +176,25 @@ const NotificationsPage = () => {
         return '✅';
       case 'seller_application_rejected':
         return '❗';
+      case 'product_approved':
+        return '✅';
+      case 'product_rejected':
+        return '❌';
+      case 'product_status_updated':
+        return '📦';
+      case 'campaign_approved':
+        return '🎉';
+      case 'campaign_rejected':
+        return '⚠️';
+      case 'receipt_verified':
+      case 'payment_received':
+        return '💰';
+      case 'receipt_rejected':
+        return '❌';
+      case 'receipt_needs_review':
+        return '🔍';
+      case 'badge_earned':
+        return '🏆';
       default:
         return '📢';
     }
@@ -202,9 +221,26 @@ const NotificationsPage = () => {
       case 'report_status_updated':
         return 'text-blue-600';
       case 'seller_application_approved':
+      case 'product_approved':
         return 'text-emerald-600';
       case 'seller_application_rejected':
+      case 'product_rejected':
         return 'text-red-600';
+      case 'product_status_updated':
+        return 'text-blue-600';
+      case 'campaign_approved':
+        return 'text-green-600';
+      case 'campaign_rejected':
+        return 'text-orange-600';
+      case 'receipt_verified':
+      case 'payment_received':
+        return 'text-green-600';
+      case 'receipt_rejected':
+        return 'text-red-600';
+      case 'receipt_needs_review':
+        return 'text-yellow-600';
+      case 'badge_earned':
+        return 'text-purple-600';
       default:
         return 'text-gray-600';
     }
@@ -228,7 +264,17 @@ const NotificationsPage = () => {
       'report_status_updated': 'Report Status Update',
       'system_message': 'System Message',
       'seller_application_approved': 'Seller Application Approved',
-      'seller_application_rejected': 'Seller Application Rejected'
+      'seller_application_rejected': 'Seller Application Rejected',
+      'product_approved': 'Product Approved',
+      'product_rejected': 'Product Rejected',
+      'product_status_updated': 'Product Status Updated',
+      'campaign_approved': 'Campaign Approved',
+      'campaign_rejected': 'Campaign Rejected',
+      'receipt_verified': 'Receipt Verified',
+      'receipt_rejected': 'Receipt Rejected',
+      'payment_received': 'Payment Received',
+      'receipt_needs_review': 'Receipt Needs Review',
+      'badge_earned': 'Badge Earned'
     };
     return typeMap[type] || type;
   };

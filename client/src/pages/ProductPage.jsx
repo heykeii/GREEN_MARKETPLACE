@@ -10,7 +10,6 @@ import { toast } from '@/utils/toast';
 import { 
   FaSpinner, 
   FaArrowLeft, 
-  FaHeart, 
   FaShare, 
   FaStar, 
   FaShoppingCart,

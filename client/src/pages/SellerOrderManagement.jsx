@@ -297,45 +297,49 @@ const SellerOrderManagement = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-16 px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-[#f5fdfb] via-[#e7f7f4] to-[#daf2ef] py-8 sm:py-12 lg:py-16 px-3 sm:px-4 lg:px-6 pt-20 sm:pt-24">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-4xl font-extrabold text-emerald-800 flex items-center gap-3">
-              <FaBox className="text-emerald-600 text-3xl" /> My Store Orders
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-emerald-800 flex items-center gap-2 sm:gap-3">
+              <FaBox className="text-emerald-600 text-2xl sm:text-3xl" />
+              <span className="hidden sm:inline">My Store Orders</span>
+              <span className="sm:hidden">Store Orders</span>
             </h1>
             <Link to="/seller/dashboard">
-              <Button variant="outline">Back to Dashboard</Button>
+              <Button variant="outline" className="w-full sm:w-auto">
+                Back to Dashboard
+              </Button>
             </Link>
           </div>
 
           {/* Filters */}
-          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md mb-8">
-            <CardHeader>
-              <CardTitle className="text-xl text-emerald-800">Filters</CardTitle>
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-md mb-6 sm:mb-8">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl text-emerald-800">Filters</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="search">Search Orders</Label>
-                  <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <Label htmlFor="search" className="text-sm font-medium text-gray-700">Search Orders</Label>
+                  <div className="relative mt-1">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
                     <Input
                       id="search"
                       placeholder="Order number, customer name, email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-9 text-sm"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <Label htmlFor="status">Filter by Status</Label>
+                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">Filter by Status</Label>
                   <select
                     id="status"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent mt-1"
                   >
                     <option value="all">All Orders</option>
                     <option value="pending">Pending</option>
@@ -350,120 +354,122 @@ const SellerOrderManagement = () => {
           </Card>
 
           {filteredOrders.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-6">📦</div>
-              <h2 className="text-2xl font-semibold text-gray-600 mb-4">No orders found</h2>
-              <p className="text-gray-500">No orders match your current filters or you haven't received any orders yet.</p>
+            <div className="text-center py-12 sm:py-16 lg:py-20">
+              <div className="text-4xl sm:text-5xl lg:text-6xl mb-4 sm:mb-6">📦</div>
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-600 mb-3 sm:mb-4">No orders found</h2>
+              <p className="text-gray-500 text-sm sm:text-base px-4">No orders match your current filters or you haven't received any orders yet.</p>
             </div>
           ) : (
             <>
               <div className="space-y-6">
                 {filteredOrders.map((order) => (
                   <Card key={order._id} className="shadow-xl border-0 bg-white/90 backdrop-blur-md">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-2xl">
-                            {getStatusIcon(order.status)}
-                          </div>
-                          <div>
-                            <CardTitle className="text-xl text-emerald-800">
-                              Order #{order.orderNumber}
-                            </CardTitle>
-                            <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                              <span className="flex items-center gap-1">
-                                <FaCalendar />
-                                {new Date(order.createdAt).toLocaleDateString()}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <FaMoneyBillWave />
-                                ₱{order.totalAmount.toFixed(2)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <FaUser />
-                                {order.customer?.firstName} {order.customer?.lastName}
-                              </span>
+                    <CardHeader className="pb-3 sm:pb-4">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                          <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="text-xl sm:text-2xl flex-shrink-0">
+                              {getStatusIcon(order.status)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-lg sm:text-xl text-emerald-800">
+                                Order #{order.orderNumber}
+                              </CardTitle>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 mt-1">
+                                <span className="flex items-center gap-1">
+                                  <FaCalendar className="text-xs" />
+                                  {new Date(order.createdAt).toLocaleDateString()}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <FaMoneyBillWave className="text-xs" />
+                                  ₱{order.totalAmount.toFixed(2)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <FaUser className="text-xs" />
+                                  {order.customer?.firstName} {order.customer?.lastName}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge className={getStatusColor(order.status)}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </Badge>
-                          {canUpdateStatus(order.status) && (
-                            order.status === 'ready' ? (
-                              <DropdownMenu open={statusDropdownOpen === order._id} onOpenChange={(open) => setStatusDropdownOpen(open ? order._id : null)}>
-                                <DropdownMenuTrigger asChild>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                            <Badge className={getStatusColor(order.status)}>
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </Badge>
+                            {canUpdateStatus(order.status) && (
+                              order.status === 'ready' ? (
+                                <DropdownMenu open={statusDropdownOpen === order._id} onOpenChange={(open) => setStatusDropdownOpen(open ? order._id : null)}>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
+                                    >
+                                      Update Status
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        updateOrderStatus(order._id, 'completed');
+                                        setStatusDropdownOpen(null);
+                                      }}
+                                      className="text-green-600 hover:text-green-700"
+                                    >
+                                      ✅ Mark as Completed
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setCancelOrderId(order._id);
+                                        setCancelReason('');
+                                        setCancelDialogOpen(true);
+                                        setStatusDropdownOpen(null);
+                                      }}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      ❌ Cancel Order
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                                   <Button
                                     size="sm"
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    onClick={() => updateOrderStatus(order._id, getNextStatus(order.status))}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
                                   >
-                                    Update Status
+                                    {getNextStatusText(order.status)}
                                   </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      updateOrderStatus(order._id, 'completed');
-                                      setStatusDropdownOpen(null);
-                                    }}
-                                    className="text-green-600 hover:text-green-700"
-                                  >
-                                    ✅ Mark as Completed
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setCancelOrderId(order._id);
-                                      setCancelReason('');
-                                      setCancelDialogOpen(true);
-                                      setStatusDropdownOpen(null);
-                                    }}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    ❌ Cancel Order
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => updateOrderStatus(order._id, getNextStatus(order.status))}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                                >
-                                  {getNextStatusText(order.status)}
-                                </Button>
-                                {(order.status === 'pending' || order.status === 'confirmed') && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-red-300 text-red-600 hover:bg-red-50"
-                                    onClick={() => {
-                                      setCancelOrderId(order._id);
-                                      setCancelReason('');
-                                      setCancelDialogOpen(true);
-                                    }}
-                                  >
-                                    Cancel Order
-                                  </Button>
-                                )}
-                              </div>
-                            )
-                          )}
+                                  {(order.status === 'pending' || order.status === 'confirmed') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-red-300 text-red-600 hover:bg-red-50 w-full sm:w-auto"
+                                      onClick={() => {
+                                        setCancelOrderId(order._id);
+                                        setCancelReason('');
+                                        setCancelDialogOpen(true);
+                                      }}
+                                    >
+                                      Cancel Order
+                                    </Button>
+                                  )}
+                                </div>
+                              )
+                            )}
+                          </div>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <CardContent className="pt-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <img
                               src={item.product?.images?.[0]}
                               alt={item.product?.name}
-                              className="w-12 h-12 object-cover rounded-lg border"
+                              className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg border flex-shrink-0"
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm text-emerald-800 truncate">
+                              <p className="font-medium text-xs sm:text-sm text-emerald-800 truncate">
                                 {item.product?.name}
                               </p>
                               {item.variant?.name && (
@@ -480,40 +486,41 @@ const SellerOrderManagement = () => {
                         ))}
                       </div>
                       
-                      <div className="mt-4 flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm text-gray-600">
+                      <div className="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                          <span>
                             <strong>Payment:</strong> {order.paymentMethod.toUpperCase()}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span>
                             <strong>Status:</strong> {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
                           </span>
-                          <span className="text-sm text-gray-700">
+                          <span>
                             <strong>Admin Commission:</strong> ₱{calculateCommissionForOrder(order).toFixed(2)}
                           </span>
                           {order.shippingAddress && (
-                            <span className="text-sm text-gray-600">
+                            <span>
                               <strong>Ship to:</strong> {order.shippingAddress.city}, {order.shippingAddress.province}
                             </span>
                           )}
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           {(['completed', 'ready'].includes(order.status)) && order.paymentStatus === 'paid' && !(order.commission && order.commission.isPaid) && (
                             <Button
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
                               onClick={() => openPayCommissionDialog(order)}
                             >
                               Pay Commission
                             </Button>
                           )}
                           {order?.commission?.isPaid && (
-                            <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700 self-center">Commission Paid</span>
+                            <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700 self-center text-center">Commission Paid</span>
                           )}
                           <Button
                             size="sm"
                             variant="outline"
+                            className="w-full sm:w-auto"
                             onClick={() => {
                               const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
                               if (!token) {
@@ -545,7 +552,7 @@ const SellerOrderManagement = () => {
 
                       {order.notes && (
                         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-blue-800">
+                          <p className="text-xs sm:text-sm text-blue-800">
                             <strong>Customer Notes:</strong> {order.notes}
                           </p>
                         </div>
@@ -557,23 +564,26 @@ const SellerOrderManagement = () => {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-10">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-8 sm:mt-10">
                   <Button
                     variant="outline"
                     disabled={!pagination.hasPrev}
                     onClick={() => handlePageChange(currentPage - 1)}
+                    className="w-full sm:w-auto px-4 sm:px-6 py-2"
                   >
                     Previous
                   </Button>
                   
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 sm:pb-0">
                     {[...Array(pagination.totalPages)].map((_, idx) => (
                       <Button
                         key={idx + 1}
                         variant={currentPage === idx + 1 ? "default" : "outline"}
                         size="sm"
                         onClick={() => handlePageChange(idx + 1)}
-                        className={currentPage === idx + 1 ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 ${
+                          currentPage === idx + 1 ? "bg-emerald-600 hover:bg-emerald-700" : ""
+                        }`}
                       >
                         {idx + 1}
                       </Button>
@@ -584,6 +594,7 @@ const SellerOrderManagement = () => {
                     variant="outline"
                     disabled={!pagination.hasNext}
                     onClick={() => handlePageChange(currentPage + 1)}
+                    className="w-full sm:w-auto px-4 sm:px-6 py-2"
                   >
                     Next
                   </Button>
@@ -597,32 +608,32 @@ const SellerOrderManagement = () => {
 
       {/* Pay Commission Dialog */}
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col mx-4 sm:mx-auto">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Pay Admin Commission</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Pay Admin Commission</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-4 pr-2">
             {/* Order Info */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Order <strong className="text-gray-900">#{payOrder?.orderNumber}</strong>
               </p>
-              <p className="text-sm text-gray-600 mt-1">
-                Amount due: <span className="font-bold text-emerald-700 text-lg">₱{(payOrder ? calculateCommissionForOrder(payOrder) : 0).toFixed(2)}</span>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                Amount due: <span className="font-bold text-emerald-700 text-base sm:text-lg">₱{(payOrder ? calculateCommissionForOrder(payOrder) : 0).toFixed(2)}</span>
               </p>
             </div>
 
             {/* GCash Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+              <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2 text-sm sm:text-base">
                 <FaMoneyBillWave className="text-blue-600" />
                 Payment Instructions
               </h4>
-              <p className="text-sm text-blue-800">
+              <p className="text-xs sm:text-sm text-blue-800">
                 Please pay the commission to this GCash number:
               </p>
-              <div className="mt-2 flex items-center gap-2">
-                <code className="bg-white px-3 py-2 rounded border border-blue-300 text-blue-900 font-bold text-lg">
+              <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <code className="bg-white px-3 py-2 rounded border border-blue-300 text-blue-900 font-bold text-sm sm:text-lg">
                   {GCASH_NUMBER}
                 </code>
                 <Button 
@@ -632,7 +643,7 @@ const SellerOrderManagement = () => {
                     navigator.clipboard.writeText(GCASH_NUMBER);
                     toast.success('GCash number copied!');
                   }}
-                  className="text-blue-600 hover:text-blue-700"
+                  className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm"
                 >
                   Copy
                 </Button>
@@ -642,7 +653,7 @@ const SellerOrderManagement = () => {
             {/* File Upload */}
             <div className="space-y-3">
               <div>
-                <Label htmlFor="commission-receipt-file" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="commission-receipt-file" className="text-xs sm:text-sm font-medium text-gray-700">
                   Upload GCash Receipt Screenshot *
                 </Label>
                 <Input
@@ -650,7 +661,7 @@ const SellerOrderManagement = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleFileSelect}
-                  className="mt-1"
+                  className="mt-1 text-xs sm:text-sm"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -661,12 +672,12 @@ const SellerOrderManagement = () => {
               {/* Preview */}
               {previewUrl && (
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">Preview</Label>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-700">Preview</Label>
                   <div className="mt-1 border rounded-lg p-2 bg-gray-50">
                     <img 
                       src={previewUrl} 
                       alt="Receipt Preview" 
-                      className="max-w-full max-h-48 mx-auto rounded"
+                      className="max-w-full max-h-32 sm:max-h-48 mx-auto rounded"
                     />
                   </div>
                 </div>
@@ -681,7 +692,7 @@ const SellerOrderManagement = () => {
               </div>
             </div>
           </div>
-          <DialogFooter className="flex-shrink-0 gap-2 mt-4">
+          <DialogFooter className="flex-shrink-0 gap-2 mt-4 flex-col sm:flex-row">
             <Button 
               variant="outline" 
               onClick={() => {
@@ -689,13 +700,14 @@ const SellerOrderManagement = () => {
                 setSelectedFile(null);
                 setPreviewUrl(null);
               }}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleUploadReceipt}
               disabled={!selectedFile || uploading}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
             >
               {uploading ? (
                 <>
@@ -715,24 +727,31 @@ const SellerOrderManagement = () => {
 
     {/* Cancel Order Dialog */}
     <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-      <DialogContent>
+      <DialogContent className="mx-4 sm:mx-auto">
         <DialogHeader>
-          <DialogTitle>Cancel Order</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Cancel Order</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="cancel-reason">Reason for cancellation</Label>
+          <Label htmlFor="cancel-reason" className="text-sm font-medium text-gray-700">Reason for cancellation</Label>
           <Input
             id="cancel-reason"
             placeholder="Provide a brief reason (required)"
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
+            className="text-sm"
           />
           <p className="text-xs text-gray-500">This reason will be sent to the customer.</p>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>Close</Button>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setCancelDialogOpen(false)}
+            className="w-full sm:w-auto"
+          >
+            Close
+          </Button>
           <Button
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
             disabled={!cancelReason.trim()}
             onClick={async () => {
               try {

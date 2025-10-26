@@ -245,9 +245,9 @@ const NotificationIcon = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px]"
         >
-          <FaBell className="text-2xl text-emerald-600" />
+          <FaBell className="text-xl sm:text-2xl text-emerald-600" />
           {unreadCount > 0 && (
             <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold shadow">
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -256,7 +256,7 @@ const NotificationIcon = () => {
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto mx-4 sm:mx-0">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span className="font-semibold">Notifications</span>
           {unreadCount > 0 && (
