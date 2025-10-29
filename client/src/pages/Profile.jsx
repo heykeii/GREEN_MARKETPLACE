@@ -877,7 +877,13 @@ const Profile = () => {
                           <div className="p-4 space-y-2">
                             <div className="flex items-center justify-between">
                               <h4 className="font-semibold text-emerald-800 truncate">{c.title}</h4>
-                              <span className={`px-2 py-0.5 text-xs rounded-full ${c.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{c.verified ? 'Verified' : 'Pending'}</span>
+                              {c.verified ? (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Verified</span>
+                              ) : c.rejectionMessage ? (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700" title={c.rejectionMessage}>Rejected</span>
+                              ) : (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Pending</span>
+                              )}
                             </div>
                             {c.description && (
                               <p className="text-sm text-emerald-700 line-clamp-2">{c.description}</p>

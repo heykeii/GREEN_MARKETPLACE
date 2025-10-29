@@ -411,6 +411,19 @@ const PublicProfile = () => {
                             {c.description && (
                               <p className="text-sm text-gray-700 mt-1 line-clamp-2">{c.description}</p>
                             )}
+                            {c.media?.url && (
+                              <div className="mt-2">
+                                <a
+                                  href={c.media.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-600 hover:text-emerald-700 text-sm font-medium inline-flex items-center gap-1"
+                                >
+                                  <FaLink />
+                                  Open certificate
+                                </a>
+                              </div>
+                            )}
                           </div>
                         </div>
                         );

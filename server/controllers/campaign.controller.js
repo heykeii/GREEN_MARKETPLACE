@@ -449,9 +449,18 @@ const verifyCampaign = async (req, res) => {
     const { id } = req.params;
     const { verified, reason } = req.body;
 
+    const update = { verified };
+    if (verified) {
+      update.rejectionMessage = undefined;
+    } else if (typeof reason === 'string' && reason.trim().length > 0) {
+      update.rejectionMessage = reason.trim();
+    } else {
+      update.rejectionMessage = 'Rejected by admin';
+    }
+
     const campaign = await Campaign.findByIdAndUpdate(
       id,
-      { verified },
+      update,
       { new: true }
     ).populate('createdBy', 'firstName lastName email avatar');
 
@@ -467,7 +476,7 @@ const verifyCampaign = async (req, res) => {
       if (verified) {
         await NotificationService.notifyCampaignApproved(campaign.createdBy._id, campaign);
       } else {
-        await NotificationService.notifyCampaignRejected(campaign.createdBy._id, campaign, reason);
+        await NotificationService.notifyCampaignRejected(campaign.createdBy._id, campaign, update.rejectionMessage);
       }
     } catch (notificationError) {
       console.error('Failed to send campaign verification notification:', notificationError);
