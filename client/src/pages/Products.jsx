@@ -92,11 +92,10 @@ const Products = () => {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="w-full sm:w-auto px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                   >
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
                     <option value="price-low">Price: Low to High</option>
                     <option value="price-high">Price: High to Low</option>
-                    <option value="rating">Highest Rated</option>
                   </select>
                 </div>
 

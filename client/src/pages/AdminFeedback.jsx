@@ -42,6 +42,7 @@ const AdminFeedback = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: '', category: '', page: 1 });
+  const [replyTextById, setReplyTextById] = useState({});
   const stats = useMemo(() => ({
     total: items.length,
     newCount: items.filter((i) => i.status === 'new').length,
@@ -74,6 +75,29 @@ const AdminFeedback = () => {
       setItems((prev) => prev.map((f) => (f._id === id ? { ...f, status } : f)));
     } catch (e) {
       toast.error(e.message || 'Failed to update');
+    }
+  };
+
+  const submitReply = async (id) => {
+    const text = (replyTextById[id] || '').trim();
+    if (!text) { toast.error('Please enter a reply'); return; }
+    try {
+      const res = await api.post(`/api/v1/admin/feedback/${id}/reply`, { content: text });
+      toast.success('Reply sent');
+      setItems((prev) => prev.map((f) => (f._id === id ? (res.feedback || f) : f)));
+      setReplyTextById((p) => ({ ...p, [id]: '' }));
+    } catch (e) {
+      toast.error(e.message || 'Failed to send reply');
+    }
+  };
+
+  const deleteReply = async (id) => {
+    try {
+      await api.delete(`/api/v1/admin/feedback/${id}/reply`);
+      setItems((prev) => prev.map((f) => (f._id === id ? { ...f, adminReply: undefined } : f)));
+      toast.success('Reply deleted');
+    } catch (e) {
+      toast.error(e.message || 'Failed to delete reply');
     }
   };
 
@@ -172,6 +196,38 @@ const AdminFeedback = () => {
                       </button>
                     )}
                   </div>
+                </div>
+
+                {/* Admin reply box */}
+                <div className="mt-4 pl-0 md:pl-8">
+                  {f.adminReply?.content ? (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-emerald-800 font-semibold">Admin reply</div>
+                        <button onClick={() => deleteReply(f._id)} className="text-red-600 text-xs hover:underline">Delete</button>
+                      </div>
+                      <div className="text-emerald-900 whitespace-pre-line">{f.adminReply.content}</div>
+                      <div className="text-xs text-emerald-700 mt-1">
+                        {f.adminReply.admin ? `${f.adminReply.admin.firstName || ''} ${f.adminReply.admin.lastName || ''}`.trim() : 'Admin'} • {new Date(f.adminReply.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        placeholder="Write a reply to this feedback…"
+                        value={replyTextById[f._id] || ''}
+                        onChange={(e) => setReplyTextById((p) => ({ ...p, [f._id]: e.target.value }))}
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      />
+                      <button
+                        onClick={() => submitReply(f._id)}
+                        className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm hover:bg-emerald-700"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))

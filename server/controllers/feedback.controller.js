@@ -51,7 +51,8 @@ export const listFeedback = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
-        .populate('user', 'firstName lastName email'),
+        .populate('user', 'firstName lastName email')
+        .populate('adminReply.admin', 'firstName lastName email role'),
       Feedback.countDocuments(filter)
     ]);
 
@@ -84,4 +85,39 @@ export const updateFeedbackStatus = async (req, res) => {
   }
 };
 
+export const replyToFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Reply content is required' });
+    }
+    const feedback = await Feedback.findById(id);
+    if (!feedback) return res.status(404).json({ success: false, message: 'Feedback not found' });
+    feedback.adminReply = {
+      content: content.trim(),
+      admin: req.user._id,
+      createdAt: new Date()
+    };
+    await feedback.save();
+    const populated = await Feedback.findById(id)
+      .populate('user', 'firstName lastName email')
+      .populate('adminReply.admin', 'firstName lastName email role');
+    return res.status(200).json({ success: true, feedback: populated });
+  } catch (error) {
+    return errorResponse(res, 500, 'Failed to save reply', error);
+  }
+};
 
+export const deleteFeedbackReply = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const feedback = await Feedback.findById(id);
+    if (!feedback) return res.status(404).json({ success: false, message: 'Feedback not found' });
+    feedback.adminReply = undefined;
+    await feedback.save();
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return errorResponse(res, 500, 'Failed to delete reply', error);
+  }
+};

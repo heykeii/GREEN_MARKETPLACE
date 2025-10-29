@@ -458,8 +458,15 @@ const Profile = () => {
 
                     {/* User Info */}
                     <div className="text-center space-y-2 sm:space-y-3">
-                      <h1 className="text-xl sm:text-2xl font-bold text-green-800">
+                      <h1 className="text-xl sm:text-2xl font-bold text-green-800 flex items-center gap-2 justify-center">
                         {user.firstName} {user.lastName}
+                        {user.role === 'admin' && (
+                          <span title="Administrator" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold border border-red-200">
+                            {/* shield icon */}
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l7 4v6c0 5.25-3.438 9.906-8.25 11-4.812-1.094-8.25-5.75-8.25-11V6l7-4z"/></svg>
+                            Admin
+                          </span>
+                        )}
                       </h1>
                       <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-50 rounded-full">
                         <span className="text-green-700 text-xs sm:text-sm font-medium break-all">{user.email}</span>

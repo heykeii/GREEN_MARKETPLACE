@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
-import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaUsers, FaStore, FaCertificate } from 'react-icons/fa';
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaUsers, FaStore, FaCertificate, FaShieldAlt } from 'react-icons/fa';
 import ReportButton from '@/components/ReportButton';
 import BadgeModal from '@/components/BadgeModal';
 import CompactBadgeDisplay from '@/components/CompactBadgeDisplay';
@@ -197,8 +197,13 @@ const PublicProfile = () => {
 
                       {/* Name and Info */}
                       <div className="flex-1 text-center sm:text-left">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                           {profile.firstName} {profile.lastName}
+                          {profile.role === 'admin' && (
+                            <span title="Administrator" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold border border-red-200">
+                              <FaShieldAlt className="text-sm" /> Admin
+                            </span>
+                          )}
                         </h1>
                         <div className="flex items-center justify-center sm:justify-start gap-2 mb-4">
                           <FaEnvelope className="text-emerald-600 text-sm" />

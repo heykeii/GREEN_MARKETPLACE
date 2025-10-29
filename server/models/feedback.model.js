@@ -16,6 +16,11 @@ const feedbackSchema = new mongoose.Schema(
       userAgent: String,
       page: String,
       url: String
+    },
+    adminReply: {
+      content: { type: String, trim: true },
+      admin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      createdAt: { type: Date }
     }
   },
   { timestamps: true }
