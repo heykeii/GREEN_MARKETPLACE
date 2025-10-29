@@ -336,4 +336,18 @@ export class NotificationService {
       'high'
     );
   }
+
+  // Feedback: admin replied to feedback
+  static async notifyFeedbackReplied(userId, feedback) {
+    if (!userId) return;
+    await createNotification(
+      userId,
+      'feedback_replied',
+      'Admin replied to your feedback',
+      String(feedback.adminReply?.content || 'An admin responded to your feedback.'),
+      { feedbackId: feedback._id },
+      '/notifications',
+      'medium'
+    );
+  }
 }

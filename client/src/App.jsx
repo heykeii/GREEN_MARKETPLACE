@@ -51,6 +51,7 @@ import ResetPassword from './pages/ResetPassword';
 import AdminSustainability from './pages/AdminSustainability';
 import Terms from './pages/Terms';
 import LikedCampaigns from './pages/LikedCampaigns';
+import MyFeedback from './pages/MyFeedback';
 
 const ScrollToTopOnRouteChange = () => {
   const { pathname } = useLocation();
@@ -86,6 +87,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<PublicProfile />} />
         <Route path="/my-reports" element={<MyReports />} />
+        <Route path="/my-feedback" element={<MyFeedback />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/seller/create-product" element={<CreateProduct />} />

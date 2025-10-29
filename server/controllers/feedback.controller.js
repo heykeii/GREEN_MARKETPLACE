@@ -1,4 +1,5 @@
 import Feedback from '../models/feedback.model.js';
+import { NotificationService } from '../utils/notificationService.js';
 
 // Local error response helper to match existing controllers
 const errorResponse = (res, status, message, error = null) => {
@@ -85,6 +86,16 @@ export const updateFeedbackStatus = async (req, res) => {
   }
 };
 
+export const listMyFeedback = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const items = await Feedback.find({ user: userId }).sort({ createdAt: -1 }).populate('adminReply.admin', 'firstName lastName role');
+    return res.status(200).json({ success: true, items });
+  } catch (error) {
+    return errorResponse(res, 500, 'Failed to fetch your feedback', error);
+  }
+};
+
 export const replyToFeedback = async (req, res) => {
   try {
     const { id } = req.params;
@@ -103,6 +114,12 @@ export const replyToFeedback = async (req, res) => {
     const populated = await Feedback.findById(id)
       .populate('user', 'firstName lastName email')
       .populate('adminReply.admin', 'firstName lastName email role');
+    // Notify original user
+    try {
+      if (populated.user?._id) {
+        await NotificationService.notifyFeedbackReplied(populated.user._id, populated);
+      }
+    } catch (_) {}
     return res.status(200).json({ success: true, feedback: populated });
   } catch (error) {
     return errorResponse(res, 500, 'Failed to save reply', error);

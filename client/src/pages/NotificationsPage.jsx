@@ -160,6 +160,8 @@ const NotificationsPage = () => {
         return '🤝';
       case 'review_reply':
         return '↩️';
+      case 'feedback_replied':
+        return '🗨️';
       case 'order_status_updated':
       case 'order_confirmed':
       case 'order_ready':
@@ -212,6 +214,7 @@ const NotificationsPage = () => {
         return 'text-red-600';
       case 'campaign_commented':
       case 'review_reply':
+      case 'feedback_replied':
         return 'text-blue-600';
       case 'order_cancelled':
       case 'order_cancelled_by_customer':
@@ -255,6 +258,7 @@ const NotificationsPage = () => {
       'campaign_commented': 'Campaign Comment',
       'campaign_joined': 'Campaign Joined',
       'review_reply': 'Review Reply',
+      'feedback_replied': 'Feedback Reply',
       'order_status_updated': 'Order Status Update',
       'order_confirmed': 'Order Confirmed',
       'order_ready': 'Order Ready',
