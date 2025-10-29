@@ -11,7 +11,6 @@ import {
   Mail,
   User,
   Trash2,
-  Download,
   UserCheck,
   Shield,
   Star,
@@ -29,10 +28,29 @@ const AdminUserManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [verifiedSellers, setVerifiedSellers] = useState(0);
 
   useEffect(() => {
     fetchUsers();
   }, [currentPage, searchQuery]);
+
+  useEffect(() => {
+    const fetchAdminStats = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/stats`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          }
+        });
+        
+        setVerifiedSellers(response.data.verifiedSellers || 0);
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+      }
+    };
+
+    fetchAdminStats();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -119,8 +137,6 @@ const AdminUserManagement = () => {
     return 'User';
   };
 
-  const verifiedSellers = users.filter(u => u.isSeller && u.sellerStatus === 'verified').length;
-
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
@@ -138,10 +154,6 @@ const AdminUserManagement = () => {
                 <p className="text-slate-600 text-sm sm:text-lg mt-1">Manage and monitor all registered users in the marketplace</p>
               </div>
             </div>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl shadow-blue-500/25 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl w-full sm:w-auto">
-              <Download className="h-4 w-4 mr-2" />
-              Export Users
-            </Button>
           </div>
         </div>
         {/* Enhanced Stats Cards */}

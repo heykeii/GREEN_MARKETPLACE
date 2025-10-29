@@ -75,6 +75,8 @@ const CheckoutPage = () => {
               quantity: i.quantity,
               images: p.images || [],
               image: p.image,
+              // include seller so downstream flows (e.g., GCash) have it
+              seller: typeof p.seller === 'object' && p.seller !== null ? (p.seller._id || p.seller.id) : p.seller,
               variant: chosenVariant ? {
                 name: chosenVariant.name,
                 price: Number(chosenVariant.price),
@@ -143,19 +145,40 @@ const CheckoutPage = () => {
   // Fetch seller's GCash details when GCash is selected
   useEffect(() => {
     const fetchSellerGcashDetails = async () => {
-      if (paymentMethod === 'gcash' && cart.length > 0) {
-        try {
-          const token = localStorage.getItem('token');
-          const sellerId = cart[0].seller; // Assuming all items are from the same seller
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/v1/seller/${sellerId}/gcash`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          setSellerGcashDetails(response.data.gcash);
-        } catch (error) {
-          console.error('Failed to fetch seller GCash details:', error);
-          toast.error('Failed to load seller GCash details');
+      if (paymentMethod !== 'gcash' || cart.length === 0) return;
+      try {
+        const token = localStorage.getItem('token');
+        // Prefer existing seller field if present
+        let sellerId = cart[0]?.seller;
+
+        // Fallback: fetch product details to derive sellerId
+        if (!sellerId) {
+          const productId = cart[0]?._id || cart[0]?.product;
+          if (productId) {
+            const pr = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/products/view/${productId}`);
+            const product = pr.data?.product;
+            if (product) {
+              sellerId = typeof product.seller === 'object' && product.seller !== null
+                ? (product.seller._id || product.seller.id)
+                : product.seller;
+            }
+          }
         }
+
+        if (!sellerId) {
+          console.warn('Cannot determine seller ID for GCash details');
+          toast.error('Unable to determine seller for GCash payment');
+          return;
+        }
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/v1/seller/${sellerId}/gcash`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setSellerGcashDetails(response.data.gcash);
+      } catch (error) {
+        console.error('Failed to fetch seller GCash details:', error);
+        toast.error('Failed to load seller GCash details');
       }
     };
 

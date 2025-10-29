@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
-import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaUsers, FaStore } from 'react-icons/fa';
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaSnapchatGhost, FaDiscord, FaTelegramPlane, FaGlobe, FaLink, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaUsers, FaStore, FaCertificate } from 'react-icons/fa';
 import ReportButton from '@/components/ReportButton';
 import BadgeModal from '@/components/BadgeModal';
 import CompactBadgeDisplay from '@/components/CompactBadgeDisplay';
@@ -59,6 +59,8 @@ const PublicProfile = () => {
   const [products, setProducts] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [followLoading, setFollowLoading] = useState(false);
+  const [certifications, setCertifications] = useState([]);
+  const [failedCertImgs, setFailedCertImgs] = useState(new Set());
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
   const isAdmin = typeof window !== 'undefined' && localStorage.getItem('admin_token');
 
@@ -86,6 +88,11 @@ const PublicProfile = () => {
         try {
           const campRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/campaigns/by-user/${userId}`);
           if (campRes.data?.success) setCampaigns(campRes.data.campaigns || []);
+        } catch(e) {}
+        // Fetch sustainability certifications (public)
+        try {
+          const certRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/certifications/user/${userId}`);
+          if (certRes.data?.success) setCertifications(certRes.data.items || []);
         } catch(e) {}
       } catch (e) {
         setError('Failed to load profile.');
@@ -360,6 +367,58 @@ const PublicProfile = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Sustainability Certifications */}
+              <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-600 to-green-600 flex items-center justify-center shadow-lg">
+                      <span className="text-white text-lg">♻️</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Sustainability Certifications</h3>
+                  </div>
+                  {certifications.length === 0 ? (
+                    <div className="text-gray-500 text-sm">No certifications to display</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {certifications.map((c) => {
+                        const showImage = !!c.media?.url && !failedCertImgs.has(c._id);
+                        return (
+                        <div key={c._id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:border-emerald-200 transition-colors">
+                          {showImage ? (
+                            <img
+                              src={c.media.url}
+                              alt={c.title}
+                              className="w-14 h-14 object-cover rounded-md border flex-shrink-0"
+                              onError={() => {
+                                setFailedCertImgs(prev => new Set(prev).add(c._id));
+                              }}
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-md bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                              <FaCertificate className="text-2xl" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-semibold text-gray-900 truncate">{c.title}</h4>
+                              {c.issuedBy && (
+                                <Badge variant="secondary" className="text-xs">{c.issuedBy}</Badge>
+                              )}
+                            </div>
+                            {c.issueDate && (
+                              <div className="text-xs text-gray-500 mt-0.5">Issued {new Date(c.issueDate).toLocaleDateString()}</div>
+                            )}
+                            {c.description && (
+                              <p className="text-sm text-gray-700 mt-1 line-clamp-2">{c.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
               {/* Achievements Card */}
               <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-6">

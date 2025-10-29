@@ -48,3 +48,15 @@ export const deleteCertification = async (req, res) => {
 };
 
 
+// Public: list certifications for a specific user by ID
+export const listUserCertificationsPublic = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return errorResponse(res, 400, 'userId is required');
+    const items = await Certification.find({ user: userId }).sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, items });
+  } catch (error) {
+    return errorResponse(res, 500, 'Failed to fetch certifications', error);
+  }
+};
+
