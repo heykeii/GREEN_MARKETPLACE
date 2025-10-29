@@ -348,6 +348,13 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                      <FaEnvelope className="text-emerald-600" /> Messages
                    </DropdownMenuItem>
                   
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/my-feedback")}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
+                  >
+                    <FaExclamationTriangle className="text-emerald-600" /> My Feedback
+                  </DropdownMenuItem>
+                  
                    <DropdownMenuItem 
                      onClick={() => navigate("/notifications")}
                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-700 font-medium transition-colors duration-150"
@@ -528,6 +535,15 @@ const Navbar = ({ onProductsClick, onAboutClick }) => {
                       className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
                     >
                       Notifications
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/my-feedback');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2.5 text-gray-700 font-medium hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                    >
+                      My Feedback
                     </button>
                   </div>
                   
