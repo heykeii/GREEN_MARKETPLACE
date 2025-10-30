@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from '@/utils/toast';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -18,7 +18,7 @@ const ReportForm = ({
   const [formData, setFormData] = useState({
     reason: '',
     description: '',
-    evidence: []
+    evidence: [] // Will store File objects
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,19 +62,40 @@ const ReportForm = ({
   };
 
   const handleEvidenceChange = (e) => {
-    const files = Array.from(e.target.files);
-    const urls = files.map(file => URL.createObjectURL(file));
+    const newFiles = Array.from(e.target.files);
+    const totalFiles = formData.evidence.length + newFiles.length;
+    
+    if (totalFiles > 5) {
+      toast.error('Maximum 5 evidence images allowed');
+      return;
+    }
+    
+    // Store File objects and create preview URLs
+    const fileObjects = newFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    
     setFormData(prev => ({
       ...prev,
-      evidence: [...prev.evidence, ...urls]
+      evidence: [...prev.evidence, ...fileObjects]
     }));
+    
+    // Reset file input to allow selecting the same file again
+    e.target.value = '';
   };
 
   const removeEvidence = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      evidence: prev.evidence.filter((_, i) => i !== index)
-    }));
+    setFormData(prev => {
+      // Revoke the blob URL to free memory
+      if (prev.evidence[index]?.preview) {
+        URL.revokeObjectURL(prev.evidence[index].preview);
+      }
+      return {
+        ...prev,
+        evidence: prev.evidence.filter((_, i) => i !== index)
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -89,25 +110,38 @@ const ReportForm = ({
 
     try {
       const authToken = localStorage.getItem('token') || localStorage.getItem('admin_token');
+      
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('reportedItemType', reportedItemType);
+      formDataToSend.append('reportedItemId', reportedItemId);
+      formDataToSend.append('reason', formData.reason);
+      formDataToSend.append('description', formData.description);
+      
+      // Append evidence files
+      formData.evidence.forEach((evidenceItem) => {
+        formDataToSend.append('evidence', evidenceItem.file);
+      });
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/reports/create`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
+          // Don't set Content-Type - browser will set it with boundary for FormData
         },
-        body: JSON.stringify({
-          reportedItemType,
-          reportedItemId,
-          reason: formData.reason,
-          description: formData.description,
-          evidence: formData.evidence
-        })
+        body: formDataToSend
       });
 
       const data = await response.json();
 
       if (data.success) {
         toast.success('Report submitted successfully');
+        // Clean up blob URLs after successful submission
+        formData.evidence.forEach((evidenceItem) => {
+          if (evidenceItem?.preview) {
+            URL.revokeObjectURL(evidenceItem.preview);
+          }
+        });
         onSuccess && onSuccess(data.report);
         onClose && onClose();
       } else {
@@ -120,6 +154,17 @@ const ReportForm = ({
       setIsSubmitting(false);
     }
   };
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      formData.evidence.forEach((evidenceItem) => {
+        if (evidenceItem?.preview) {
+          URL.revokeObjectURL(evidenceItem.preview);
+        }
+      });
+    };
+  }, []);
 
   const getItemTypeLabel = (type) => {
     switch (type) {
@@ -211,10 +256,10 @@ const ReportForm = ({
             <div>
               <Label className="text-sm font-medium">Uploaded Evidence:</Label>
               <div className="mt-2 flex flex-wrap gap-2">
-                {formData.evidence.map((url, index) => (
+                {formData.evidence.map((evidenceItem, index) => (
                   <div key={index} className="relative">
                     <img
-                      src={url}
+                      src={evidenceItem.preview || evidenceItem}
                       alt={`Evidence ${index + 1}`}
                       className="w-20 h-20 object-cover rounded border"
                     />

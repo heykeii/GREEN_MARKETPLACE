@@ -259,9 +259,6 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4">
-              View All Activity
-            </Button>
           </CardContent>
         </Card>
       </div>
@@ -309,17 +306,19 @@ const AdminDashboard = () => {
         <Card className="shadow-xl border-0 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-indigo-100 rounded-2xl">
-                <Star className="h-6 w-6 text-indigo-600" />
+              <div className="p-3 bg-red-100 rounded-2xl">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Platform Analytics</h3>
-                <p className="text-sm text-gray-600">View detailed insights</p>
+                <h3 className="font-semibold text-gray-900">Report Management</h3>
+                <p className="text-sm text-gray-600">Review and manage user reports</p>
               </div>
             </div>
-            <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-              View Analytics
-            </Button>
+            <Link to="/admin/report-management">
+              <Button className="w-full bg-red-600 hover:bg-red-700">
+                View Reports
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

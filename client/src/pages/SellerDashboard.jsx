@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/utils/toast';
-import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import { FaSpinner, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaStore, FaBoxOpen, FaClock, FaCheck, FaChartLine, FaUsers, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaList, FaDownload, FaUserTie, FaChartBar, FaDollarSign, FaEye, FaShoppingBag, FaCalendarAlt, FaGlobe, FaTag, FaArrowDown, FaArrowUp, FaExclamationTriangle } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CATEGORY_OPTIONS } from '@/constants/categories';
@@ -1670,6 +1670,27 @@ const SellerDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Report Management Card */}
+          <Card className="mb-8 glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-red-100 rounded-2xl">
+                  <FaExclamationTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Report Management</h3>
+                  <p className="text-sm text-gray-600">Review and manage user reports</p>
+                </div>
+              </div>
+              <Button 
+                className="w-full bg-red-600 hover:bg-red-700" 
+                onClick={() => navigate('/admin/report-management')}
+              >
+                View Reports
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* GCash Information */}
           <Card className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-xl">

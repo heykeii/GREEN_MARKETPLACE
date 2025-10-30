@@ -4,6 +4,7 @@ import Product from '../models/products.model.js';
 import Review from '../models/reviews.model.js';
 import Order from '../models/orders.model.js';
 import { NotificationService } from '../utils/notificationService.js';
+import cloudinary from '../utils/cloudinary.js';
 
 // Helper for error responses
 const errorResponse = (res, status, message, error = null) => {
@@ -17,7 +18,7 @@ const errorResponse = (res, status, message, error = null) => {
 // Create a new report
 export const createReport = async (req, res) => {
   try {
-    const { reportedItemType, reportedItemId, reason, description, evidence } = req.body;
+    const { reportedItemType, reportedItemId, reason, description } = req.body;
     const reporterId = req.user._id;
 
     // Validate reported item exists
@@ -54,6 +55,40 @@ export const createReport = async (req, res) => {
       return errorResponse(res, 400, 'You have already reported this item');
     }
 
+    // Handle evidence image uploads to Cloudinary
+    let evidenceUrls = [];
+    if (req.files && req.files.length > 0) {
+      if (req.files.length > 5) {
+        return errorResponse(res, 400, 'Maximum 5 evidence images allowed per report');
+      }
+
+      try {
+        const uploadPromises = req.files.map(file => {
+          return new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+              {
+                folder: 'reports/evidence',
+                resource_type: 'auto',
+                transformation: [
+                  { width: 1920, height: 1080, crop: 'limit' },
+                  { quality: 'auto:good' }
+                ]
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+              }
+            ).end(file.buffer);
+          });
+        });
+        
+        evidenceUrls = await Promise.all(uploadPromises);
+      } catch (uploadError) {
+        console.error('Evidence upload error:', uploadError);
+        return errorResponse(res, 500, 'Evidence image upload failed', uploadError.message);
+      }
+    }
+
     // Create the report
     const report = new Report({
       reporter: reporterId,
@@ -63,7 +98,7 @@ export const createReport = async (req, res) => {
       },
       reason,
       description,
-      evidence: evidence || []
+      evidence: evidenceUrls
     });
 
     await report.save();

@@ -27,6 +27,9 @@ const AdminReportManagement = () => {
     action: '',
     notes: ''
   });
+  const [selectedEvidenceImage, setSelectedEvidenceImage] = useState(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   useEffect(() => {
     fetchReports();
@@ -347,9 +350,24 @@ const AdminReportManagement = () => {
               {report.evidence && report.evidence.length > 0 && (
                 <div className="mb-4">
                   <p className="text-sm font-medium mb-2">Evidence:</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {report.evidence.map((url, index) => (
-                      <img key={index} src={url} alt={`Evidence ${index + 1}`} className="w-16 h-16 object-cover rounded border" />
+                      <div
+                        key={index}
+                        onClick={() => {
+                          setSelectedEvidenceImage(url);
+                          setImageLoading(true);
+                          setImageLoadError(false);
+                        }}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <img 
+                          src={url} 
+                          alt={`Evidence ${index + 1}`} 
+                          className="w-16 h-16 object-cover rounded border hover:border-blue-500 hover:shadow-md transition-all" 
+                        />
+                        <p className="text-xs text-gray-500 text-center mt-1">Evidence {index + 1}</p>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -452,6 +470,76 @@ const AdminReportManagement = () => {
           </Card>
         ))}
       </div>
+
+      {/* Evidence Image Viewer Dialog */}
+      <Dialog open={!!selectedEvidenceImage} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedEvidenceImage(null);
+          setImageLoadError(false);
+          setImageLoading(true);
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Evidence Image</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex justify-center items-center min-h-[400px] bg-gray-50 rounded-lg p-4 overflow-auto">
+            {selectedEvidenceImage && (
+              <>
+                {imageLoading && !imageLoadError && (
+                  <div className="text-gray-500">Loading image...</div>
+                )}
+                {imageLoadError ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="text-red-500 text-center">
+                      <p className="font-medium mb-2">Failed to load image</p>
+                      <p className="text-sm text-gray-600 mb-4">{selectedEvidenceImage}</p>
+                      <Button 
+                        onClick={() => window.open(selectedEvidenceImage, '_blank')}
+                        variant="outline"
+                      >
+                        Open Image in New Tab
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <img 
+                    src={selectedEvidenceImage} 
+                    alt="Evidence" 
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                    onLoad={() => {
+                      setImageLoading(false);
+                      setImageLoadError(false);
+                    }}
+                    onError={() => {
+                      setImageLoading(false);
+                      setImageLoadError(true);
+                    }}
+                    style={{ display: imageLoading ? 'none' : 'block' }}
+                  />
+                )}
+              </>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            {selectedEvidenceImage && !imageLoadError && (
+              <Button 
+                variant="outline"
+                onClick={() => window.open(selectedEvidenceImage, '_blank')}
+              >
+                Open in New Tab
+              </Button>
+            )}
+            <Button onClick={() => {
+              setSelectedEvidenceImage(null);
+              setImageLoadError(false);
+              setImageLoading(true);
+            }}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
