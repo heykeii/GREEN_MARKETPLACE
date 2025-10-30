@@ -185,20 +185,23 @@ paymentReceiptSchema.methods.validateReceiptData = async function(orderData, sel
         overallStatus: 'rejected'
     };
     
-    // Check amount match (allow small rounding differences)
+    // Check amount match with robust parsing and rounding
     let extractedAmount = this.extractedData.amount;
     if (!(typeof extractedAmount === 'number' && Number.isFinite(extractedAmount))) {
         const parsed = parseFloat(String(extractedAmount)
             .replace(/[^\d.,-]/g, '')
-            .replace(/,(?=\d{3}(\D|$))/g, '')
-            .replace(/,(?=\d{1,2}$)/, '.')
+            .replace(/,(?=\d{3}(\D|$))/g, '') // remove thousand separators
+            .replace(/,(?=\d{1,2}$)/, '.')     // decimal comma -> dot
             .replace(/,/g, '')
         );
-        extractedAmount = Number.isFinite(parsed) ? Number(parsed.toFixed(2)) : NaN;
+        extractedAmount = Number.isFinite(parsed) ? parsed : NaN;
     }
     const orderAmount = Number(orderData.totalAmount);
-    const amountDifference = Math.abs((extractedAmount ?? NaN) - orderAmount);
-    validation.amountMatch = amountDifference <= 0.01; // Allow 1 centavo difference
+    const round2 = (n) => Number(Math.round((n + Number.EPSILON) * 100) / 100);
+    const a = round2(extractedAmount ?? NaN);
+    const b = round2(orderAmount);
+    const amountDifference = Math.abs(a - b);
+    validation.amountMatch = amountDifference <= 0.1 || a === b; // tolerant and exact after rounding
     
     // Check receiver match (fallback to sender number if receiver not detected)
     const extractedReceiverRaw = this.extractedData.receiver?.number || this.extractedData.sender?.number || '';
