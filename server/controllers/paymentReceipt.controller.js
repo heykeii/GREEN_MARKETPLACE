@@ -54,6 +54,19 @@ const uploadReceiptToCloudinary = async (fileBuffer, filename) => {
     });
 };
 
+// Helper to normalize amount values coming from OCR (handles ₱, commas, spaces)
+const normalizeAmount = (value) => {
+    if (typeof value === 'number' && Number.isFinite(value)) return Number(value.toFixed(2));
+    if (value == null) return NaN;
+    const str = String(value)
+        .replace(/[^\d.,-]/g, '') // keep digits, comma, dot, minus
+        .replace(/,(?=\d{3}(\D|$))/g, '') // remove thousand separators
+        .replace(/,(?=\d{1,2}$)/, '.') // convert decimal comma to dot when applicable
+        .replace(/,/g, ''); // drop remaining commas
+    const num = parseFloat(str);
+    return Number.isFinite(num) ? Number(num.toFixed(2)) : NaN;
+};
+
 // Helper function to extract text from receipt using OpenAI Vision API
 const extractReceiptData = async (imageUrl) => {
     try {
@@ -245,7 +258,7 @@ export const uploadGcashReceipt = async (req, res) => {
             originalReceiptImage: receiptImageUrl,
             extractedData: {
                 referenceNumber: ocrResult.data.reference_number,
-                amount: ocrResult.data.amount,
+                amount: normalizeAmount(ocrResult.data.amount),
                 sender: {
                     name: ocrResult.data.sender_name,
                     number: ocrResult.data.sender_number
@@ -569,7 +582,7 @@ export const verifyReceiptOnly = async (req, res) => {
         const tempReceipt = {
             extractedData: {
                 referenceNumber: ocrResult.data.reference_number,
-                amount: ocrResult.data.amount,
+                amount: normalizeAmount(ocrResult.data.amount),
                 sender: {
                     name: ocrResult.data.sender_name,
                     number: ocrResult.data.sender_number

@@ -186,9 +186,18 @@ paymentReceiptSchema.methods.validateReceiptData = async function(orderData, sel
     };
     
     // Check amount match (allow small rounding differences)
-    const extractedAmount = this.extractedData.amount;
-    const orderAmount = orderData.totalAmount;
-    const amountDifference = Math.abs(extractedAmount - orderAmount);
+    let extractedAmount = this.extractedData.amount;
+    if (!(typeof extractedAmount === 'number' && Number.isFinite(extractedAmount))) {
+        const parsed = parseFloat(String(extractedAmount)
+            .replace(/[^\d.,-]/g, '')
+            .replace(/,(?=\d{3}(\D|$))/g, '')
+            .replace(/,(?=\d{1,2}$)/, '.')
+            .replace(/,/g, '')
+        );
+        extractedAmount = Number.isFinite(parsed) ? Number(parsed.toFixed(2)) : NaN;
+    }
+    const orderAmount = Number(orderData.totalAmount);
+    const amountDifference = Math.abs((extractedAmount ?? NaN) - orderAmount);
     validation.amountMatch = amountDifference <= 0.01; // Allow 1 centavo difference
     
     // Check receiver match (fallback to sender number if receiver not detected)
