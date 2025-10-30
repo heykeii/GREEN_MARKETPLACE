@@ -620,7 +620,8 @@ export const verifyReceiptOnly = async (req, res) => {
                 const a = round2(extractedAmount ?? NaN);
                 const b = round2(orderAmount);
                 const amountDifference = Math.abs(a - b);
-                validation.amountMatch = amountDifference <= 0.1 || a === b;
+                const equalByFixed = Number.isFinite(a) && Number.isFinite(b) && a.toFixed(2) === b.toFixed(2);
+                validation.amountMatch = (Number.isFinite(a) && Number.isFinite(b)) && (amountDifference <= 0.1 || equalByFixed || a === b);
                 
                 // Check receiver match
                 const extractedReceiverNumber = this.extractedData.receiver?.number?.replace(/[^\d]/g, '');

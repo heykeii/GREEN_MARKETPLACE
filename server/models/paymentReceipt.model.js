@@ -201,7 +201,8 @@ paymentReceiptSchema.methods.validateReceiptData = async function(orderData, sel
     const a = round2(extractedAmount ?? NaN);
     const b = round2(orderAmount);
     const amountDifference = Math.abs(a - b);
-    validation.amountMatch = amountDifference <= 0.1 || a === b; // tolerant and exact after rounding
+    const equalByFixed = Number.isFinite(a) && Number.isFinite(b) && a.toFixed(2) === b.toFixed(2);
+    validation.amountMatch = (Number.isFinite(a) && Number.isFinite(b)) && (amountDifference <= 0.1 || equalByFixed || a === b);
     
     // Check receiver match (fallback to sender number if receiver not detected)
     const extractedReceiverRaw = this.extractedData.receiver?.number || this.extractedData.sender?.number || '';

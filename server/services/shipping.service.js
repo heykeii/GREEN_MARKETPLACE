@@ -136,11 +136,13 @@ Example for Manila to Batangas (1kg):
             explanation = 'Same city delivery';
         }
         // 2. Same province
-        else if (sellerProvince === province || 
-                 (sellerProvince && province.includes(sellerProvince)) ||
-                 (province && sellerProvince.includes(province))) {
+        else if (
+            (sellerProvince && sellerProvince === province) || 
+            (sellerProvince && province && province.includes(sellerProvince)) ||
+            (sellerProvince && province && sellerProvince.includes(province))
+        ) {
             baseFee = 45;
-            estimatedDays = 1-2;
+            estimatedDays = 2;
             distance = 'short';
             explanation = 'Within same province';
         }
@@ -155,7 +157,7 @@ Example for Manila to Batangas (1kg):
         // 4. Within Luzon but different regions
         else if (this._isLuzon(province) && this._isLuzon(seller)) {
             baseFee = 70;
-            estimatedDays = 2-3;
+            estimatedDays = 3;
             distance = 'medium';
             explanation = 'Within Luzon region';
         }
@@ -163,7 +165,7 @@ Example for Manila to Batangas (1kg):
         else if ((this._isLuzon(province) && this._isVisayas(seller)) || 
                  (this._isVisayas(province) && this._isLuzon(seller))) {
             baseFee = 120;
-            estimatedDays = 3-4;
+            estimatedDays = 4;
             distance = 'long';
             explanation = 'Inter-island shipping (Luzon-Visayas)';
         }
@@ -171,7 +173,7 @@ Example for Manila to Batangas (1kg):
         else if ((this._isLuzon(province) && this._isMindanao(seller)) || 
                  (this._isMindanao(province) && this._isLuzon(seller))) {
             baseFee = 150;
-            estimatedDays = 4-5;
+            estimatedDays = 5;
             distance = 'long';
             explanation = 'Inter-island shipping (Luzon-Mindanao)';
         }
@@ -179,7 +181,7 @@ Example for Manila to Batangas (1kg):
         else if ((this._isVisayas(province) && this._isMindanao(seller)) || 
                  (this._isMindanao(province) && this._isVisayas(seller))) {
             baseFee = 130;
-            estimatedDays = 3-4;
+            estimatedDays = 4;
             distance = 'long';
             explanation = 'Inter-island shipping (Visayas-Mindanao)';
         }
@@ -204,7 +206,7 @@ Example for Manila to Batangas (1kg):
      * @private
      */
     _extractProvince(location) {
-        const loc = location.toLowerCase();
+        const loc = String(location || '').toLowerCase();
         
         // Check all provinces
         const allProvinces = [
@@ -236,29 +238,34 @@ Example for Manila to Batangas (1kg):
      * @private
      */
     _isMetroManilaToCALABARZON(loc1, loc2) {
-        const isManila = loc1.includes('manila') || loc1.includes('quezon city') || 
-                        loc1.includes('makati') || loc1.includes('taguig') || 
-                        loc1.includes('pasig') || loc1.includes('caloocan');
+        const a = String(loc1 || '').toLowerCase();
+        const b = String(loc2 || '').toLowerCase();
+        const isManila = a.includes('manila') || a.includes('quezon city') || 
+                        a.includes('makati') || a.includes('taguig') || 
+                        a.includes('pasig') || a.includes('caloocan');
         
         const calabarzon = ['cavite', 'laguna', 'batangas', 'rizal', 'quezon'];
-        const isCALABARZON = calabarzon.some(p => loc2.includes(p));
+        const isCALABARZON = calabarzon.some(p => b.includes(p));
         
         return isManila && isCALABARZON;
     }
 
     _isLuzon(province) {
         const luzon = ['batangas', 'cavite', 'laguna', 'rizal', 'bulacan', 'pampanga', 'nueva ecija', 'tarlac', 'pangasinan', 'la union', 'benguet', 'ilocos', 'cagayan', 'isabela', 'quirino', 'nueva vizcaya', 'bataan', 'zambales', 'quezon', 'aurora', 'marinduque', 'romblon', 'palawan', 'occidental mindoro', 'oriental mindoro', 'albay', 'camarines', 'catanduanes', 'masbate', 'sorsogon'];
-        return luzon.some(l => province.includes(l));
+        const p = String(province || '').toLowerCase();
+        return luzon.some(l => p.includes(l));
     }
 
     _isVisayas(province) {
         const visayas = ['cebu', 'bohol', 'leyte', 'samar', 'negros', 'panay', 'iloilo', 'aklan', 'capiz', 'antique', 'guimaras', 'biliran', 'siquijor'];
-        return visayas.some(v => province.includes(v));
+        const p = String(province || '').toLowerCase();
+        return visayas.some(v => p.includes(v));
     }
 
     _isMindanao(province) {
         const mindanao = ['davao', 'bukidnon', 'misamis', 'lanao', 'cotabato', 'maguindanao', 'sultan kudarat', 'south cotabato', 'sarangani', 'agusan', 'surigao', 'dinagat', 'zamboanga', 'basilan', 'sulu', 'tawi-tawi'];
-        return mindanao.some(m => province.includes(m));
+        const p = String(province || '').toLowerCase();
+        return mindanao.some(m => p.includes(m));
     }
 }
 
