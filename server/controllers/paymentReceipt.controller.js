@@ -622,6 +622,24 @@ export const verifyReceiptOnly = async (req, res) => {
                 const amountDifference = Math.abs(a - b);
                 const equalByFixed = Number.isFinite(a) && Number.isFinite(b) && a.toFixed(2) === b.toFixed(2);
                 validation.amountMatch = (Number.isFinite(a) && Number.isFinite(b)) && (amountDifference <= 0.1 || equalByFixed || a === b);
+
+                // Debug info for amount comparison
+                const amountDebug = {
+                    extractedRaw: this.extractedData.amount,
+                    extractedParsed: extractedAmount,
+                    orderAmountRaw: orderData.totalAmount,
+                    roundedExtracted: a,
+                    roundedOrder: b,
+                    amountDifference,
+                    equalByFixed,
+                    tolerance: 0.1,
+                    amountMatch: validation.amountMatch
+                };
+                if (!validation.amountMatch) {
+                    console.warn('GCash amount mismatch debug (verify-only):', amountDebug);
+                } else {
+                    console.log('GCash amount match debug (verify-only):', amountDebug);
+                }
                 
                 // Check receiver match
                 const extractedReceiverNumber = this.extractedData.receiver?.number?.replace(/[^\d]/g, '');
@@ -662,6 +680,7 @@ export const verifyReceiptOnly = async (req, res) => {
             verification: validation,
             extractedData: tempReceipt.extractedData,
             receiptImageUrl: receiptImageUrl,
+            debug: validation.amountDebug || undefined,
             message: validation.overallStatus === 'verified' 
                 ? 'Receipt verified successfully!' 
                 : 'Receipt verification failed.'

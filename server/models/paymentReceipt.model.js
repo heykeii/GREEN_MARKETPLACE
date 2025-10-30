@@ -203,6 +203,24 @@ paymentReceiptSchema.methods.validateReceiptData = async function(orderData, sel
     const amountDifference = Math.abs(a - b);
     const equalByFixed = Number.isFinite(a) && Number.isFinite(b) && a.toFixed(2) === b.toFixed(2);
     validation.amountMatch = (Number.isFinite(a) && Number.isFinite(b)) && (amountDifference <= 0.1 || equalByFixed || a === b);
+    const amountDebug = {
+        extractedRaw: this.extractedData.amount,
+        extractedParsed: extractedAmount,
+        orderAmountRaw: orderData.totalAmount,
+        roundedExtracted: a,
+        roundedOrder: b,
+        amountDifference,
+        equalByFixed,
+        tolerance: 0.1,
+        amountMatch: validation.amountMatch
+    };
+    if (!validation.amountMatch) {
+        console.warn('GCash amount mismatch debug (model):', amountDebug);
+    } else {
+        console.log('GCash amount match debug (model):', amountDebug);
+    }
+    // Attach debug for higher-level controller responses if needed
+    validation.amountDebug = amountDebug;
     
     // Check receiver match (fallback to sender number if receiver not detected)
     const extractedReceiverRaw = this.extractedData.receiver?.number || this.extractedData.sender?.number || '';
