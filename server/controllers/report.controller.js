@@ -222,6 +222,14 @@ export const getAllReports = async (req, res) => {
       Report.countDocuments(filter)
     ]);
 
+    // Debug: Log evidence data for verification
+    console.log('Reports fetched for admin:', reports.map(r => ({ 
+      id: r._id, 
+      reportNumber: r.reportNumber,
+      evidenceCount: r.evidence?.length || 0,
+      evidence: r.evidence 
+    })));
+
     const totalPages = Math.ceil(total / parseInt(limit));
 
     res.status(200).json({

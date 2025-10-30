@@ -53,6 +53,14 @@ const AdminReportManagement = () => {
 
       const data = await response.json();
       if (data.success) {
+        // Debug: Log reports to check evidence field
+        console.log('Fetched reports with evidence:', data.reports.map(r => ({ 
+          id: r._id, 
+          reportNumber: r.reportNumber,
+          evidence: r.evidence, 
+          evidenceLength: r.evidence?.length,
+          hasEvidence: !!r.evidence && r.evidence.length > 0
+        })));
         setReports(data.reports);
         setPagination(data.pagination);
       }
@@ -347,30 +355,74 @@ const AdminReportManagement = () => {
                 <p className="text-sm text-gray-700">{report.description}</p>
               </div>
 
-              {report.evidence && report.evidence.length > 0 && (
+              {report.evidence && report.evidence.length > 0 ? (
                 <div className="mb-4">
-                  <p className="text-sm font-medium mb-2">Evidence:</p>
+                  <p className="text-sm font-medium mb-2">Evidence ({report.evidence.length} {report.evidence.length === 1 ? 'image' : 'images'}):</p>
                   <div className="flex gap-2 flex-wrap">
-                    {report.evidence.map((url, index) => (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          setSelectedEvidenceImage(url);
-                          setImageLoading(true);
-                          setImageLoadError(false);
-                        }}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                      >
-                        <img 
-                          src={url} 
-                          alt={`Evidence ${index + 1}`} 
-                          className="w-16 h-16 object-cover rounded border hover:border-blue-500 hover:shadow-md transition-all" 
-                        />
-                        <p className="text-xs text-gray-500 text-center mt-1">Evidence {index + 1}</p>
-                      </div>
-                    ))}
+                    {report.evidence.map((url, index) => {
+                      if (!url || url.trim() === '') {
+                        return null;
+                      }
+                      return (
+                        <div
+                          key={index}
+                          className="relative"
+                        >
+                          <div
+                            onClick={() => {
+                              setSelectedEvidenceImage(url);
+                              setImageLoading(true);
+                              setImageLoadError(false);
+                            }}
+                            className="cursor-pointer hover:opacity-80 transition-opacity relative group"
+                          >
+                            <img 
+                              src={url} 
+                              alt={`Evidence ${index + 1}`} 
+                              className="w-20 h-20 object-cover rounded border-2 border-gray-300 hover:border-blue-500 hover:shadow-md transition-all" 
+                              onError={(e) => {
+                                console.error(`Failed to load evidence image ${index + 1}:`, url);
+                                e.target.style.display = 'none';
+                                e.target.nextSibling?.classList.remove('hidden');
+                              }}
+                              onLoad={(e) => {
+                                e.target.nextSibling?.classList.add('hidden');
+                              }}
+                            />
+                            <div className="hidden w-20 h-20 rounded border-2 border-gray-300 bg-gray-100 items-center justify-center text-xs text-gray-500 p-1">
+                              <div className="text-center">
+                                <div>Failed to load</div>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(url, '_blank');
+                                  }}
+                                  className="mt-1 text-blue-600 hover:underline text-xs"
+                                >
+                                  View URL
+                                </button>
+                              </div>
+                            </div>
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded transition-all flex items-center justify-center">
+                              <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium">
+                                Click to view
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 text-center mt-1">Evidence {index + 1}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
+              ) : (
+                report.evidence === undefined || report.evidence === null ? (
+                  <div className="mb-4 p-2 bg-yellow-50 rounded border border-yellow-200">
+                    <p className="text-xs text-yellow-800">
+                      <strong>Debug:</strong> Evidence field is {report.evidence === undefined ? 'undefined' : 'null'} in report data.
+                    </p>
+                  </div>
+                ) : null
               )}
 
               {report.adminResponse && (
@@ -571,3 +623,4 @@ const AdminReportManagement = () => {
 };
 
 export default AdminReportManagement;
+
