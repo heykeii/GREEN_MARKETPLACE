@@ -296,7 +296,11 @@ const CheckoutPage = () => {
 
     try {
       // For GCash payments, verify receipt BEFORE creating order
-    if (paymentMethod === 'gcash' && gcashReceipt) {
+      // Hold verified receipt data across verification and final payload
+      let verifiedReceiptDataLocal = null;
+      let receiptImageUrlLocal = null;
+
+      if (paymentMethod === 'gcash' && gcashReceipt) {
       // reset previous verification details
       setReceiptVerification(null);
       setReceiptExtracted(null);
@@ -373,8 +377,8 @@ const CheckoutPage = () => {
           toast.success('Receipt verified! Creating order...');
           
           // Store verification data for order creation
-          tempPayload.verifiedReceiptData = uploadRes.data.extractedData;
-          tempPayload.receiptImageUrl = uploadRes.data.receiptImageUrl;
+          verifiedReceiptDataLocal = uploadRes.data.extractedData;
+          receiptImageUrlLocal = uploadRes.data.receiptImageUrl;
           
         } catch (verifyError) {
           console.error('Receipt verification error:', verifyError);
@@ -404,8 +408,8 @@ const CheckoutPage = () => {
 
       // Add verified receipt data if available
       if (paymentMethod === 'gcash' && gcashReceipt) {
-        payload.verifiedReceiptData = tempPayload.verifiedReceiptData;
-        payload.receiptImageUrl = tempPayload.receiptImageUrl;
+        payload.verifiedReceiptData = verifiedReceiptDataLocal;
+        payload.receiptImageUrl = receiptImageUrlLocal;
       }
       
       const res = await axios.post(
