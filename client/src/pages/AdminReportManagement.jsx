@@ -195,6 +195,23 @@ const AdminReportManagement = () => {
     return actionMap[action] || action;
   };
 
+  // Safely derive a human-readable name/title for the reported item
+  const getReportedItemDisplay = (report) => {
+    if (!report || !report.reportedItem) return 'Unknown';
+    const type = getItemTypeLabel(report.reportedItem.type);
+    const item = report.reportedItem.itemId || {};
+    const primaryName = item.name || item.title || item.firstName || item.fullName;
+    if (primaryName && typeof primaryName === 'string') {
+      return `${type}: ${primaryName}`;
+    }
+    // Fallbacks when the document is missing or not populated
+    const rawId = typeof item === 'object' && item?._id ? String(item._id) : String(report.reportedItem.itemId || '');
+    if (rawId) {
+      return `${type}: ${rawId.slice(0, 6)}…`;
+    }
+    return `${type}: Unknown`;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -337,7 +354,7 @@ const AdminReportManagement = () => {
                     <span className="text-sm text-gray-500">#{report.reportNumber}</span>
                   </div>
                   <h3 className="font-semibold">
-                    Reported: {report.reportedItem.itemId?.name || report.reportedItem.itemId?.title || report.reportedItem.itemId?.firstName || 'Unknown'}
+                    {getReportedItemDisplay(report)}
                   </h3>
                   <p className="text-sm text-gray-600">
                     By: {report.reporter?.firstName} {report.reporter?.lastName} ({report.reporter?.email})

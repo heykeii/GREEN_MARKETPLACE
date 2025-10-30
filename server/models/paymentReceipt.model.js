@@ -206,12 +206,22 @@ paymentReceiptSchema.methods.validateReceiptData = async function(orderData, sel
     const sellerGcashNumber = sellerGcashDetails?.number?.replace(/[^\d]/g, '');
     validation.receiverMatch = extractedReceiverNumber === sellerGcashNumber;
     
-    // Check reference number format (GCash reference numbers are typically 10-13 digits)
-    const refNumber = this.extractedData.referenceNumber;
-    validation.referenceValid = /^\d{10,13}$/.test(refNumber);
+    // Check reference number format
+    // Normalize by removing any non-digits first, since receipts often contain spaces or hyphens
+    const refNumberRaw = this.extractedData.referenceNumber ?? '';
+    const refDigits = String(refNumberRaw).replace(/\D/g, '');
+    // Accept 10 to 13 digits to cover historical and current GCash formats
+    validation.referenceValid = refDigits.length >= 10 && refDigits.length <= 13;
+    // Persist normalized digits for downstream checks and deduping
+    if (validation.referenceValid) {
+        this.extractedData.referenceNumber = refDigits;
+    }
     
     // Check for duplicate reference number
-    validation.isDuplicate = await this.constructor.isDuplicateReference(refNumber, this._id);
+    validation.isDuplicate = await this.constructor.isDuplicateReference(
+        validation.referenceValid ? refDigits : refNumberRaw,
+        this._id
+    );
     
     // Overall status
     if (validation.amountMatch && validation.receiverMatch && validation.referenceValid && !validation.isDuplicate) {

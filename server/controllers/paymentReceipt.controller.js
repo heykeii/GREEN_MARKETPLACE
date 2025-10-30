@@ -615,12 +615,18 @@ export const verifyReceiptOnly = async (req, res) => {
                 const sellerGcashNumber = sellerGcashDetails?.number?.replace(/[^\d]/g, '');
                 validation.receiverMatch = extractedReceiverNumber === sellerGcashNumber;
                 
-                // Check reference number format
-                const refNumber = this.extractedData.referenceNumber;
-                validation.referenceValid = /^\d{10,13}$/.test(refNumber);
+                // Check reference number format with normalization
+                const refNumberRaw = this.extractedData.referenceNumber ?? '';
+                const refDigits = String(refNumberRaw).replace(/\D/g, '');
+                validation.referenceValid = refDigits.length >= 10 && refDigits.length <= 13;
+                if (validation.referenceValid) {
+                    this.extractedData.referenceNumber = refDigits;
+                }
                 
                 // Check for duplicate reference number
-                validation.isDuplicate = await PaymentReceipt.isDuplicateReference(refNumber);
+                validation.isDuplicate = await PaymentReceipt.isDuplicateReference(
+                    validation.referenceValid ? refDigits : refNumberRaw
+                );
                 
                 // Overall status
                 if (validation.amountMatch && validation.receiverMatch && validation.referenceValid && !validation.isDuplicate) {
