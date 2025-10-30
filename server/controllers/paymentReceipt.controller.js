@@ -605,10 +605,19 @@ export const verifyReceiptOnly = async (req, res) => {
                 };
                 
                 // Check amount match (allow small rounding differences)
-                const extractedAmount = this.extractedData.amount;
-                const orderAmount = orderData.totalAmount;
-                const amountDifference = Math.abs(extractedAmount - orderAmount);
-                validation.amountMatch = amountDifference <= 0.01;
+                let extractedAmount = this.extractedData.amount;
+                if (!(typeof extractedAmount === 'number' && Number.isFinite(extractedAmount))) {
+                    const parsed = parseFloat(String(extractedAmount)
+                        .replace(/[^\d.,-]/g, '')
+                        .replace(/,(?=\d{3}(\D|$))/g, '')
+                        .replace(/,(?=\d{1,2}$)/, '.')
+                        .replace(/,/g, '')
+                    );
+                    extractedAmount = Number.isFinite(parsed) ? Number(parsed.toFixed(2)) : NaN;
+                }
+                const orderAmount = Number(orderData.totalAmount);
+                const amountDifference = Math.abs((extractedAmount ?? NaN) - orderAmount);
+                validation.amountMatch = amountDifference <= 0.01; // 1 centavo tolerance
                 
                 // Check receiver match
                 const extractedReceiverNumber = this.extractedData.receiver?.number?.replace(/[^\d]/g, '');
