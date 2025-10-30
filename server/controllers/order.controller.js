@@ -993,7 +993,7 @@ export const verifyReceiptBeforeOrder = async (req, res) => {
             });
         }
 
-        let validItems, orderItems, subtotal, totalAmount, firstProductSellerId;
+        let validItems, orderItems, subtotal, totalAmount, firstProductSellerId, productsDocs;
 
         if (items && Array.isArray(items)) {
             // Direct checkout flow
@@ -1004,6 +1004,7 @@ export const verifyReceiptBeforeOrder = async (req, res) => {
             // Load products and validate stock
             const productIds = items.map(i => i.productId);
             const products = await Product.find({ _id: { $in: productIds } });
+            productsDocs = products;
             const idToProduct = new Map(products.map(p => [p._id.toString(), p]));
 
             orderItems = [];
@@ -1032,6 +1033,7 @@ export const verifyReceiptBeforeOrder = async (req, res) => {
             }
 
             validItems = cart.items.filter(item => item.product && item.product.isAvailable);
+            productsDocs = validItems.map(i => i.product).filter(Boolean);
             
             if (validItems.length === 0) {
                 return res.status(400).json({ 
@@ -1061,25 +1063,22 @@ export const verifyReceiptBeforeOrder = async (req, res) => {
 
         subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
-        // Calculate shipping fee
+        // Calculate shipping fee aligned with calculateShipping endpoint
         let shippingFee = 0;
         try {
-            const seller = await User.findById(firstProductSellerId);
-            const sellerLocation = seller?.location?.city || seller?.location?.province || 'Metro Manila';
-            
-            const shippingEstimate = await ShippingService.estimateShippingFee({
-                sellerLocation,
-                buyerCity: shippingAddress.city,
-                buyerProvince: shippingAddress.province,
-                totalWeight: orderItems.reduce((sum, item) => sum + item.quantity, 0) * 0.5
-            });
-            
-            if (shippingEstimate.success) {
-                shippingFee = shippingEstimate.shippingFee;
+            const sellerFeesMap = new Map();
+            for (const p of (productsDocs || [])) {
+                const sellerId = String(p.seller);
+                const productShippingFee = Number(p.shippingFee || 0);
+                if (!sellerFeesMap.has(sellerId)) {
+                    sellerFeesMap.set(sellerId, productShippingFee);
+                }
             }
+            const totalSellerShippingFee = Array.from(sellerFeesMap.values()).reduce((sum, v) => sum + (Number.isFinite(v) ? v : 0), 0);
+            shippingFee = totalSellerShippingFee > 0 ? totalSellerShippingFee : 0; // free shipping if none defined
         } catch (shippingError) {
             console.error('Shipping calculation error in verify-receipt:', shippingError);
-            shippingFee = 50; // Default fallback
+            shippingFee = 0; // default to free if error to match UI during verification
         }
 
         totalAmount = subtotal + shippingFee;

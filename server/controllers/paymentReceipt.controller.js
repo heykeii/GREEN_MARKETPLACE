@@ -621,7 +621,14 @@ export const verifyReceiptOnly = async (req, res) => {
                 const b = round2(orderAmount);
                 const amountDifference = Math.abs(a - b);
                 const equalByFixed = Number.isFinite(a) && Number.isFinite(b) && a.toFixed(2) === b.toFixed(2);
-                validation.amountMatch = (Number.isFinite(a) && Number.isFinite(b)) && (amountDifference <= 0.1 || equalByFixed || a === b);
+                // Also allow matching the subtotal, since some users may pay product subtotal only and shipping on delivery
+                const orderSubtotal = Number(parsedOrderData?.subtotal);
+                const c = Number.isFinite(orderSubtotal) ? round2(orderSubtotal) : NaN;
+                const diffToSubtotal = Math.abs(a - c);
+                const equalByFixedSubtotal = Number.isFinite(a) && Number.isFinite(c) && a.toFixed(2) === c.toFixed(2);
+                const matchesTotal = (Number.isFinite(a) && Number.isFinite(b)) && (amountDifference <= 0.1 || equalByFixed || a === b);
+                const matchesSubtotal = (Number.isFinite(a) && Number.isFinite(c)) && (diffToSubtotal <= 0.1 || equalByFixedSubtotal || a === c);
+                validation.amountMatch = matchesTotal || matchesSubtotal;
 
                 // Debug info for amount comparison
                 const amountDebug = {
@@ -630,8 +637,11 @@ export const verifyReceiptOnly = async (req, res) => {
                     orderAmountRaw: orderData.totalAmount,
                     roundedExtracted: a,
                     roundedOrder: b,
+                    roundedSubtotal: c,
                     amountDifference,
+                    diffToSubtotal,
                     equalByFixed,
+                    equalByFixedSubtotal,
                     tolerance: 0.1,
                     amountMatch: validation.amountMatch
                 };
