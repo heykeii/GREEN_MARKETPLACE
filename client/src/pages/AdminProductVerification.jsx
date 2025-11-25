@@ -357,7 +357,11 @@ const AdminProductVerification = () => {
 
                             {/* Sustainability Score Section */}
                             {product.sustainabilityData && (
-                              <div className="space-y-4 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-2xl border border-green-200/50 shadow-sm">
+                              <div className={`space-y-4 p-6 rounded-2xl border shadow-sm ${
+                                (product.sustainabilityData?.score ?? 0) < 0.5
+                                  ? 'bg-gradient-to-br from-rose-50 via-red-50 to-rose-50 border-rose-200/50'
+                                  : 'bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-green-200/50'
+                              }`}>
                                 <div className="flex items-center justify-between mb-4">
                                   <div className="flex items-center gap-3">
                                     <div className="relative">

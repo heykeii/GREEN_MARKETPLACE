@@ -1671,26 +1671,7 @@ const SellerDashboard = () => {
             </Card>
           </div>
 
-          {/* Report Management Card */}
-          <Card className="mb-8 glass-card border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-red-100 rounded-2xl">
-                  <FaExclamationTriangle className="h-6 w-6 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Report Management</h3>
-                  <p className="text-sm text-gray-600">Review and manage user reports</p>
-                </div>
-              </div>
-              <Button 
-                className="w-full bg-red-600 hover:bg-red-700" 
-                onClick={() => navigate('/admin/report-management')}
-              >
-                View Reports
-              </Button>
-            </CardContent>
-          </Card>
+          
 
           {/* GCash Information */}
           <Card className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-xl">
