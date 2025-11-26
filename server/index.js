@@ -40,6 +40,7 @@ const server = http.createServer(app);
 // Middleware
 const allowedOrigins = [
   'https://greenmarketcom.shop',
+  'https://d3zkc5tz2e5m4.cloudfront.net',
   'http://localhost:5173',
   'http://localhost:3000',
   process.env.FRONTEND_URL
